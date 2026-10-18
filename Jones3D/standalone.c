@@ -3,6 +3,7 @@
 // The original Indy3D.exe is still required, but only as a data file for its dialog and icon resources.
 #include "types.h" // Should be included first due to Windows.h / CommCtrl.h conflict
 #include "Indy3D.h"
+#include <Jones3D/Gui/wx/JonesWxDialogs.h>
 
 #include <wkernel/wkernel.h>
 
@@ -55,10 +56,11 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
     HMODULE hResModule = Standalone_LoadResourceModule();
     if ( !hResModule )
     {
-        MessageBoxA(NULL,
+        JonesWx_ShowMessageBox("OpenJones3D Error",
             "Can't find " INDY3D_RESOURCE_MODULE "!\n\nPlace this program in the game's Resource folder next to " INDY3D_RESOURCE_MODULE ".",
-            "OpenJones3D Error", MB_ICONERROR | MB_OK
+            /*bError=*/1
         );
+        JonesWx_Shutdown();
         return -1;
     }
 

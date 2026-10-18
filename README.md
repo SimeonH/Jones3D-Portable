@@ -40,6 +40,8 @@ This project does ***not*** include any original game assets. A valid copy of th
     **Config options**
     * `JONES3D_QOL_IMPROVEMENTS` - Enables various quality of life improvements such as better error handling, logging, and debugging features. Enabled by default.
 
+   *Note: The game dialogs use [wxWidgets](https://www.wxwidgets.org/) 3.2, which CMake downloads and builds as a static library on first configure. To build from a local copy of the wxWidgets source instead, set `FETCHCONTENT_SOURCE_DIR_WXWIDGETS=<path>`.*
+
 3. Build the project.
 
 ## High-Level Overview of Engine Architecture

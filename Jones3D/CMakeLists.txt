@@ -12,7 +12,7 @@ option(JONES3D_ENABLE_POST_BUILD_COPY "Enable copying of output files (Jones3D.d
 set(JONES3D_POST_BUILD_COPY_DIR "" CACHE PATH "Destination folder for the post-build copied files (Jones3D.dll, Jones3D.exe)")
 
 # Collect Jones3D DLL sources
-file(GLOB_RECURSE JONES3D_DLL_SOURCES *.c)
+file(GLOB_RECURSE JONES3D_DLL_SOURCES CONFIGURE_DEPENDS *.c Gui/wx/*.cpp)
 file(GLOB_RECURSE JONES3D_DLL_HEADERS *.h)
 list(REMOVE_ITEM JONES3D_DLL_SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/sha256.h")
 list(REMOVE_ITEM JONES3D_DLL_SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/standalone.c")
@@ -61,6 +61,13 @@ target_link_libraries(Jones3D_DLL PRIVATE Comctl32.lib)
 # anywhere to pull these in implicitly; link them explicitly.
 target_link_libraries(Jones3D_DLL PRIVATE Gdi32.lib User32.lib Shell32.lib Comdlg32.lib Advapi32.lib Ole32.lib)
 
+# Game dialogs are implemented with wxWidgets (Gui/wx).
+# wx requires the wide Win32 API, the rest of the game uses the ANSI API.
+set(JONES3D_WX_LIBS wx::core wx::base)
+file(GLOB JONES3D_WX_SOURCES CONFIGURE_DEPENDS Gui/wx/*.cpp)
+set_source_files_properties(${JONES3D_WX_SOURCES} PROPERTIES COMPILE_DEFINITIONS "UNICODE;_UNICODE")
+target_link_libraries(Jones3D_DLL PRIVATE ${JONES3D_WX_LIBS})
+
 # Standalone OpenJones3D.exe, runs the game without Indy3D.exe code (Indy3D.exe is only read for its resources)
 option(JONES3D_BUILD_STANDALONE "Build standalone OpenJones3D.exe" ON)
 if(JONES3D_BUILD_STANDALONE)
@@ -68,6 +75,7 @@ if(JONES3D_BUILD_STANDALONE)
     target_include_directories(OpenJones3D PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/..)
     target_link_libraries(OpenJones3D PRIVATE Libs)
     target_link_libraries(OpenJones3D PRIVATE Comctl32.lib Gdi32.lib User32.lib Shell32.lib Comdlg32.lib Advapi32.lib Ole32.lib)
+    target_link_libraries(OpenJones3D PRIVATE ${JONES3D_WX_LIBS})
     set_property(TARGET OpenJones3D PROPERTY VS_DPI_AWARE "PerMonitor")
 endif()
 

@@ -1,6 +1,7 @@
 cmake_minimum_required(VERSION 3.12)
 set(EXTERNAL_MODULES
     DirectX61c
+    wxWidgets
 )
 
 # Then add other modules

@@ -1,6 +1,7 @@
 #include "Indy3D.h"
 #include <j3dcore/j3dhook.h>
 #include <Jones3D/RTI/symbols.h>
+#include <Jones3D/Gui/wx/JonesWxDialogs.h>
 #include <Jones3D/Main/JonesMain.h>
 
 #include <wkernel/wkernel.h>
@@ -25,9 +26,7 @@ void Indy3D_InitProcess(void)
     if ( !Indy3D_RemoveDirect3D3ResolutionCap() )
     {
         printf("WARNING: Failed to remove Direct3D3 cap on width/height of DirectDrawSurface!\n");
-        MessageBox(NULL, "Failed to remove DirectX 6 draw surface resolution cap!", "Jones3D",
-            MB_ICONINFORMATION | MB_DEFBUTTON1
-        );
+        JonesWx_ShowMessageBox("Jones3D", "Failed to remove DirectX 6 draw surface resolution cap!", /*bError=*/0);
     }
 }
 
@@ -50,7 +49,9 @@ int WINAPI Indy3D_WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lp
         wkernel_SetProcessProc(JonesMain_Process);
         wkernel_SetStartupCallback(Indy3D_Startup);
         wkernel_SetShutdownCallback(JonesMain_Shutdown);
-        return wkernel_Run(hInstance, hPrevInstance, lpCmdLine, nShowCmd, appName);
+        int result = wkernel_Run(hInstance, hPrevInstance, lpCmdLine, nShowCmd, appName);
+        JonesWx_Shutdown();
+        return result;
     }
 
     CloseHandle(JonesMain_g_mainMutex);
