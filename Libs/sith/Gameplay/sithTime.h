@@ -9,26 +9,19 @@
 
 J3D_EXTERN_C_START
 
-#define sithTime_g_frameTime J3D_DECL_FAR_VAR(sithTime_g_frameTime, uint32_t)
-// extern unsigned int sithTime_g_frameTime;
+extern uint32_t sithTime_g_frameTime;
 
-#define sithTime_g_frameTimeFlex J3D_DECL_FAR_VAR(sithTime_g_frameTimeFlex, float)
-// extern float sithTime_g_secFrameTime;
+extern float sithTime_g_frameTimeFlex;
 
-#define sithTime_g_fps J3D_DECL_FAR_VAR(sithTime_g_fps, float)
-// extern float sithTime_g_fps;
+extern float sithTime_g_fps;
 
-#define sithTime_g_msecGameTime J3D_DECL_FAR_VAR(sithTime_g_msecGameTime, uint32_t)
-// extern unsigned int sithTime_g_msecGameTime;
+extern uint32_t sithTime_g_msecGameTime;
 
-#define sithTime_g_secGameTime J3D_DECL_FAR_VAR(sithTime_g_secGameTime, float)
-// extern float sithTime_g_secGameTime;
+extern float sithTime_g_secGameTime;
 
-#define sithTime_g_clockTime J3D_DECL_FAR_VAR(sithTime_g_clockTime, uint32_t)
-// extern unsigned int sithTime_g_clockTime;
+extern uint32_t sithTime_g_clockTime;
 
-#define sithTime_g_bPaused J3D_DECL_FAR_VAR(sithTime_g_bPaused, int)
-// extern int sithTime_g_bPaused;
+extern int sithTime_g_bPaused;
 
 void sithTime_Advance(void);
 void sithTime_Pause(void);
@@ -40,7 +33,6 @@ int sithTime_IsPaused(void);
 
 // Helper hooking functions
 void sithTime_InstallHooks(void);
-void sithTime_ResetGlobals(void);
 
 J3D_EXTERN_C_END
 #endif // SITH_SITHTIME_H

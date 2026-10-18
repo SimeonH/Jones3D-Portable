@@ -100,9 +100,6 @@ void sithGamesave_InstallHooks(void)
     J3D_HOOKFUNC(sithGamesave_SetSaveGameCallback);
 }
 
-void sithGamesave_ResetGlobals(void)
-{}
-
 SithGameStatistics* sithGamesave_GetGameStatistics(void)
 {
     if ( sithGamesave_bStatisticsLocked )
@@ -425,6 +422,33 @@ int J3DAPI sithGamesave_SaveCurrentWorld(SithMessageStream outstream)
     return 0;
 }
 
+
+// Added: Sends autosave/restore notification (user0) to the master cog.
+// Fixed: Level cogs (e.g. 00_cyn_opening.cog, riv_parachute.cog) do a short Sleep in their startup handler before
+//        setting up the intro camera, and expect user0 to arrive after the startup handler has finished.
+//        When user0 arrived while startup was still sleeping (e.g. when restoring the start of level autosave),
+//        the cog VM resumed the rest of startup after user0 returned, i.e. after the intro cutscene ended,
+//        leaving the cutscene camera pointing at the sky. Finish such short startup sleep first.
+static void sithGamesave_NotifyMasterCog(void)
+{
+    SithCog* pCog = sithCog_g_pMasterCog;
+    if ( !pCog )
+    {
+        return;
+    }
+
+    // Note, the handler type (execMsgType) isn't stored in savegames, so a restored cog sleeping in startup
+    //       can't be distinguished by it; any short top-level sleep is finished instead.
+    if ( pCog->status == SITHCOG_STATUS_SLEEPING && pCog->callDepth == 0
+        && (uint32_t)pCog->statusParams[0] <= sithTime_g_msecGameTime + 100 )
+    {
+        pCog->statusParams[0] = sithTime_g_msecGameTime; // wake up now
+        sithCog_ProcessCog(pCog);
+    }
+
+    sithCog_SendMessage(pCog, SITHCOG_MSG_USER0, SITHCOG_SYM_REF_NONE, 0, SITHCOG_SYM_REF_NONE, 0, 0);
+}
+
 int sithGamesave_Process(void)
 {
     int bError;
@@ -449,7 +473,7 @@ int sithGamesave_Process(void)
         const char* pFilename = stdFnames_FindMedName(sithGamesave_aCurFilename);
         if ( strneq(pFilename, pPrefix, strlen(pPrefix)) && sithCog_g_pMasterCog )
         {
-            sithCog_SendMessage(sithCog_g_pMasterCog, SITHCOG_MSG_USER0, SITHCOG_SYM_REF_NONE, 0, SITHCOG_SYM_REF_NONE, 0, 0);
+            sithGamesave_NotifyMasterCog();
         }
     }
     else
@@ -466,7 +490,7 @@ int sithGamesave_Process(void)
         bError = sithGamesave_RestoreFile(sithGamesave_aCurFilename, /*bNotify*/0);
         if ( sithCog_g_pMasterCog )
         {
-            sithCog_SendMessage(sithCog_g_pMasterCog, SITHCOG_MSG_USER0, SITHCOG_SYM_REF_NONE, 0, SITHCOG_SYM_REF_NONE, 0, 0);
+            sithGamesave_NotifyMasterCog();
         }
     }
 
@@ -643,7 +667,7 @@ void J3DAPI sithGamesave_NotifyRestored(const char* pFilePath)
     {
         if ( sithCog_g_pMasterCog )
         {
-            sithCog_SendMessage(sithCog_g_pMasterCog, SITHCOG_MSG_USER0, SITHCOG_SYM_REF_NONE, 0, SITHCOG_SYM_REF_NONE, 0, 0);
+            sithGamesave_NotifyMasterCog();
         }
     }
 }

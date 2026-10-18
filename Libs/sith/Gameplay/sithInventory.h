@@ -9,23 +9,17 @@
 
 J3D_EXTERN_C_START
 
-#define sithInventory_g_bInitInventory J3D_DECL_FAR_VAR(sithInventory_g_bInitInventory, int)
-// extern int sithInventory_g_bInitInventory ;
+extern int sithInventory_g_bInitInventory;
 
-#define sithInventory_g_bSendDeactivateMessage J3D_DECL_FAR_VAR(sithInventory_g_bSendDeactivateMessage, int)
-// extern int sithInventory_g_bSendDeactivateMessage;
+extern int sithInventory_g_bSendDeactivateMessage;
 
-#define sithInventory_g_dword_56B750 J3D_DECL_FAR_VAR(sithInventory_g_dword_56B750, int)
-// extern int sithInventory_g_dword_56B750;
+extern int sithInventory_g_dword_56B750;
 
-#define sithInventory_g_dword_56B754 J3D_DECL_FAR_VAR(sithInventory_g_dword_56B754, int)
-// extern int sithInventory_g_dword_56B754;
+extern int sithInventory_g_dword_56B754;
 
-#define sithInventory_g_aTypes J3D_DECL_FAR_ARRAYVAR(sithInventory_g_aTypes, SithInventoryType(*)[SITHINVENTORY_MAXTYPES])
-// extern SithInventoryType sithInventory_g_aTypes[SITHINVENTORY_MAXTYPES];
+extern SithInventoryType sithInventory_g_aTypes[SITHINVENTORY_MAXTYPES];
 
-#define sithInventory_g_aUnknown J3D_DECL_FAR_ARRAYVAR(sithInventory_g_aUnknown, SithInventoryUnknown(*)[20])
-// extern SithInventoryUnknown sithInventory_g_aUnknown[20];
+extern SithInventoryUnknown sithInventory_g_aUnknown[20];
 
 void J3DAPI sithInventory_RegisterType(size_t typeId, const char* pName, float min, float max, SithInventoryTypeFlag flags, SithCog* pItemCog, rdModel3* pInvModel, rdModel3* pItemModel);
 
@@ -88,7 +82,6 @@ void J3DAPI sithInventory_SetSwimmingInventory(SithThing* pThing, int bItemsAvai
 
 // Helper hooking functions
 void sithInventory_InstallHooks(void);
-void sithInventory_ResetGlobals(void);
 
 J3D_EXTERN_C_END
 #endif // SITH_SITHINVENTORY_H

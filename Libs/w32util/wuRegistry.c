@@ -22,12 +22,6 @@ void wuRegistry_InstallHooks(void)
     J3D_HOOKFUNC(wuRegistry_GetStr);
 }
 
-void wuRegistry_ResetGlobals(void)
-{
-    //memset(&wuRegistry_g_bStarted, 0, sizeof(wuRegistry_g_bStarted));
-    //memset(&appSubKey, 0, sizeof(appSubKey));
-    //memset(&appRootKey, 0, sizeof(appRootKey));
-}
 
 int J3DAPI wuRegistry_Startup(HKEY rootKey, LPCSTR subKey)
 {

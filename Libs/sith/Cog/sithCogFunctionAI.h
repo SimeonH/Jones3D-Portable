@@ -13,7 +13,6 @@ int J3DAPI sithCogFunctionAI_RegisterFunctions(SithCogSymbolTable* pTable);
 
 // Helper hooking functions
 void sithCogFunctionAI_InstallHooks(void);
-void sithCogFunctionAI_ResetGlobals(void);
 
 J3D_EXTERN_C_END
 #endif // SITH_SITHCOGFUNCTIONAI_H

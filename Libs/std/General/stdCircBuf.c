@@ -13,10 +13,6 @@ void stdCircBuf_InstallHooks(void)
     J3D_HOOKFUNC(stdCircBuf_GetNextElement);
 }
 
-void stdCircBuf_ResetGlobals(void)
-{
-
-}
 
 int J3DAPI stdCircBuf_New(tCircularBuffer* pCirc, int numElementsDesired, int sizeOfEachElement)
 {

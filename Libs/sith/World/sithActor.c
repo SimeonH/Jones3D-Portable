@@ -52,9 +52,6 @@ void sithActor_InstallHooks(void)
     J3D_HOOKFUNC(sithActor_ParseArg);
 }
 
-void sithActor_ResetGlobals(void)
-{}
-
 void J3DAPI sithActor_SetDifficulty(SithThing* pActor)
 {
     if ( !pActor || pActor->type != SITH_THING_ACTOR )

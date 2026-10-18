@@ -11,29 +11,23 @@ J3D_EXTERN_C_START
 #define SITHRENDER_MAX_VISIBLE_SECTORS     4096 // Changed: Was 128
 #define SITHRENDER_MAX_SECTORS_WITH_THINGS SITHRENDER_MAX_VISIBLE_SECTORS * 2 // Changed: Was 256
 
-#define sithRender_g_fogDensity J3D_DECL_FAR_VAR(sithRender_g_fogDensity, float)
-// extern float sithRender_g_fogDensity ;
+extern float sithRender_g_fogDensity;
 
-#define sithRender_g_numDrawnThings J3D_DECL_FAR_VAR(sithRender_g_numDrawnThings, size_t)
-// extern int sithRender_g_numDrawnThings;
+extern size_t sithRender_g_numDrawnThings;
 
-#define sithRender_g_numArchPolys J3D_DECL_FAR_VAR(sithRender_g_numArchPolys, size_t)
-// extern int sithRender_g_numArchPolys;
+extern size_t sithRender_g_numArchPolys;
 
-#define sithRender_g_numAlphaArchPolys J3D_DECL_FAR_VAR(sithRender_g_numAlphaArchPolys, size_t)
-// extern int sithRender_g_numAlphaArchPolys;
+extern size_t sithRender_g_numAlphaArchPolys;
 
-#define sithRender_g_numThingPolys J3D_DECL_FAR_VAR(sithRender_g_numThingPolys, size_t)
-// extern int sithRender_g_numThingPolys;
+extern size_t sithRender_g_numThingPolys;
 
-#define sithRender_g_numAlphaThingPoly J3D_DECL_FAR_VAR(sithRender_g_numAlphaThingPoly, size_t)
-// extern int sithRender_g_numAlphaThingPoly;
+extern size_t sithRender_g_numAlphaThingPoly;
 
-#define sithRender_g_numVisibleAdjoins J3D_DECL_FAR_VAR(sithRender_g_numVisibleAdjoins, size_t)
-// extern int sithRender_g_numVisibleAdjoins;
+extern size_t sithRender_g_numVisibleAdjoins;
 
-#define sithRender_g_numVisibleSectors J3D_DECL_FAR_VAR(sithRender_g_numVisibleSectors, size_t)
-// extern int sithRender_g_numVisibleSectors;
+extern size_t sithRender_g_numVisibleSectors;
+
+extern bool sithRender_bResetCameraAspect;
 
 int sithRender_Startup(void);
 int J3DAPI sithRender_Open();
@@ -64,7 +58,6 @@ int sithRender_MakeScreenShot(void);
 
 // Helper hooking functions
 void sithRender_InstallHooks(void);
-void sithRender_ResetGlobals(void);
 
 J3D_EXTERN_C_END
 #endif // SITH_SITHRENDER_H

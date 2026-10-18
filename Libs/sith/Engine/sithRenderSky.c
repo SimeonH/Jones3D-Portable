@@ -37,9 +37,6 @@ void sithRenderSky_InstallHooks(void)
     J3D_HOOKFUNC(sithRenderSky_CeilingFaceToPlane);
 }
 
-void sithRenderSky_ResetGlobals(void)
-{}
-
 int J3DAPI sithRenderSky_Open(float horizonDistance, float ceilingHeight)
 {
     horizonPixelsPerRev = 0.0083333338f; // (768.0f / 360.0f) / 256.0f

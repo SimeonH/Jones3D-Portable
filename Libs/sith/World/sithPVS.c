@@ -17,9 +17,6 @@ void sithPVS_InstallHooks(void)
     J3D_HOOKFUNC(sithPVS_SetTable);
 }
 
-void sithPVS_ResetGlobals(void)
-{}
-
 int J3DAPI sithPVS_WritePVSText(const SithWorld* pWorld)
 {
     if ( !pWorld->aPVS )

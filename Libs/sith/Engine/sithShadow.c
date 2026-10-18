@@ -31,9 +31,6 @@ void sithShadow_InstallHooks(void)
     J3D_HOOKFUNC(sithShadow_DrawWalkShadow);
 }
 
-void sithShadow_ResetGlobals(void)
-{}
-
 void J3DAPI sithShadow_RenderThingShadow(SithThing* pThing)
 {
     if ( pThing->renderData.data.pModel3 && (pThing->pInSector->flags & SITH_SECTOR_UNDERWATER) == 0 && (pThing->pInSector->flags & SITH_SECTOR_AETHERIUM) == 0 )

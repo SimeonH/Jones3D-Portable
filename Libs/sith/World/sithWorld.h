@@ -16,17 +16,13 @@ J3D_EXTERN_C_START
 #define SITHWORLD_IS_STATICINDEX(idx) ((idx & SITH_STATICRESOURCE_INDEXMASK) != 0)
 
 
-#define sithWorld_g_pCurrentWorld J3D_DECL_FAR_VAR(sithWorld_g_pCurrentWorld, SithWorld*)
-// extern SithWorld *sithWorld_g_pCurrentWorld;
+extern SithWorld* sithWorld_g_pCurrentWorld;
 
-#define sithWorld_g_pStaticWorld J3D_DECL_FAR_VAR(sithWorld_g_pStaticWorld, SithWorld*)
-// extern SithWorld *sithWorld_g_pStaticWorld;
+extern SithWorld* sithWorld_g_pStaticWorld;
 
-#define sithWorld_g_pLastLoadedWorld J3D_DECL_FAR_VAR(sithWorld_g_pLastLoadedWorld, SithWorld*)
-// extern SithWorld *sithWorld_g_pLastLoadedWorld;
+extern SithWorld* sithWorld_g_pLastLoadedWorld;
 
-#define sithWorld_g_bLoading J3D_DECL_FAR_VAR(sithWorld_g_bLoading, int)
-// extern int sithWorld_g_bLoading;
+extern int sithWorld_g_bLoading;
 
 int sithWorld_Startup(void);
 void sithWorld_Shutdown(void);
@@ -72,7 +68,6 @@ int J3DAPI sithWorld_LoadEntryBinary(SithWorld* pWorld, const char* pFilePath);
 
 // Helper hooking functions
 void sithWorld_InstallHooks(void);
-void sithWorld_ResetGlobals(void);
 
 J3D_EXTERN_C_END
 #endif // SITH_SITHWORLD_H

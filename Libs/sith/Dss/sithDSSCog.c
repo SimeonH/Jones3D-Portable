@@ -2,7 +2,7 @@
 #include <j3dcore/j3dhook.h>
 
 #include <sith/Cog/sithCog.h>
-#include <sith/Dss/sithDss.h>
+#include <sith/Dss/sithDSS.h>
 #include <sith/Dss/sithMulti.h>
 #include <sith/RTI/symbols.h>
 #include <sith/World/sithThing.h>
@@ -15,9 +15,6 @@ void sithDSSCog_InstallHooks(void)
     J3D_HOOKFUNC(sithDSSCog_SyncCogState);
     J3D_HOOKFUNC(sithDSSCog_ProcessCogState);
 }
-
-void sithDSSCog_ResetGlobals(void)
-{}
 
 int J3DAPI sithDSSCog_SendMessage(const SithCog* pCog, SithCogMsgType msgType, SithCogSymbolRefType senderType, int senderIdx, SithCogSymbolRefType srcType, int srcIdx, int linkId, int param0, int param1, int param2, int param3, DPID idTo)
 {

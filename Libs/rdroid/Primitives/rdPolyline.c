@@ -29,10 +29,6 @@ void rdPolyline_InstallHooks(void)
     J3D_HOOKFUNC(rdPolyline_DrawFace);
 }
 
-void rdPolyline_ResetGlobals(void)
-{
-    // memset(&rdPolyline_aVerticesCache, 0, sizeof(rdPolyline_aVerticesCache));
-}
 
 rdPolyline* J3DAPI rdPolyline_New(const char* pName, const char* pMatFilename, const char* pMatFilename2, float length, float baseRadius, float tipRadius, rdGeometryMode geoMode, rdLightMode lightMode, const rdVector4* pColor)
 {

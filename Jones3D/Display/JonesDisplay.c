@@ -66,9 +66,6 @@ void JonesDisplay_InstallHooks(void)
     J3D_HOOKFUNC(JonesDisplay_UpdateLoadProgress);
 }
 
-void JonesDisplay_ResetGlobals(void)
-{}
-
 int J3DAPI JonesDisplay_Startup(JonesDisplaySettings* pSettings)
 {
     if ( !stdDisplay_Startup() )
@@ -509,7 +506,7 @@ int JonesDisplay_ShowSplashDemo(void)
     bool bFinish = false;
     while ( !bFinish && pWallpaper )
     {
-        int numPressed;
+        int numPressed = 0; // Added: Init to 0 as stdControl_ReadKey accumulates into it
         stdControl_ReadControls();
         if ( stdControl_ReadKey(DIK_ESCAPE, &numPressed)
             || stdControl_ReadKey(DIK_SPACE, &numPressed)

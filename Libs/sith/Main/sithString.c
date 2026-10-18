@@ -19,9 +19,6 @@ void sithString_InstallHooks(void)
     J3D_HOOKFUNC(sithString_GetString);
 }
 
-void sithString_ResetGlobals(void)
-{
-}
 
 int sithString_Startup(void)
 {

@@ -46,26 +46,19 @@ void sithPlayer_InstallHooks(void)
     J3D_HOOKFUNC(sithPlayer_IMPEndFiring);
 }
 
-void sithPlayer_ResetGlobals(void)
-{
-    int sithPlayer_g_bPlayerInPor_tmp = 1; // Must be set to 1
-    memcpy(&sithPlayer_g_bPlayerInPor, &sithPlayer_g_bPlayerInPor_tmp, sizeof(sithPlayer_g_bPlayerInPor));
-
-    int sithPlayer_g_impFireType_tmp = -1;
-    memcpy(&sithPlayer_g_impFireType, &sithPlayer_g_impFireType_tmp, sizeof(sithPlayer_g_impFireType));
-
-    memset(&sithPlayer_g_playerNum, 0, sizeof(sithPlayer_g_playerNum));
-    memset(&sithPlayer_g_numPlayers, 0, sizeof(sithPlayer_g_numPlayers));
-    memset(&sithPlayer_g_pLocalPlayerThing, 0, sizeof(sithPlayer_g_pLocalPlayerThing));
-    memset(&sithPlayer_g_pLocalPlayer, 0, sizeof(sithPlayer_g_pLocalPlayer));
-    memset(&sithPlayer_g_bPlayerInvulnerable, 0, sizeof(sithPlayer_g_bPlayerInvulnerable));
-    memset(&sithPlayer_g_bInAetheriumSector, 0, sizeof(sithPlayer_g_bInAetheriumSector));
-    memset(&sithPlayer_g_bGuybrush, 0, sizeof(sithPlayer_g_bGuybrush));
-    memset(&sithPlayer_g_curLevelNum, 0, sizeof(sithPlayer_g_curLevelNum));
-    memset(&sithPlayer_g_bBonusMapBought, 0, sizeof(sithPlayer_g_bBonusMapBought));
-    memset(&sithPlayer_g_aPlayers, 0, sizeof(sithPlayer_g_aPlayers));
-    memset(&sithPlayer_g_impState, 0, sizeof(sithPlayer_g_impState));
-}
+int sithPlayer_g_bPlayerInPor = 1;
+int sithPlayer_g_impFireType = -1;
+size_t sithPlayer_g_playerNum;
+size_t sithPlayer_g_numPlayers;
+SithThing* sithPlayer_g_pLocalPlayerThing;
+SithPlayer* sithPlayer_g_pLocalPlayer;
+int sithPlayer_g_bPlayerInvulnerable;
+int sithPlayer_g_bInAetheriumSector;
+int sithPlayer_g_bGuybrush;
+int sithPlayer_g_curLevelNum;
+int sithPlayer_g_bBonusMapBought;
+SithPlayer sithPlayer_g_aPlayers[SITHPLAYER_MAX_PLAYERS];
+float sithPlayer_g_impState;
 
 void J3DAPI sithPlayer_Open(const wchar_t* awName)
 {

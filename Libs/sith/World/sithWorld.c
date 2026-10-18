@@ -276,13 +276,10 @@ void sithWorld_InstallHooks(void)
     J3D_HOOKFUNC(sithWorld_LoadEntryBinary);
 }
 
-void sithWorld_ResetGlobals(void)
-{
-    memset(&sithWorld_g_pCurrentWorld, 0, sizeof(sithWorld_g_pCurrentWorld));
-    memset(&sithWorld_g_pStaticWorld, 0, sizeof(sithWorld_g_pStaticWorld));
-    memset(&sithWorld_g_pLastLoadedWorld, 0, sizeof(sithWorld_g_pLastLoadedWorld));
-    memset(&sithWorld_g_bLoading, 0, sizeof(sithWorld_g_bLoading));
-}
+SithWorld* sithWorld_g_pCurrentWorld;
+SithWorld* sithWorld_g_pStaticWorld;
+SithWorld* sithWorld_g_pLastLoadedWorld;
+int sithWorld_g_bLoading;
 
 int sithWorld_Startup(void)
 {

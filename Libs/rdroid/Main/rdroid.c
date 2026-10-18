@@ -25,13 +25,10 @@ void rdroid_InstallHooks(void)
     J3D_HOOKFUNC(rdGetRenterOptions);
 }
 
-void rdroid_ResetGlobals(void)
-{
-    memset(&rdroid_g_curLightingMode, 0, sizeof(rdroid_g_curLightingMode));
-    memset(&rdroid_g_pHS, 0, sizeof(rdroid_g_pHS));
-    memset(&rdroid_g_curGeometryMode, 0, sizeof(rdroid_g_curGeometryMode));
-    memset(&rdroid_g_curRenderOptions, 0, sizeof(rdroid_g_curRenderOptions));
-}
+rdLightMode rdroid_g_curLightingMode;
+tHostServices* rdroid_g_pHS;
+rdGeometryMode rdroid_g_curGeometryMode;
+rdRoidFlags rdroid_g_curRenderOptions;
 
 void J3DAPI rdSetServices(tHostServices* pHS)
 {

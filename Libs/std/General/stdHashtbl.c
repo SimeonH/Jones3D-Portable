@@ -1,6 +1,6 @@
 #include "std.h"
 #include "stdHashtbl.h"
-#include "stdLinklist.h"
+#include "stdLinkList.h"
 #include "stdMemory.h"
 #include "stdUtil.h"
 
@@ -34,17 +34,6 @@ void stdHashtbl_InstallHooks(void)
     J3D_HOOKFUNC(stdHashtbl_Remove);
 }
 
-void stdHashtbl_ResetGlobals(void)
-{
-    /*int stdHashtbl_aPrimeTable_tmp[32] = {
-        23u,   53u,   79u,   101u,  151u,  211u,  251u,  307u,
-        353u,  401u,  457u,  503u,  557u,  601u,  653u,  701u,
-        751u,  809u,  853u,  907u,  953u,  1009u, 1103u, 1201u,
-        1301u, 1409u, 1511u, 1601u, 1709u, 1801u, 1901u, 1999u
-    };
-    memcpy(&stdHashtbl_aPrimeTable, &stdHashtbl_aPrimeTable_tmp, sizeof(stdHashtbl_aPrimeTable));*/
-
-}
 
 unsigned int J3DAPI CalculateHash(const char* pData, signed int hashSize)
 {

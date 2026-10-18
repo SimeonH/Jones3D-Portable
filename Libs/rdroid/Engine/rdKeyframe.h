@@ -21,7 +21,6 @@ void rdKeyframe_PrintKeyframe(const rdKeyframe* pKeyframe); // Added
 
 // Helper hooking functions
 void rdKeyframe_InstallHooks(void);
-void rdKeyframe_ResetGlobals(void);
 
 J3D_EXTERN_C_END
 #endif // RDROID_RDKEYFRAME_H

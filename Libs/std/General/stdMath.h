@@ -49,7 +49,6 @@ inline float stdMath_ClipNearZero(float val)
 
 // Helper hooking functions
 void stdMath_InstallHooks(void);
-void stdMath_ResetGlobals(void);
 
 J3D_EXTERN_C_END
 #endif // STD_STDMATH_H

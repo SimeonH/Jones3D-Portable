@@ -45,9 +45,6 @@ void sithSector_InstallHooks(void)
     J3D_HOOKFUNC(sithSector_GetSectorIndex);
 }
 
-void sithSector_ResetGlobals(void)
-{}
-
 int J3DAPI sithSector_WriteSectorsListText(const SithWorld* pWorld)
 {
     if ( stdConffile_WriteLine("###### Sector information ######\n")

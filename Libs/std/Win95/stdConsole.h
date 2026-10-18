@@ -16,7 +16,6 @@ int J3DAPI stdConsole_WriteConsole(const char* pText, uint32_t textAttribute);
 
 // Helper hooking functions
 void stdConsole_InstallHooks(void);
-void stdConsole_ResetGlobals(void);
 
 J3D_EXTERN_C_END
 #endif // STD_STDCONSOLE_H

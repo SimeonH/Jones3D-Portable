@@ -143,9 +143,6 @@ void stdControl_InstallHooks(void)
     J3D_HOOKFUNC(stdControl_IsGamePad);
 }
 
-void stdControl_ResetGlobals(void)
-{}
-
 int J3DAPI stdControl_Startup(int bKeyboardForeground)
 {
     if ( stdControl_bStartup )
@@ -508,7 +505,10 @@ int J3DAPI stdControl_ReadKey(size_t keyNum, int* pbPressed)
     {
         if ( pbPressed )
         {
-            *pbPressed = stdControl_aKeyPressed[keyNum];
+            // Fixed: Was `=`; the original accumulates. sithControl_GetKey zeroes the state once and then calls this
+            //        for every key bound to the control (e.g. jump: X, LALT, RALT), so assigning made the last bound
+            //        key's press count overwrite the pressed key's, losing the key-press event.
+            *pbPressed += stdControl_aKeyPressed[keyNum];
         }
 
         if ( stdControl_bControlsIdle && stdControl_aKeyInfo[keyNum] )

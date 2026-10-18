@@ -51,7 +51,6 @@ void J3DAPI sithDSSThing_MoveToPos(SithThing* pThing, const rdVector3* pPos, Sit
 
 // Helper hooking functions
 void sithDSSThing_InstallHooks(void);
-void sithDSSThing_ResetGlobals(void);
 
 J3D_EXTERN_C_END
 #endif // SITH_SITHDSSTHING_H

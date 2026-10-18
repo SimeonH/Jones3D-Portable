@@ -24,7 +24,6 @@ bool J3DAPI stdPlatform_DirExists(const char* pPath);
 
 // Helper hooking functions
 void stdPlatform_InstallHooks(void);
-void stdPlatform_ResetGlobals(void);
 
 J3D_EXTERN_C_END
 #endif // STD_STDPLATFORM_H

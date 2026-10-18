@@ -10,14 +10,11 @@ J3D_EXTERN_C_START
 #define RDCAMERA_FOVMIN   5.0f
 #define RDCAMERA_FOVMAX 179.0f
 
-#define rdCamera_g_camPYR J3D_DECL_FAR_VAR(rdCamera_g_camPYR, rdVector3)
-// extern rdVector3 rdCamera_g_camPYR;
+extern rdVector3 rdCamera_g_camPYR;
 
-#define rdCamera_g_pCurCamera J3D_DECL_FAR_VAR(rdCamera_g_pCurCamera, rdCamera*)
-// extern rdCamera *rdCamera_g_pCurCamera;
+extern rdCamera* rdCamera_g_pCurCamera;
 
-#define rdCamera_g_camMatrix J3D_DECL_FAR_VAR(rdCamera_g_camMatrix, rdMatrix34)
-// extern rdMatrix34 rdCamera_g_camMatrix;
+extern rdMatrix34 rdCamera_g_camMatrix;
 
 rdCamera* J3DAPI rdCamera_New(float fov, int bFarClip, float nearPlane, float farPlane, float aspectRatio);
 int J3DAPI rdCamera_NewEntry(rdCamera* pCamera, float fov, int bClipFar, float nearPlane, float farPlane, float aspectRatio);
@@ -54,7 +51,6 @@ bool rdCamera_sub_506861(void); // Added
 
 // Helper hooking functions
 void rdCamera_InstallHooks(void);
-void rdCamera_ResetGlobals(void);
 
 J3D_EXTERN_C_END
 #endif // RDROID_RDCAMERA_H

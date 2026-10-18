@@ -9,8 +9,7 @@
 
 J3D_EXTERN_C_START
 
-#define sithEvent_g_pFirstQueuedEvent J3D_DECL_FAR_VAR(sithEvent_g_pFirstQueuedEvent, SithEvent*)
-// extern SithEvent *sithEvent_g_pFirstQueuedEvent;
+extern SithEvent* sithEvent_g_pFirstQueuedEvent;
 
 int sithEvent_Startup(void);
 void sithEvent_Shutdown(void);
@@ -47,7 +46,6 @@ void sithEvent_Process(void);
 
 // Helper hooking functions
 void sithEvent_InstallHooks(void);
-void sithEvent_ResetGlobals(void);
 
 J3D_EXTERN_C_END
 #endif // SITH_SITHEVENT_H

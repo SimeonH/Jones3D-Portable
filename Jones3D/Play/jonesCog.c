@@ -57,13 +57,10 @@ void jonesCog_InstallHooks(void)
     J3D_HOOKFUNC(jonesCog_ToggleInterface);
 }
 
-void jonesCog_ResetGlobals(void)
-{
-    memset(&jonesCog_g_bShowHealthHUD, 0, sizeof(jonesCog_g_bShowHealthHUD));
-    memset(&jonesCog_g_bMenuVisible, 0, sizeof(jonesCog_g_bMenuVisible));
-    memset(&jonesCog_g_bEnableGamesave, 0, sizeof(jonesCog_g_bEnableGamesave));
-    memset(&jonesCog_g_dword_17EFFCC, 0, sizeof(jonesCog_g_dword_17EFFCC));
-}
+int jonesCog_g_bShowHealthHUD;
+int jonesCog_g_bMenuVisible;
+int jonesCog_g_bEnableGamesave;
+int jonesCog_g_dword_17EFFCC;
 
 int jonesCog_Startup(void)
 {

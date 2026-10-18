@@ -59,7 +59,7 @@ rdLightMode sithRender_lightMode;
 
 static int (J3DAPI* sithRender_pExtraThingRenderFunc)(SithThing* pThing);
 
-static bool sithRender_bResetCameraAspect;
+bool sithRender_bResetCameraAspect; // Not static, it's synced by sithDSS_SyncGameState
 
 // Sector render vars
 static size_t sithRender_numRenderedSectors;
@@ -126,20 +126,14 @@ void sithRender_InstallHooks(void)
     J3D_HOOKFUNC(sithRender_MakeScreenShot);
 }
 
-void sithRender_ResetGlobals(void)
-{
-    float jonesConfig_g_fogDensity_tmp = 100.0f;
-    memcpy(&sithRender_g_fogDensity, &jonesConfig_g_fogDensity_tmp, sizeof(sithRender_g_fogDensity));
-
-    memset(&sithRender_g_numDrawnThings, 0, sizeof(sithRender_g_numDrawnThings));
-    memset(&sithRender_g_numArchPolys, 0, sizeof(sithRender_g_numArchPolys));
-    memset(&sithRender_g_numAlphaArchPolys, 0, sizeof(sithRender_g_numAlphaArchPolys));
-    memset(&sithRender_g_numThingPolys, 0, sizeof(sithRender_g_numThingPolys));
-    memset(&sithRender_g_numAlphaThingPoly, 0, sizeof(sithRender_g_numAlphaThingPoly));
-    memset(&sithRender_g_numVisibleAdjoins, 0, sizeof(sithRender_g_numVisibleAdjoins));
-
-    memset(&sithRender_g_numVisibleSectors, 0, sizeof(sithRender_g_numVisibleSectors));
-}
+float sithRender_g_fogDensity = 100.0f;
+size_t sithRender_g_numDrawnThings;
+size_t sithRender_g_numArchPolys;
+size_t sithRender_g_numAlphaArchPolys;
+size_t sithRender_g_numThingPolys;
+size_t sithRender_g_numAlphaThingPoly;
+size_t sithRender_g_numVisibleAdjoins;
+size_t sithRender_g_numVisibleSectors;
 
 int sithRender_Startup(void)
 {

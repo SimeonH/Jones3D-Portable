@@ -27,7 +27,6 @@ void jonesInventory_ResetStatisticsGameTime(void);
 
 // Helper hooking functions
 void jonesInventory_InstallHooks(void);
-void jonesInventory_ResetGlobals(void);
 
 J3D_EXTERN_C_END
 #endif // JONES3D_JONESINVENTORY_H

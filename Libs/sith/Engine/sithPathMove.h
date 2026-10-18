@@ -30,7 +30,6 @@ void J3DAPI sithPathMove_Create(SithThing* pNewThing, const SithThing* pMarker, 
 
 // Helper hooking functions
 void sithPathMove_InstallHooks(void);
-void sithPathMove_ResetGlobals(void);
 
 J3D_EXTERN_C_END
 #endif // SITH_SITHPATHMOVE_H

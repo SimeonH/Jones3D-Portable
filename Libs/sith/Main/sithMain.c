@@ -133,13 +133,10 @@ void sithMain_InstallHooks(void)
     J3D_HOOKFUNC(sithGetLevelSaveFilename);
 }
 
-void sithMain_ResetGlobals(void)
-{
-    memset(&sith_g_pHS, 0, sizeof(sith_g_pHS));
-    memset(&sithMain_g_frameNumber, 0, sizeof(sithMain_g_frameNumber));
-    memset(&sithMain_g_sith_mode, 0, sizeof(sithMain_g_sith_mode));
-    memset(&sithMain_g_curRenderTick, 0, sizeof(sithMain_g_curRenderTick));
-}
+tHostServices* sith_g_pHS;
+size_t sithMain_g_frameNumber;
+SithMode sithMain_g_sith_mode;
+size_t sithMain_g_curRenderTick;
 
 void J3DAPI sithSetServices(tHostServices* pHS)
 {

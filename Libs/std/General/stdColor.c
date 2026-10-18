@@ -9,9 +9,6 @@ void stdColor_InstallHooks(void)
     J3D_HOOKFUNC(stdColor_ColorConvertOneRow);
 }
 
-void stdColor_ResetGlobals(void)
-{}
-
 void J3DAPI stdColor_RGBtoHSV(float r, float g, float b, float* hue, float* saturation, float* value)
 {
     float cmin;

@@ -18,10 +18,6 @@ void rdQClip_InstallHooks(void)
     J3D_HOOKFUNC(rdQClip_Face3W);
 }
 
-void rdQClip_ResetGlobals(void)
-{
-
-}
 
 size_t J3DAPI rdQClip_VerticesInFrustrum(const rdClipFrustum* pFrustrum, const rdVector3* aVertices, size_t numVertices)
 {

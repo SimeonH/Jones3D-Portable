@@ -9,17 +9,13 @@
 
 J3D_EXTERN_C_START
 
-#define sithAIMove_g_flt_585464 J3D_DECL_FAR_VAR(sithAIMove_g_flt_585464, float)
-// extern float sithAIMove_g_flt_585464;
+extern float sithAIMove_g_flt_585464;
 
-#define sithAIMove_g_flt_585468 J3D_DECL_FAR_VAR(sithAIMove_g_flt_585468, float)
-// extern float sithAIMove_g_flt_585468;
+extern float sithAIMove_g_flt_585468;
 
-#define sithAIMove_g_flt_58546C J3D_DECL_FAR_VAR(sithAIMove_g_flt_58546C, float)
-// extern float sithAIMove_g_flt_58546C;
+extern float sithAIMove_g_flt_58546C;
 
-#define sithAIMove_g_flt_585470 J3D_DECL_FAR_VAR(sithAIMove_g_flt_585470, float)
-// extern float sithAIMove_g_flt_585470;
+extern float sithAIMove_g_flt_585470;
 
 void J3DAPI sithAIMove_Update(SithThing* pThing, float secDeltatTime);
 void J3DAPI sithAIMove_UpdateMineCar(SithAIControlBlock* pLocal, float secDeltaTime);
@@ -69,7 +65,6 @@ void J3DAPI sithAIMove_UpdateMardukTail(SithThing* pThing, float secDeltaTime);
 
 // Helper hooking functions
 void sithAIMove_InstallHooks(void);
-void sithAIMove_ResetGlobals(void);
 
 J3D_EXTERN_C_END
 #endif // SITH_SITHAIMOVE_H

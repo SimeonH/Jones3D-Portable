@@ -21,9 +21,6 @@ void stdConsole_InstallHooks(void)
     J3D_HOOKFUNC(stdConsole_WriteConsole);
 }
 
-void stdConsole_ResetGlobals(void)
-{}
-
 int J3DAPI stdConsole_Startup(const char* pTitleText, int attributes, int bShowMinimized)
 {
     AllocConsole();

@@ -32,7 +32,6 @@ const rdFont* sithVoice_GetTextFont(void);
 
 // Helper hooking functions
 void sithVoice_InstallHooks(void);
-void sithVoice_ResetGlobals(void);
 
 J3D_EXTERN_C_END
 #endif // SITH_SITHVOICE_H

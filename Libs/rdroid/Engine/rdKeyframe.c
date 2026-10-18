@@ -19,10 +19,6 @@ void rdKeyframe_InstallHooks(void)
     J3D_HOOKFUNC(rdKeyframe_FreeEntry);
 }
 
-void rdKeyframe_ResetGlobals(void)
-{
-    memset(&rdKeyframe_pKeyframeLoader, 0, sizeof(rdKeyframe_pKeyframeLoader));
-}
 
 rdKeyframeLoadFunc J3DAPI rdKeyframe_RegisterLoader(rdKeyframeLoadFunc pFunc)
 {

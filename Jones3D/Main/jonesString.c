@@ -18,12 +18,6 @@ void jonesString_InstallHooks(void)
     J3D_HOOKFUNC(jonesString_Shutdown);
 }
 
-void jonesString_ResetGlobals(void)
-{
-    //memset(&jonesString_jonesStringsTbl, 0, sizeof(jonesString_jonesStringsTbl));
-    //memset(&jonesString_aBuffer, 0, sizeof(jonesString_aBuffer));
-    //memset(&jonesString_bStarted, 0, sizeof(jonesString_bStarted));
-}
 
 const char* J3DAPI jonesString_GetString(const char* pKey)
 {

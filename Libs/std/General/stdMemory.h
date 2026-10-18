@@ -30,8 +30,7 @@ J3D_EXTERN_C_START
 #define STDREALLOC(data, size) \
     stdMemory_Realloc((data), (size), J3D_FILE, __LINE__)
 
-#define stdMemory_g_curState J3D_DECL_FAR_VAR(stdMemory_g_curState, tMemoryState)
-// extern tMemoryState stdMemory_g_curState;
+extern tMemoryState stdMemory_g_curState;
 
 int  stdMemory_Startup(void);
 void  stdMemory_Shutdown(void);
@@ -50,7 +49,6 @@ void* J3DAPI stdMemory_BlockAlloc(size_t size);
 
 // Helper hooking functions
 void stdMemory_InstallHooks(void);
-void stdMemory_ResetGlobals(void);
 
 J3D_EXTERN_C_END
 #endif // STD_STDMEMORY_H

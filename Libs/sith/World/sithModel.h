@@ -37,7 +37,6 @@ bool sithModel_IsHiPolyEnabled(void); // Added
 
 // Helper hooking functions
 void sithModel_InstallHooks(void);
-void sithModel_ResetGlobals(void);
 
 J3D_EXTERN_C_END
 #endif // SITH_SITHMODEL_H

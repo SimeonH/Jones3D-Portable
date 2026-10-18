@@ -54,9 +54,6 @@ void sithSurface_InstallHooks(void)
     J3D_HOOKFUNC(sithSurface_GetSurfaceIndexEx);
 }
 
-void sithSurface_ResetGlobals(void)
-{}
-
 void J3DAPI sithSurface_HideSectorAdjoin(SithSurfaceAdjoin* pAdjoin)
 {
     SITH_ASSERTREL(pAdjoin);

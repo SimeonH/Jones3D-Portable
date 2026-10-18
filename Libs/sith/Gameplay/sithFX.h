@@ -12,14 +12,11 @@
 
 J3D_EXTERN_C_START
 
-#define sithFX_g_lastChalkMarkNum J3D_DECL_FAR_VAR(sithFX_g_lastChalkMarkNum, int)
-// extern int sithFX_g_lastChalkMarkNum ;
+extern int sithFX_g_lastChalkMarkNum;
 
-#define sithFX_g_aChalkMarks J3D_DECL_FAR_ARRAYVAR(sithFX_g_aChalkMarks, SithThing*(*)[10])
-// extern SithThing *sithFX_g_aChalkMarks[10];
+extern SithThing* sithFX_g_aChalkMarks[10];
 
-#define sithFX_g_numChalkMarks J3D_DECL_FAR_VAR(sithFX_g_numChalkMarks, size_t)
-// extern size_t sithFX_g_numChalkMarks;
+extern size_t sithFX_g_numChalkMarks;
 
 void sithFX_Reset(void);
 void sithFX_ClearChalkMarks(void);
@@ -55,7 +52,6 @@ SithThing* J3DAPI sithFX_CreatePolylineThing(const SithThing* pSourceThing, Sith
 
 // Helper hooking functions
 void sithFX_InstallHooks(void);
-void sithFX_ResetGlobals(void);
 
 J3D_EXTERN_C_END
 #endif // SITH_SITHFX_H

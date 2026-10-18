@@ -247,9 +247,6 @@ static void Sound_Release(tSoundChannel* pChannel) // Added
     pChannel->thingId       = 0;
 }
 
-void Sound_ResetGlobals(void)
-{}
-
 int J3DAPI Sound_Initialize(tHostServices* pHS)
 {
     // Fixed: Added check for pHS, as module requires it to be initialized

@@ -2370,7 +2370,3 @@ void sithCogFunction_InstallHooks(void)
     J3D_HOOKFUNC(sithCogFunction_FindNewSectorFromThing);
 }
 
-void sithCogFunction_ResetGlobals(void)
-{
-
-}

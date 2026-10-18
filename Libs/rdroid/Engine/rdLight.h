@@ -22,7 +22,6 @@ float J3DAPI rdLight_GetIntensity(const rdVector4* pLight);
 
 // Helper hooking functions
 void rdLight_InstallHooks(void);
-void rdLight_ResetGlobals(void);
 
 J3D_EXTERN_C_END
 #endif // RDROID_RDLIGHT_H

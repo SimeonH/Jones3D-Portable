@@ -50,12 +50,9 @@ void rdCamera_InstallHooks(void)
     J3D_HOOKFUNC(rdCamera_sub_4C60B0);
 }
 
-void rdCamera_ResetGlobals(void)
-{
-    memset(&rdCamera_g_camPYR, 0, sizeof(rdCamera_g_camPYR));
-    memset(&rdCamera_g_pCurCamera, 0, sizeof(rdCamera_g_pCurCamera));
-    memset(&rdCamera_g_camMatrix, 0, sizeof(rdCamera_g_camMatrix));
-}
+rdVector3 rdCamera_g_camPYR;
+rdCamera* rdCamera_g_pCurCamera;
+rdMatrix34 rdCamera_g_camMatrix;
 
 inline float rdCamera_ClampFOV(float fov)
 {

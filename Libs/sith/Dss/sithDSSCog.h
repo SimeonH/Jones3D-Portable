@@ -20,7 +20,6 @@ int J3DAPI sithDSSCog_ProcessCogState(const SithMessage* pMsg);
 
 // Helper hooking functions
 void sithDSSCog_InstallHooks(void);
-void sithDSSCog_ResetGlobals(void);
 
 J3D_EXTERN_C_END
 #endif // SITH_SITHDSSCOG_H

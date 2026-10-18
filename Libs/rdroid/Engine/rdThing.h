@@ -20,7 +20,6 @@ void J3DAPI rdThing_AccumulateMatrices(rdThing* pThing, const rdModel3HNode* pNo
 
 // Helper hooking functions
 void rdThing_InstallHooks(void);
-void rdThing_ResetGlobals(void);
 
 J3D_EXTERN_C_END
 #endif // RDROID_RDTHING_H

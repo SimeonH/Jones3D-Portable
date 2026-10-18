@@ -9,11 +9,9 @@
 
 J3D_EXTERN_C_START
 
-#define sithVehicleControls_g_bJeepForceStopped J3D_DECL_FAR_VAR(sithVehicleControls_g_bJeepForceStopped, int)
-// extern int sithVehicleControls_g_bJeepForceStopped;
+extern int sithVehicleControls_g_bJeepForceStopped;
 
-#define sithVehicleControls_g_bJeepAccMoveSndFxPlayed J3D_DECL_FAR_VAR(sithVehicleControls_g_bJeepAccMoveSndFxPlayed, int)
-// extern int sithVehicleControls_g_bJeepAccMoveSndFxPlayed;
+extern int sithVehicleControls_g_bJeepAccMoveSndFxPlayed;
 
 SithMineCarControlState* J3DAPI sithVehicleControls_GetMineCarControlState();
 void J3DAPI sithVehicleControls_SetMineCarControlState(SithMineCarControlState* pState);
@@ -35,7 +33,6 @@ void J3DAPI sithVehicleControls_SendMessageUser1(SithThing* pThing);
 
 // Helper hooking functions
 void sithVehicleControls_InstallHooks(void);
-void sithVehicleControls_ResetGlobals(void);
 
 J3D_EXTERN_C_END
 #endif // SITH_SITHVEHICLECONTROLS_H

@@ -1150,9 +1150,6 @@ void sithCommand_InstallHooks(void)
     J3D_HOOKFUNC(sithCommand_CipherText);
 }
 
-void sithCommand_ResetGlobals(void)
-{}
-
 void sithCommand_RegisterCommands(void)
 {
     // taklit_marion

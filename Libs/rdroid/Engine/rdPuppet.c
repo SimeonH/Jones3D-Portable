@@ -32,9 +32,6 @@ void rdPuppet_InstallHooks(void)
     J3D_HOOKFUNC(rdPuppet_BuildJointMatrices);
 }
 
-void rdPuppet_ResetGlobals(void)
-{}
-
 rdPuppet* J3DAPI rdPuppet_New(rdThing* pParent)
 {
     rdPuppet* pPuppet = (rdPuppet*)STDMALLOC(sizeof(rdPuppet));

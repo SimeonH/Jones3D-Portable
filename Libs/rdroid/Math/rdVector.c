@@ -27,20 +27,10 @@ void rdVector_InstallHooks(void)
     J3D_HOOKFUNC(rdVector_Rotate3Acc);
 }
 
-void rdVector_ResetGlobals(void)
-{
-    static const rdVector3 rdroid_g_zeroVector3_tmp = { { 0.0f }, { 0.0f }, { 0.0f } };
-    memcpy((rdVector3*)&rdroid_g_zeroVector3, &rdroid_g_zeroVector3_tmp, sizeof(rdroid_g_zeroVector3));
-
-    static const rdVector3 rdroid_g_xVector3_tmp = { { 1.0f }, { 0.0f }, { 0.0f } };
-    memcpy((rdVector3*)&rdroid_g_xVector3, &rdroid_g_xVector3_tmp, sizeof(rdroid_g_xVector3));
-
-    static const rdVector3 rdroid_g_yVector3_tmp = { { 0.0f }, { 1.0f }, { 0.0f } };
-    memcpy((rdVector3*)&rdroid_g_yVector3, &rdroid_g_yVector3_tmp, sizeof(rdroid_g_yVector3));
-
-    static const rdVector3 rdroid_g_zVector3_tmp = { { 0.0f }, { 0.0f }, { 1.0f } };
-    memcpy((rdVector3*)&rdroid_g_zVector3, &rdroid_g_zVector3_tmp, sizeof(rdroid_g_zVector3));
-}
+const rdVector3 rdroid_g_zeroVector3 = { { 0.0f }, { 0.0f }, { 0.0f } };
+const rdVector3 rdroid_g_xVector3 = { { 1.0f }, { 0.0f }, { 0.0f } };
+const rdVector3 rdroid_g_yVector3 = { { 0.0f }, { 1.0f }, { 0.0f } };
+const rdVector3 rdroid_g_zVector3 = { { 0.0f }, { 0.0f }, { 1.0f } };
 
 float J3DAPI rdVector_Normalize2(rdVector2* dest, const rdVector2* src)
 {

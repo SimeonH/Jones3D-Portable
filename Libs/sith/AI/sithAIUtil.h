@@ -9,8 +9,7 @@
 
 J3D_EXTERN_C_START
 
-#define sithAIUtil_g_bRenderAIWpnts J3D_DECL_FAR_VAR(sithAIUtil_g_bRenderAIWpnts, int)
-// extern int sithAIUtil_g_bRenderAIWpnts;
+extern int sithAIUtil_g_bRenderAIWpnts;
 
 void J3DAPI sithAIUtil_sub_49B2E0(SithAIControlBlock* pLocal, SithAIUtilFireFlags flags);
 void J3DAPI sithAIUtil_sub_49B640(SithAIControlBlock* pLocal);
@@ -73,7 +72,6 @@ int J3DAPI sithAIUtil_CanSeeTarget(const SithAIControlBlock* pLocal, SithThing* 
 
 // Helper hooking functions
 void sithAIUtil_InstallHooks(void);
-void sithAIUtil_ResetGlobals(void);
 
 J3D_EXTERN_C_END
 #endif // SITH_SITHAIUTIL_H

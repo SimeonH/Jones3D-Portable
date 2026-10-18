@@ -38,7 +38,6 @@ void J3DAPI sithSound_SetSkipRestoringSounds(int bSkip);
 
 // Helper hooking functions
 void sithSound_InstallHooks(void);
-void sithSound_ResetGlobals(void);
 
 J3D_EXTERN_C_END
 #endif // SITH_SITHSOUND_H

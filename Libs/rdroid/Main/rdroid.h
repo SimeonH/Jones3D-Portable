@@ -57,17 +57,13 @@ J3D_EXTERN_C_START
 #define RD_ASSERTREL(condition) \
     J3D_ASSERTREL(condition, rdroid_g_pHS )
 
-#define rdroid_g_curLightingMode J3D_DECL_FAR_VAR(rdroid_g_curLightingMode, rdLightMode)
-// extern rdLightMode rdroid_g_curLightingMode;
+extern rdLightMode rdroid_g_curLightingMode;
 
-#define rdroid_g_pHS J3D_DECL_FAR_VAR(rdroid_g_pHS, tHostServices*)
-// extern tHostServices *rdroid_g_pHS;
+extern tHostServices* rdroid_g_pHS;
 
-#define rdroid_g_curGeometryMode J3D_DECL_FAR_VAR(rdroid_g_curGeometryMode, rdGeometryMode)
-// extern rdGeometryMode rdroid_g_curGeometryMode;
+extern rdGeometryMode rdroid_g_curGeometryMode;
 
-#define rdroid_g_curRenderOptions J3D_DECL_FAR_VAR(rdroid_g_curRenderOptions, rdRoidFlags)
-// extern rdRoidFlags rdroid_g_curRenderOptions;
+extern rdRoidFlags rdroid_g_curRenderOptions;
 
 void J3DAPI rdStartup();
 void J3DAPI rdShutdown();
@@ -89,7 +85,6 @@ void J3DAPI rdSetLightingMode(rdLightMode mode);
 
 // Helper hooking functions
 void rdroid_InstallHooks(void);
-void rdroid_ResetGlobals(void);
 
 J3D_EXTERN_C_END
 #endif // RDROID_RDROID_H

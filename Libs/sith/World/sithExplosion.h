@@ -22,7 +22,6 @@ int J3DAPI sithExplosion_ParseArg(const StdConffileArg* pArg, SithThing* pThing,
 
 // Helper hooking functions
 void sithExplosion_InstallHooks(void);
-void sithExplosion_ResetGlobals(void);
 
 J3D_EXTERN_C_END
 #endif // SITH_SITHEXPLOSION_H

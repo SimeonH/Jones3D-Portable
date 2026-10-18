@@ -29,7 +29,6 @@ void J3DAPI sithParticle_Free(SithThing* pThing);
 
 // Helper hooking functions
 void sithParticle_InstallHooks(void);
-void sithParticle_ResetGlobals(void);
 
 J3D_EXTERN_C_END
 #endif // SITH_SITHPARTICLE_H

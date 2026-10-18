@@ -35,9 +35,6 @@ void stdMath_InstallHooks(void)
     J3D_HOOKFUNC(stdMath_Dist3D1);
 }
 
-void stdMath_ResetGlobals(void)
-{}
-
 float J3DAPI stdMath_FlexPower(float base, int exponent)
 {
     float ret = base;

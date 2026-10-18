@@ -83,23 +83,19 @@ void sithCamera_InstallHooks(void)
     J3D_HOOKFUNC(sithCamera_GetCameraStateFlags);
 }
 
-void sithCamera_ResetGlobals(void)
-{
-    memset(&sithCamera_g_pCurCamera, 0, sizeof(sithCamera_g_pCurCamera));
-    memset(&sithCamera_g_bExtCameraLookMode, 0, sizeof(sithCamera_g_bExtCameraLookMode));
-
-    memset(&sithCamera_g_camSpot, 0, sizeof(sithCamera_g_camSpot));
-    memset(&sithCamera_g_aCameras, 0, sizeof(sithCamera_g_aCameras));
-    memset(&sithCamera_g_bCurCameraSet, 0, sizeof(sithCamera_g_bCurCameraSet));
-    memset(&sithCamera_g_stateFlags, 0, sizeof(sithCamera_g_stateFlags));
-    memset(&sithCamera_g_curCycleCamNum, 0, sizeof(sithCamera_g_curCycleCamNum));
-    memset(&sithCamera_g_vecCameraPosOffset, 0, sizeof(sithCamera_g_vecCameraPosOffset));
-    memset(&sithCamera_g_vecCameraAngleOffset, 0, sizeof(sithCamera_g_vecCameraAngleOffset));
-    memset(&sithCamera_g_cameraPosDelta, 0, sizeof(sithCamera_g_cameraPosDelta));
-    memset(&sithCamera_g_cameraAngleDelta, 0, sizeof(sithCamera_g_cameraAngleDelta));
-    memset(&sithCamera_g_orbCamOrient, 0, sizeof(sithCamera_g_orbCamOrient));
-    memset(&sithCamera_g_camLookSpot, 0, sizeof(sithCamera_g_camLookSpot));
-}
+SithCamera* sithCamera_g_pCurCamera;
+int sithCamera_g_bExtCameraLookMode;
+rdVector3 sithCamera_g_camSpot;
+SithCamera sithCamera_g_aCameras[7];
+int sithCamera_g_bCurCameraSet;
+SithCameraState sithCamera_g_stateFlags;
+size_t sithCamera_g_curCycleCamNum;
+rdVector3 sithCamera_g_vecCameraPosOffset;
+rdVector3 sithCamera_g_vecCameraAngleOffset;
+float sithCamera_g_cameraPosDelta;
+float sithCamera_g_cameraAngleDelta;
+rdMatrix34 sithCamera_g_orbCamOrient;
+rdVector3 sithCamera_g_camLookSpot;
 
 int sithCamera_Startup(void)
 {

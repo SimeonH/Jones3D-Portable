@@ -36,7 +36,6 @@ void J3DAPI sithWhip_ClimbDismountPuppetCallback(SithThing* pThing, int track, r
 
 // Helper hooking functions
 void sithWhip_InstallHooks(void);
-void sithWhip_ResetGlobals(void);
 
 J3D_EXTERN_C_END
 #endif // SITH_SITHWHIP_H

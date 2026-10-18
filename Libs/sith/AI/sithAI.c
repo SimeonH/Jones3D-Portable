@@ -69,12 +69,9 @@ void sithAI_InstallHooks(void)
     J3D_HOOKFUNC(sithAI_ResetAllAIs);
 }
 
-void sithAI_ResetGlobals(void)
-{
-    memset(&sithAI_g_bOpen, 0, sizeof(sithAI_g_bOpen));
-    memset(&sithAI_g_aControlBlocks, 0, sizeof(sithAI_g_aControlBlocks));
-    memset(&sithAI_g_lastUsedAIIndex, 0, sizeof(sithAI_g_lastUsedAIIndex));
-}
+int sithAI_g_bOpen;
+SithAIControlBlock sithAI_g_aControlBlocks[256];
+int sithAI_g_lastUsedAIIndex;
 
 int sithAI_Startup(void)
 {

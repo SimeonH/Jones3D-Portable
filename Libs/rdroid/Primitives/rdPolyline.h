@@ -16,7 +16,6 @@ void J3DAPI rdPolyline_DrawFace(const rdThing* pLine, const rdFace* pFace, const
 
 // Helper hooking functions
 void rdPolyline_InstallHooks(void);
-void rdPolyline_ResetGlobals(void);
 
 J3D_EXTERN_C_END
 #endif // RDROID_RDPOLYLINE_H

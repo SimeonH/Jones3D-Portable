@@ -42,7 +42,6 @@ int J3DAPI sithSector_GetSectorIndex(const SithSector* pSector);
 
 // Helper hooking functions
 void sithSector_InstallHooks(void);
-void sithSector_ResetGlobals(void);
 
 J3D_EXTERN_C_END
 #endif // SITH_SITHSECTOR_H

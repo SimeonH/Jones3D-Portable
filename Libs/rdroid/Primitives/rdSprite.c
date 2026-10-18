@@ -25,10 +25,6 @@ void rdSprite_InstallHooks(void)
     J3D_HOOKFUNC(rdSprite_Draw);
 }
 
-void rdSprite_ResetGlobals(void)
-{
-    //memset(&rdSprite_aView, 0, sizeof(rdSprite_aView));
-}
 
 rdSprite3* J3DAPI rdSprite_New(int type, const char* pName, const char* pMatNam, float width, float height, rdGeometryMode geomode, rdLightMode lightmode, const rdVector4* pExtraLight, const rdVector3* pOffset)
 {

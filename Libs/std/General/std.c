@@ -12,9 +12,9 @@ static char aPrintBuffer[2048]     = { 0 };
 static char aFilePrintBuffer[2048] = { 0 };
 static bool bStdStartup = false;
 
-#define word_183962C J3D_DECL_FAR_VAR(word_183962C, int16_t)
-#define word_1839630 J3D_DECL_FAR_VAR(word_1839630, int16_t)
-#define word_183962E J3D_DECL_FAR_VAR(word_183962E, int16_t)
+static int16_t word_183962C;
+static int16_t word_1839630;
+static int16_t word_183962E;
 
 void std_InstallHooks(void)
 {
@@ -43,14 +43,9 @@ void std_InstallHooks(void)
     J3DHookFunction(stdio_flush_ADDR, (void*)stdFileFlush);
 }
 
-void std_ResetGlobals(void)
-{
-    memset((char*)&std_g_aEmptyString, 0, sizeof(std_g_aEmptyString));
-    //memset(&aPrintBuffer, 0, sizeof(aPrintBuffer));
-    //memset(&bStdStartup, 0, sizeof(bStdStartup));
-    memset(&std_g_genBuffer, 0, sizeof(std_g_genBuffer));
-    memset(&std_g_pHS, 0, sizeof(std_g_pHS));
-}
+const char std_g_aEmptyString[8];
+char std_g_genBuffer[2048];
+tHostServices* std_g_pHS;
 
 void J3DAPI stdStartup(tHostServices* pHS)
 {

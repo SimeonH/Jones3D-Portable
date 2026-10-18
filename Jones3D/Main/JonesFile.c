@@ -78,10 +78,6 @@ void JonesFile_InstallHooks(void)
     J3D_HOOKFUNC(JonesFile_FilePrintf);
 }
 
-void JonesFile_ResetGlobals(void)
-{
-
-}
 
 void J3DAPI JonesFile_Startup(tHostServices* pHS)
 {

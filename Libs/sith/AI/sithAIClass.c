@@ -33,10 +33,7 @@ void sithAIClass_InstallHooks(void)
     J3D_HOOKFUNC(sithAIClass_CacheRemove);
 }
 
-void sithAIClass_ResetGlobals(void)
-{
-    memset(&sithAIClass_g_pHashtable, 0, sizeof(sithAIClass_g_pHashtable));
-}
+tHashTable* sithAIClass_g_pHashtable;
 
 int sithAIClass_Startup(void)
 {

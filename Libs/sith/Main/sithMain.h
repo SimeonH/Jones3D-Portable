@@ -51,19 +51,15 @@ J3D_EXTERN_C_START
 #define SITH_ISFRAMECYCLE(offset, n) (((uint8_t)sithMain_g_frameNumber + (uint8_t)(offset)) & ((n)-1)) == 0
 
 
-#define sith_g_pHS J3D_DECL_FAR_VAR(sith_g_pHS, tHostServices*)
-// extern tHostServices *sith_g_pHS;
+extern tHostServices* sith_g_pHS;
 
 // TODO: Rename all to be prefixed only by 'sith'
 
-#define sithMain_g_frameNumber J3D_DECL_FAR_VAR(sithMain_g_frameNumber, size_t)
-// extern int sithMain_g_frameNumber;
+extern size_t sithMain_g_frameNumber;
 
-#define sithMain_g_sith_mode J3D_DECL_FAR_VAR(sithMain_g_sith_mode, SithMode)
-// extern SithMode sithMain_g_sith_mode;
+extern SithMode sithMain_g_sith_mode;
 
-#define sithMain_g_curRenderTick J3D_DECL_FAR_VAR(sithMain_g_curRenderTick, size_t)
-// extern unsigned int sithMain_g_curRenderTick;
+extern size_t sithMain_g_curRenderTick;
 
 void J3DAPI sithSetServices(tHostServices* pHS);
 void sithClearServices(void);
@@ -109,7 +105,6 @@ const char* J3DAPI sithGetLevelSaveFilename(size_t levelNum);
 
 // Helper hooking functions
 void sithMain_InstallHooks(void);
-void sithMain_ResetGlobals(void);
 
 J3D_EXTERN_C_END
 #endif // SITH_SITHMAIN_H

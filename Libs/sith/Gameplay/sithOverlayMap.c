@@ -108,9 +108,6 @@ void sithOverlayMap_InstallHooks(void)
     J3D_HOOKFUNC(sithOverlayMap_CanDrawSurfaceEdge);
 }
 
-void sithOverlayMap_ResetGlobals(void)
-{}
-
 int J3DAPI sithOverlayMap_EasterEggConsoleCallback(const SithConsoleCommand* pFunc, const char* pArg)
 {
     J3D_UNUSED(pFunc);

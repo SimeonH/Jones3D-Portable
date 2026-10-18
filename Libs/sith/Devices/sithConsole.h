@@ -45,7 +45,6 @@ int J3DAPI sithConsole_Help(const SithConsoleCommand* pFunc, const char* pArg); 
 
 // Helper hooking functions
 void sithConsole_InstallHooks(void);
-void sithConsole_ResetGlobals(void);
 
 J3D_EXTERN_C_END
 #endif // SITH_SITHCONSOLE_H

@@ -42,9 +42,6 @@ void sithParticle_InstallHooks(void)
     J3D_HOOKFUNC(sithParticle_CacheRemove);
 }
 
-void sithParticle_ResetGlobals(void)
-{}
-
 int sithParticle_Startup(void)
 {
     sithParticle_pHashtable = stdHashtbl_New(128u);

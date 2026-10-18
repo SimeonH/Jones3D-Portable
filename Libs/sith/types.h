@@ -1053,12 +1053,12 @@ typedef enum eSithCogStatus
 
 typedef enum eSithMineCarType
 {
-    SITHMINECAR_BOULDER      = 0x0,
+    SITHMINECAR_MINECAR_AI   = 0x0, // Fixed: Was named SITHMINECAR_BOULDER; the original assigns 5 to boulder_mc
     SITHMINECAR_PLAYER       = 0x1,
     SITHMINECAR_DEFAULT      = 0x2,
     SITHMINECAR_KILLTRUCK_AI = 0x3,
     SITHMINECAR_JEEP_AI      = 0x4,
-    SITHMINECAR_MINECAR_AI   = 0x5,
+    SITHMINECAR_BOULDER      = 0x5,
     SITHMINECAR_TRUCK_AI     = 0x6,
 } SithMineCarType;
 
@@ -1597,154 +1597,7 @@ typedef struct sSithVehicleExhaustInfo
     char aExhaustTemplate[64];
 } SithVehicleExhaustInfo;
 
-typedef struct sSithJeepUserBlock
-{
-    int type;
-    SithVehicleExhaustInfo exhaustInfo;
-    int unknown35;
-    int unknown36;
-    int unknown37;
-    int unknown38;
-    int unknown39;
-    int unknown40;
-    int unknown41;
-    int unknown42;
-    int unknown43;
-    int unknown44;
-    int unknown45;
-    int unknown46;
-    int unknown47;
-    int unknown48;
-    int unknown49;
-    int unknown50;
-    int unknown51;
-    int unknown52;
-    int unknown53;
-    int unknown54;
-    int unknown55;
-    int unknown56;
-    int unknown57;
-    int unknown58;
-    int unknown59;
-    int unknown60;
-    int unknown61;
-    int unknown62;
-    int unknown63;
-    int unknown64;
-    int unknown65;
-    int unknown66;
-    int unknown67;
-    int unknown68;
-    int unknown69;
-    int unknown70;
-    int unknown71;
-    int unknown72;
-    int unknown73;
-    int unknown74;
-    int unknown75;
-    int unknown76;
-    int unknown77;
-    int unknown78;
-    int unknown79;
-    int unknown80;
-    int unknown81;
-    int unknown82;
-    int unknown83;
-    int unknown84;
-    int unknown85;
-    int unknown86;
-    int unknown87;
-    int unknown88;
-    int unknown89;
-    int unknown90;
-    int unknown91;
-    int unknown92;
-    int unknown93;
-    int unknown94;
-    int unknown95;
-    int unknown96;
-    int unknown97;
-    int unknown98;
-    int unknown99;
-    int unknown100;
-    int unknown101;
-    int unknown102;
-    int unknown103;
-    int unknown104;
-    int unknown105;
-    int unknown106;
-    int unknown107;
-    int unknown108;
-    int unknown109;
-    int unknown110;
-    int unknown111;
-    int unknown112;
-    int unknown113;
-    int unknown114;
-    int unknown115;
-    int unknown116;
-    int unknown117;
-    int unknown118;
-    int unknown119;
-    int unknown120;
-    int unknown121;
-    int unknown122;
-    int unknown123;
-    int unknown124;
-    int unknown125;
-    int unknown126;
-    int unknown127;
-    int unknown128;
-    int unknown129;
-    int unknown130;
-    int unknown131;
-    int unknown132;
-    int unknown133;
-    int unknown134;
-    int unknown135;
-    int unknown136;
-    int unknown137;
-    int unknown138;
-    int unknown139;
-    int unknown140;
-    int unknown141;
-    int unknown142;
-    int unknown143;
-    int unknown144;
-    int unknown145;
-    int unknown146;
-    int unknown147;
-    int unknown148;
-    int unknown149;
-    int unknown150;
-    int unknown151;
-    int unknown152;
-    int unknown153;
-    int unknown154;
-    int unknown155;
-    int unknown156;
-    int unknown157;
-    int unknown158;
-    int unknown159;
-    int unknown160;
-    int unknown161;
-    int unknown162;
-    int unknown163;
-    int unknown164;
-    int unknown165;
-    int unknown166;
-    int unknown167;
-    int unknown168;
-    int unknown169;
-    int unknown170;
-    int unknown171;
-    int unknown172;
-    int unknown173;
-    int unknown174;
-    int unknown175;
-    int unknown176;
-    SithVehicleEngineFxState fxstate;
-} SithJeepUserBlock;
+
 
 typedef struct sSithVehicleChassisInfo
 {
@@ -1753,6 +1606,60 @@ typedef struct sSithVehicleChassisInfo
     int aWheelNodeNums[4];
     float wheelRadius;
 } SithVehicleChassisInfo;
+
+typedef enum eSithJeepWheelState
+{
+    SITHJEEP_WHEEL_NOSECTOR   = 0, // wheel probe position is outside world
+    SITHJEEP_WHEEL_GROUNDED   = 1, // wheel is touching the ground
+    SITHJEEP_WHEEL_INAIR      = 2, // no ground below wheel
+    SITHJEEP_WHEEL_COMPRESSED = 3, // wheel is pressed into the ground
+    SITHJEEP_WHEEL_BLOCKED    = 4, // wheel hit too steep surface (wall)
+} SithJeepWheelState;
+
+typedef struct sSithJeepWheel
+{
+    SithJeepWheelState state;
+    float groundDistance;      // distance of wheel above the ground, FLT_MAX when no ground
+    float suspensionDistance;  // distance to the second surface under the wheel
+    rdVector3 probePos;
+    rdVector3 contactPos;
+    rdVector3 normal;          // normal of the ground surface
+    rdMaterial* pGroundMaterial;
+    float radius;
+} SithJeepWheel;
+static_assert(sizeof(SithJeepWheel) == 56, "sizeof(SithJeepWheel) == 56");
+
+typedef enum eSithJeepWheelIndex
+{
+    SITHJEEP_WHEEL_FRONTLEFT  = 0,
+    SITHJEEP_WHEEL_BACKLEFT   = 1,
+    SITHJEEP_WHEEL_BACKRIGHT  = 2,
+    SITHJEEP_WHEEL_FRONTRIGHT = 3,
+} SithJeepWheelIndex;
+
+typedef struct sSithJeepState
+{
+    rdVector3 size; // width, length, height
+    SithJeepWheel aWheels[4];
+    rdVector3 center;      // average of the wheel contact positions
+    rdVector3 targetPos;   // new position of the jeep body above the ground
+    rdVector3 normal;      // averaged ground normal under the grounded wheels
+    size_t numGroundedWheels;
+    int bAirborne;
+    float secAirTime;
+    int bSkidding;
+} SithJeepState;
+static_assert(sizeof(SithJeepState) == 288, "sizeof(SithJeepState) == 288");
+
+typedef struct sSithJeepUserBlock
+{
+    int type; // 1 - player jeep, 0 - other
+    SithVehicleExhaustInfo exhaustInfo;
+    SithVehicleChassisInfo chassisInfo; // unused for jeep
+    SithJeepState state;
+    SithVehicleEngineFxState fxstate;
+} SithJeepUserBlock;
+static_assert(sizeof(SithJeepUserBlock) == 0x2CC, "sizeof(SithJeepUserBlock) == 0x2CC");
 
 struct sSithSurfaceAdjoin
 {
@@ -1843,21 +1750,66 @@ typedef struct sSithAnimationSlot
 } SithAnimationSlot;
 static_assert(sizeof(SithAnimationSlot) == 168, "sizeof(SithAnimationSlot) == 168");
 
+typedef enum eSithMineCarTurnState
+{
+    SITHMINECAR_TURN_NONE        = 0,
+    SITHMINECAR_TURN_LEFT_START  = 1, // started turning left
+    SITHMINECAR_TURN_LEFT        = 2,
+    SITHMINECAR_TURN_RIGHT_START = 3, // started turning right
+    SITHMINECAR_TURN_RIGHT       = 4,
+    SITHMINECAR_TURN_END         = 5, // stopped turning
+} SithMineCarTurnState;
+
 typedef struct sSithMineCarState
 {
-    int maybeMoveSate;
-    int unknown1;
-    float surfDrag;
+    SithMineCarTurnState turnState;
+    int bOnAdjoinTrack;          // track surface under the car has an adjoin, (e.g. rails over the chasm). Plays the clatter sound
+    float surfDrag;              // current surface drag
     SithAnimationSlot* pEngineAnim;
-    int unknown4;
+    int bEngineAnim;             // engine material is animated
     int bUpdateLeftSparks;
     int bUpdateRightSparks;
     float secTimeLeftSparks;
     float secTimeRightSparks;
-    float unknown9;
-    float unknown10;
-    int bUpdateSparks;
+    float maxBlendFaceLength;    // max length of track face along which the direction is blended with the next/prev face
+    float longFaceBlendLength;   // blend length on track faces longer than maxBlendFaceLength
+    int bWheelsLocked;           // wheels don't spin and sparks fly from both sides
 } SithMineCarState;
+static_assert(sizeof(SithMineCarState) == 48, "sizeof(SithMineCarState) == 48");
+
+// Track face geometry relative to the mine car moving direction
+typedef enum eSithTrackVertexFlag
+{
+    SITHTRACK_VERTEX_LEFT  = 0x1,
+    SITHTRACK_VERTEX_RIGHT = 0x2,
+    SITHTRACK_VERTEX_FRONT = 0x4,
+    SITHTRACK_VERTEX_BACK  = 0x8,
+} SithTrackVertexFlag;
+
+typedef struct sSithTrackFaceInfo
+{
+    rdVector3 aVertices[4];     // corner vertices of the face
+    float aFwdDots[4];          // distance of vertex from vertCenter along dir
+    float aSideDots[4];         // distance of vertex from vertCenter along right
+    int aVertFlags[4];          // SithTrackVertexFlag
+    rdVector3 aEdges[4];        // normalized edge directions (quad only)
+    float aEdgeFwdDots[4];
+    float aEdgeSideDots[4];
+    size_t nVertices;
+    rdVector3 frontLeft;
+    rdVector3 frontRight;
+    rdVector3 backLeft;
+    rdVector3 backRight;
+    rdVector3 front;            // center of front edge
+    rdVector3 back;             // center of back edge
+    rdVector3 center;
+    rdVector3 vertCenter;       // average of vertices
+    rdVector3 dir;              // track direction (back -> front)
+    rdVector3 right;
+    float distToFront;          // distance of point to the front edge along dir
+    float distFromBack;         // distance of point from the back edge along dir
+} SithTrackFaceInfo;
+static_assert(sizeof(SithTrackFaceInfo) == 0x134, "sizeof(SithTrackFaceInfo) == 0x134");
 
 typedef struct sSithMineCarFxState
 {
@@ -2853,7 +2805,7 @@ struct sSithConsoleCommand
 typedef struct sSithAIWaypointOwner
 {
     int thingNum;
-    int waypointNum;
+    int waypointNum; // low byte - previous waypoint, second byte - current waypoint
     float cosTurnAlignAngle;
 } SithAIWaypointOwner;
 
@@ -2862,8 +2814,8 @@ typedef struct sSithAIWaypoint
     int thingNum;
     int numUsedLinks;
     int aWpntLinks[8];
-    SithAIWaypointLayerFlag flags;
-    int unknown11;
+    SithAIWaypointLayerFlag flags; // layer flags, low byte is waypoint rank
+    int pathDepth;                 // path depth from the waypoint nearest to player or flee-to waypoint (255 at start, decreases by 1 for each link)
 } SithAIWaypoint;
 
 struct sSithEvent
@@ -3034,6 +2986,22 @@ typedef struct sCndAIControlInfo
     char aFileName[64];
     int numFrames;
 } CndAIControlInfo;
+
+typedef struct sCndThingListHeader
+{
+    size_t numPhysics;
+    size_t numPaths;
+    size_t numPathFrames;
+    size_t numActors;
+    size_t numWeapons;
+    size_t numExplosions;
+    size_t numItems;
+    size_t numParticles;
+    size_t numHints;
+    size_t numAIControls;
+    size_t numAIFrames;
+} CndThingListHeader;
+static_assert(sizeof(CndThingListHeader) == 44, "sizeof(CndThingListHeader) == 44");
 
 typedef struct sSithWorldBinarySectionParser
 {

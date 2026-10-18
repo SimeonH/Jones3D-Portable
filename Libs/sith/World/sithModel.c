@@ -27,13 +27,6 @@ void J3DAPI sithModel_CacheRemove(const rdModel3* pModel);
 void J3DAPI sithModel_CacheAdd(rdModel3* pModel);
 rdModel3* J3DAPI sithModel_CacheFind(const char* pName);
 
-// TODO: this is just temp wrapper for sithModel_GetModelByIndex with uint16_t modelIdx.
-//       Can be removed after all DSS functions that calls sithModel_GetModelByIndex are implemented
-rdModel3* J3DAPI sithModel_GetModelByIndexWrap(uint16_t modelIdx)
-{
-    return sithModel_GetModelByIndex(modelIdx);
-}
-
 void sithModel_InstallHooks(void)
 {
     J3D_HOOKFUNC(sithModel_Startup);
@@ -46,7 +39,7 @@ void sithModel_InstallHooks(void)
     J3D_HOOKFUNC(sithModel_GetModelMemUsage);
     J3D_HOOKFUNC(sithModel_AllocWorldModels);
 
-    J3DHookFunction(sithModel_GetModelByIndex_ADDR, (void*)sithModel_GetModelByIndexWrap);  //J3D_HOOKFUNC(sithModel_GetModelByIndex);
+    J3D_HOOKFUNC(sithModel_GetModelByIndex);
     J3D_HOOKFUNC(sithModel_GetModelIndex);
     J3D_HOOKFUNC(sithModel_GetModel);
     J3D_HOOKFUNC(sithModel_GetMeshIndex);
@@ -55,9 +48,6 @@ void sithModel_InstallHooks(void)
     J3D_HOOKFUNC(sithModel_CacheAdd);
     J3D_HOOKFUNC(sithModel_CacheFind);
 }
-
-void sithModel_ResetGlobals(void)
-{}
 
 int sithModel_Startup(void)
 {

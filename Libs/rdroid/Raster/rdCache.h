@@ -32,7 +32,6 @@ void J3DAPI rdCache_AddToTextureCache(tSystemTexture* pTexture, StdColorFormatTy
 
 // Helper hooking functions
 void rdCache_InstallHooks(void);
-void rdCache_ResetGlobals(void);
 
 J3D_EXTERN_C_END
 #endif // RDROID_RDCACHE_H

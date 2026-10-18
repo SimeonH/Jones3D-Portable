@@ -62,9 +62,6 @@ void sithTemplate_InstallHooks(void)
     J3D_HOOKFUNC(sithTemplate_ParseTemplateList);
 }
 
-void sithTemplate_ResetGlobals(void)
-{}
-
 int sithTemplate_Startup(void)
 {
     sithTemplate_pHashtable = stdHashtbl_New(SITHTEMPLAT_MAXCACHEDTEMPLATES);

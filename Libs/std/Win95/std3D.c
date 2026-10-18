@@ -10,6 +10,8 @@
 #include <std/RTI/symbols.h>
 
 #include <math.h>
+#include <stdio.h>
+#include <stdlib.h>
 
 #define STD3D_DEFAULT_MAX_VERTICES 512
 
@@ -307,12 +309,8 @@ void std3D_InstallHooks(void)
     J3D_HOOKFUNC(std3D_SetFindAllDevices);
 }
 
-void std3D_ResetGlobals(void)
-{
-    float std3D_g_fogDensity_tmp = 1.0f;
-    memcpy(&std3D_g_fogDensity, &std3D_g_fogDensity_tmp, sizeof(std3D_g_fogDensity));
-    memset(&std3D_g_maxVertices, 0, sizeof(std3D_g_maxVertices));
-}
+float std3D_g_fogDensity = 1.0f;
+size_t std3D_g_maxVertices;
 
 int std3D_Startup(void)
 {

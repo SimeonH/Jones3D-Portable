@@ -100,16 +100,9 @@ void sithFX_InstallHooks(void)
     J3D_HOOKFUNC(sithFX_CreatePolylineThing);
 }
 
-void sithFX_ResetGlobals(void)
-{
-    int sithFX_g_lastChalkMarkNum_tmp = -1;
-    memcpy(&sithFX_g_lastChalkMarkNum, &sithFX_g_lastChalkMarkNum_tmp, sizeof(sithFX_g_lastChalkMarkNum));
-
-    size_t sithFX_g_numChalkMarks_tmp = 0;
-    memcpy(&sithFX_g_numChalkMarks, &sithFX_g_numChalkMarks_tmp, sizeof(sithFX_g_numChalkMarks));
-
-    memset(&sithFX_g_aChalkMarks, 0, sizeof(sithFX_g_aChalkMarks));
-}
+int sithFX_g_lastChalkMarkNum = -1;
+SithThing* sithFX_g_aChalkMarks[10];
+size_t sithFX_g_numChalkMarks = 0;
 
 void sithFX_Reset(void)
 {

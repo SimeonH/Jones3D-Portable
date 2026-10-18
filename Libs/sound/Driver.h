@@ -64,7 +64,6 @@ void J3DAPI SoundDriver_Sleep(unsigned int dwMilliseconds);
 
 // Helper hooking functions
 void Driver_InstallHooks(void);
-void Driver_ResetGlobals(void);
 
 J3D_EXTERN_C_END
 #endif // SOUND_DRIVER_H

@@ -6,11 +6,9 @@
 
 J3D_EXTERN_C_START
 
-#define stdDisplay_g_frontBuffer J3D_DECL_FAR_VAR(stdDisplay_g_frontBuffer, tVBuffer)
-// extern tVBuffer stdDisplay_g_frontBuffer;
+extern tVBuffer stdDisplay_g_frontBuffer;
 
-#define stdDisplay_g_backBuffer J3D_DECL_FAR_VAR(stdDisplay_g_backBuffer, tVBuffer)
-// extern tVBuffer stdDisplay_g_backBuffer;
+extern tVBuffer stdDisplay_g_backBuffer;
 
 int stdDisplay_Startup(void);
 void stdDisplay_Shutdown(void);
@@ -73,7 +71,6 @@ uint32_t J3DAPI stdDisplay_EncodeFromRGB565(uint16_t pixel);
 
 // Helper hooking functions
 void stdDisplay_InstallHooks(void);
-void stdDisplay_ResetGlobals(void);
 
 J3D_EXTERN_C_END
 #endif // STD_STDDISPLAY_H

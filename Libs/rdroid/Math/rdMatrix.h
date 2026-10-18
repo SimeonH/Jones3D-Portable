@@ -11,8 +11,7 @@
 
 J3D_EXTERN_C_START
 
-#define rdroid_g_identMatrix34 J3D_DECL_FAR_VAR(rdroid_g_identMatrix34, const rdMatrix34)
-// extern const rdMatrix34 rdroid_g_identMatrix34 ;
+extern const rdMatrix34 rdroid_g_identMatrix34;
 
 inline void J3DAPI rdMatrix_Identity34(rdMatrix34* mat); // Added
 void J3DAPI rdMatrix_Copy34(rdMatrix34* dest, const rdMatrix34* src);
@@ -65,7 +64,6 @@ inline void J3DAPI rdMatrix_Copy34(rdMatrix34* dest, const rdMatrix34* src)
 
 // Helper hooking functions
 void rdMatrix_InstallHooks(void);
-void rdMatrix_ResetGlobals(void);
 
 J3D_EXTERN_C_END
 #endif // RDROID_RDMATRIX_H

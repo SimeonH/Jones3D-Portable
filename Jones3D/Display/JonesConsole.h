@@ -12,11 +12,9 @@ J3D_EXTERN_C_START
 
 #define JONESCONSOLE_FRAMERATEID 102u
 
-#define JonesConsole_g_bVisible J3D_DECL_FAR_VAR(JonesConsole_g_bVisible, int)
-// extern int JonesConsole_g_bVisible;
+extern int JonesConsole_g_bVisible;
 
-#define JonesConsole_g_bStarted J3D_DECL_FAR_VAR(JonesConsole_g_bStarted, int)
-// extern int JonesConsole_g_bStarted;
+extern int JonesConsole_g_bStarted;
 
 int JonesConsole_Startup(void);
 void JonesConsole_Shutdown(void);
@@ -34,7 +32,6 @@ void JonesConsole_HideConsole(void);
 
 // Helper hooking functions
 void JonesConsole_InstallHooks(void);
-void JonesConsole_ResetGlobals(void);
 
 J3D_EXTERN_C_END
 #endif // JONES3D_JONESCONSOLE_H

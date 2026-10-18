@@ -18,8 +18,8 @@
 #include <rdroid/Primitives/rdFont.h>
 #include <rdroid/Raster/rdCache.h>
 
-#include <sith/DSS/sithDSS.h>
-#include <sith/DSS/sithGamesave.h>
+#include <sith/Dss/sithDSS.h>
+#include <sith/Dss/sithGamesave.h>
 #include <sith/Devices/sithComm.h>
 #include <sith/Devices/sithConsole.h>
 #include <sith/Devices/sithSound.h>
@@ -243,12 +243,8 @@ void JonesMain_InstallHooks(void)
     J3D_HOOKFUNC(JonesMain_CurDisplaySupportsBPP);
 }
 
-void JonesMain_ResetGlobals(void)
-{
-    char JonesMain_g_aErrorBuffer_tmp[1024] = "Unknown error";
-    memcpy(&JonesMain_g_aErrorBuffer, &JonesMain_g_aErrorBuffer_tmp, sizeof(JonesMain_g_aErrorBuffer));
-    memset(&JonesMain_g_mainMutex, 0, sizeof(JonesMain_g_mainMutex));
-}
+char JonesMain_g_aErrorBuffer[1024] = "Unknown error";
+HANDLE JonesMain_g_mainMutex;
 
 int J3DAPI JonesMain_Startup(const char* lpCmdLine)
 {
@@ -344,6 +340,37 @@ int J3DAPI JonesMain_Startup(const char* lpCmdLine)
     Sound_SetMaxVolume(JonesMain_state.soundSettings.maxSoundVolume);
     SmushPlay_SetGlobalVolume((size_t)(JonesMain_state.soundSettings.maxSoundVolume * 127.0f)); // TODO: Can be removed as it's being set in PlayIntroMovie
 
+    // Added: Command line option '-load <savegame path>' loads the savegame directly, skipping the load game dialog and intro movie.
+    //        The path is relative to the game folder, e.g.: -load ..\SaveGames\save.nds
+    const char* pLoadArg = lpCmdLine ? strstr(lpCmdLine, "-load ") : NULL;
+    if ( pLoadArg )
+    {
+        pLoadArg += strlen("-load ");
+        while ( *pLoadArg == ' ' ) ++pLoadArg;
+
+        // Path may be quoted to allow spaces
+        char aPath[JONESCONFIG_GAMESAVE_FILEPATHSIZE] = { 0 };
+        char endChar = ' ';
+        if ( *pLoadArg == '"' )
+        {
+            endChar = '"';
+            ++pLoadArg;
+        }
+
+        size_t len = 0;
+        while ( pLoadArg[len] && pLoadArg[len] != endChar && len < STD_ARRAYLEN(aPath) - 1 )
+        {
+            aPath[len] = pLoadArg[len];
+            ++len;
+        }
+
+        if ( len > 0 )
+        {
+            STD_STRCPY(JonesMain_aNdsFilename, aPath);
+            JonesMain_state.startMode = JONES_STARTMODE_LOADGAME;
+        }
+    }
+
     // Handle start mode
     int bSuccess    = 0;
     bool bPlayIntro = true;
@@ -364,7 +391,7 @@ int J3DAPI JonesMain_Startup(const char* lpCmdLine)
 
         case JONES_STARTMODE_LOADGAME:
         {
-            if ( jonesConfig_GetLoadGameFilePath(stdWin95_GetWindow(), JonesMain_aNdsFilename) != 1 )
+            if ( !pLoadArg && jonesConfig_GetLoadGameFilePath(stdWin95_GetWindow(), JonesMain_aNdsFilename) != 1 ) // Added: Skip dialog when savegame is passed on command line
             {
                 return 1;
             }
@@ -977,6 +1004,20 @@ void J3DAPI JonesMain_OnAppActivate(HWND hWnd, int bActivated)
         JonesMain_pfCurProcess = JonesMain_pfProcess;
     }
 
+    // Added: In window mode keep the game running and rendering while the window is inactive and only release the input.
+    //        The original suspends the game until the window is activated again, which is meant for exclusive fullscreen.
+    //        Under Wine the activation is sometimes never reported back when switching back to the window,
+    //        which left the game suspended with a frozen window (see JonesMain_ProcessGame for the recovery).
+    if ( JonesMain_state.displaySettings.bWindowMode )
+    {
+        JonesMain_bAppActivated = bActivated != 0;
+        if ( !stdControl_SetActivation(bActivated) )
+        {
+            stdControl_ShowMouseCursor(bActivated ? 0 : 1);
+        }
+        return;
+    }
+
     if ( bActivated )
     {
         if ( !JonesMain_bAppActivated )
@@ -1189,6 +1230,13 @@ int JonesMain_ProcessGame(void)
     if ( JonesMain_bSystemSuspended )
     {
         return 0;
+    }
+
+    // Added: In window mode re-activate the input when the window is in the foreground but the activation
+    //        message was missed (happens under Wine), see JonesMain_OnAppActivate.
+    if ( JonesMain_state.displaySettings.bWindowMode && !JonesMain_bAppActivated && GetForegroundWindow() == stdWin95_GetWindow() )
+    {
+        JonesMain_OnAppActivate(stdWin95_GetWindow(), 1);
     }
 
     if ( sithMain_g_sith_mode.masterMode == SITH_MODE_OPENED )
@@ -2696,13 +2744,13 @@ void J3DAPI JonesMain_LoadSettings(StdDisplayEnvironment* pDisplayEnv, JonesStat
 
 int J3DAPI JonesMain_ShowDevDialog(HWND hWnd, JonesState* pConfig)
 {
-    HINSTANCE hInstance = (HINSTANCE)GetWindowLongPtr(hWnd, GWL_HINSTANCE);
+    HINSTANCE hInstance = wkernel_GetResourceInstance();
     return DialogBoxParam(hInstance, (LPCSTR)101, hWnd, JonesMain_DevDialogProc, (LPARAM)pConfig);
 }
 
 int J3DAPI JonesMain_ShowDisplayOptions(HWND hWnd, JonesState* pState)
 {
-    HINSTANCE hInstance = (HINSTANCE)GetWindowLongPtr(hWnd, GWL_HINSTANCE);
+    HINSTANCE hInstance = wkernel_GetResourceInstance();
     return DialogBoxParam(hInstance, (LPCSTR)106, hWnd, JonesMain_DevDialogProc, (LPARAM)pState);
 }
 

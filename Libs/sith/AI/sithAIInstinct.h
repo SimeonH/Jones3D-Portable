@@ -42,7 +42,6 @@ void J3DAPI sithAIInstinct_sub_494FF0(const SithThing* pThing, float a2);
 
 // Helper hooking functions
 void sithAIInstinct_InstallHooks(void);
-void sithAIInstinct_ResetGlobals(void);
 
 J3D_EXTERN_C_END
 #endif // SITH_SITHAIINSTINCT_H

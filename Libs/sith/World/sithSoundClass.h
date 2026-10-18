@@ -43,7 +43,6 @@ int J3DAPI sithSoundClass_SetThingClass(SithThing* pThing, SithSoundClass* pSoun
 
 // Helper hooking functions
 void sithSoundClass_InstallHooks(void);
-void sithSoundClass_ResetGlobals(void);
 
 J3D_EXTERN_C_END
 #endif // SITH_SITHSOUNDCLASS_H

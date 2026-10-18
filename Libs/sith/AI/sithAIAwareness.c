@@ -40,10 +40,7 @@ void sithAIAwareness_InstallHooks(void)
     J3D_HOOKFUNC(sithAIAwareness_CreateEvent);
 }
 
-void sithAIAwareness_ResetGlobals(void)
-{
-    memset(&sithAIAwareness_g_aSectors, 0, sizeof(sithAIAwareness_g_aSectors));
-}
+SithAIAwarenessSector* sithAIAwareness_g_aSectors;
 
 int sithAIAwareness_Open(void)
 {

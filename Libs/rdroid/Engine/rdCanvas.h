@@ -17,7 +17,6 @@ void J3DAPI rdCanvas_FreeEntry(rdCanvas* pCanvas); // Added
 
 // Helper hooking functions
 void rdCanvas_InstallHooks(void);
-void rdCanvas_ResetGlobals(void);
 
 J3D_EXTERN_C_END
 #endif // RDROID_RDCANVAS_H

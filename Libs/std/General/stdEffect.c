@@ -12,9 +12,6 @@ void stdEffect_InstallHooks(void)
     J3D_HOOKFUNC(stdEffect_GetFadeFactor);
 }
 
-void stdEffect_ResetGlobals(void)
-{
-}
 
 void stdEffect_Startup(void)
 {

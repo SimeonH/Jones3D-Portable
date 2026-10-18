@@ -35,7 +35,6 @@ SithThing* sithOverlayMap_GetCurrentHintThing(void); // Added: From debug
 
 // Helper hooking functions
 void sithOverlayMap_InstallHooks(void);
-void sithOverlayMap_ResetGlobals(void);
 
 J3D_EXTERN_C_END
 #endif // SITH_SITHOVERLAYMAP_H

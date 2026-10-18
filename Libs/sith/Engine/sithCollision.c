@@ -85,10 +85,6 @@ void sithCollision_InstallHooks(void)
     J3D_HOOKFUNC(sithCollision_sub_4AAF30);
 }
 
-void sithCollision_ResetGlobals(void)
-{
-
-}
 
 void sithCollision_Startup(void)
 {

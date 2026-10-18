@@ -37,9 +37,6 @@ void rdParticle_InstallHooks(void)
     J3D_HOOKFUNC(rdParticle_Draw);
 }
 
-void rdParticle_ResetGlobals(void)
-{}
-
 rdParticleLoaderFunc J3DAPI rdParticle_RegisterLoader(rdParticleLoaderFunc pFunc)
 {
     RD_ASSERTREL(pFunc != NULL);

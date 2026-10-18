@@ -21,10 +21,6 @@ void stdStrTable_InstallHooks(void)
     J3D_HOOKFUNC(stdStrTable_ReadLine);
 }
 
-void stdStrTable_ResetGlobals(void)
-{
-    //memset(&stdStrTable_aBuffer, 0, sizeof(stdStrTable_aBuffer));
-}
 
 int J3DAPI stdStrTable_Load(tStringTable* pStrTable, const char* pFilename)
 {

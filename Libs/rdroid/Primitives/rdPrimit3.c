@@ -15,9 +15,6 @@ void rdPrimit3_InstallHooks(void)
     J3D_HOOKFUNC(rdPrimit3_ClipFace);
 }
 
-void rdPrimit3_ResetGlobals(void)
-{}
-
 int J3DAPI rdPrimit3_DrawPoint(rdVector3* pPoint, int32_t* pPPoint, uint32_t color)
 {
     rdVector3 tpoint;

@@ -21,9 +21,6 @@ void stdUtil_InstallHooks(void)
     J3D_HOOKFUNC(stdUtil_StrCmp);
 }
 
-void stdUtil_ResetGlobals(void)
-{}
-
 char* J3DAPI stdUtil_StringDuplicate(const char* pSource, tHostServices* pHS)
 {
     STD_ASSERTREL(pSource != NULL);

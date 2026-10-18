@@ -32,9 +32,6 @@ void sithExplosion_InstallHooks(void)
     J3D_HOOKFUNC(sithExplosion_ParseArg);
 }
 
-void sithExplosion_ResetGlobals(void)
-{}
-
 void J3DAPI sithExplosion_Initialize(SithThing* pThing)
 {
     SITH_ASSERTREL(pThing);

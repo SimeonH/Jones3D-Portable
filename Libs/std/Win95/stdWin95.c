@@ -18,12 +18,6 @@ void stdWin95_InstallHooks(void)
     J3D_HOOKFUNC(stdWin95_SetGuid);
 }
 
-void stdWin95_ResetGlobals(void)
-{
-    /*memset(&stdWin95_guid, 0, sizeof(stdWin95_guid));
-    memset(&stdWin95_hwnd, 0, sizeof(stdWin95_hwnd));
-    memset(&stdWin95_hInstance, 0, sizeof(stdWin95_hInstance));*/
-}
 
 void J3DAPI stdWin95_SetWindow(HWND hwnd)
 {

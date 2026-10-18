@@ -17,10 +17,6 @@ void rdLight_InstallHooks(void)
     J3D_HOOKFUNC(rdLight_GetIntensity);
 }
 
-void rdLight_ResetGlobals(void)
-{
-
-}
 
 rdLight* rdLight_New(void)
 {

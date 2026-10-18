@@ -13,11 +13,9 @@ J3D_EXTERN_C_START
 #define RDMODEL3_MAX_FACES         16384 // Changed: Was 1528
 #define RDMODEL3_MAX_FACE_VERTICES RDCACHE_MAXFACEVERTICES 
 
-#define rdModel3_g_numDrawnFaces J3D_DECL_FAR_VAR(rdModel3_g_numDrawnFaces, int)
-// extern int rdModel3_g_numDrawnFaces;
+extern int rdModel3_g_numDrawnFaces;
 
-#define rdModel3_g_numDrawnAlphaFaces J3D_DECL_FAR_VAR(rdModel3_g_numDrawnAlphaFaces, int)
-// extern int rdModel3_g_numDrawnAlphaFaces;
+extern int rdModel3_g_numDrawnAlphaFaces;
 
 rdModel3LoaderFunc J3DAPI rdModel3_RegisterLoader(rdModel3LoaderFunc pfFunc);
 rdModel3UnloaderFunc J3DAPI rdModel3_RegisterUnloader(rdModel3UnloaderFunc pfFunc); // Added
@@ -58,7 +56,6 @@ rdModel3DrawFaceFunc J3DAPI rdModel3_RegisterFaceDraw(rdModel3DrawFaceFunc pFunc
 
 // Helper hooking functions
 void rdModel3_InstallHooks(void);
-void rdModel3_ResetGlobals(void);
 
 J3D_EXTERN_C_END
 #endif // RDROID_RDMODEL3_H

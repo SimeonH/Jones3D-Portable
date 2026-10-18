@@ -107,9 +107,6 @@ void stdComm_InstallHooks(void)
     J3D_HOOKFUNC(stdComm_DPGetStatus);
 }
 
-void stdComm_ResetGlobals(void)
-{}
-
 int32_t J3DAPI stdComm_Send(DPID idFrom, DPID idTo, const void* pData, uint32_t size, uint32_t flags)
 {
     STD_ASSERTREL(pDirectPlay);

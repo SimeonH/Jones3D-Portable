@@ -227,10 +227,7 @@ void sithPuppet_InstallHooks(void)
     J3D_HOOKFUNC(sithPuppet_ClearTrackList);
 }
 
-void sithPuppet_ResetGlobals(void)
-{
-    memset(&sithPuppet_g_bPlayerLeapForward, 0, sizeof(sithPuppet_g_bPlayerLeapForward));
-}
+int sithPuppet_g_bPlayerLeapForward;
 
 int sithPuppet_Startup(void)
 {

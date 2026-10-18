@@ -23,9 +23,6 @@ void sithItem_InstallHooks(void)
     J3D_HOOKFUNC(sithItem_ParseArg);
 }
 
-void sithItem_ResetGlobals(void)
-{}
-
 int J3DAPI sithItem_PlayerCollisionHandler(SithThing* pItem, SithThing* pPlayer, SithCollision* pCollision, int a5)
 {
     J3D_UNUSED(a5);

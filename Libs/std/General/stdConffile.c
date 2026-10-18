@@ -50,11 +50,8 @@ void stdConffile_InstallHooks(void)
     J3D_HOOKFUNC(stdConffile_PopStack);
 }
 
-void stdConffile_ResetGlobals(void)
-{
-    memset(&stdConffile_g_entry, 0, sizeof(stdConffile_g_entry));
-    memset(&stdConffile_g_aLine, 0, sizeof(stdConffile_g_aLine));
-}
+StdConffileEntry stdConffile_g_entry;
+char* stdConffile_g_aLine;
 
 int J3DAPI stdConffile_Open(const char* pFilename)
 {

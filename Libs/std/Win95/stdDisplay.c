@@ -228,11 +228,8 @@ void stdDisplay_InstallHooks(void)
     J3D_HOOKFUNC(stdDisplay_EncodeFromRGB565);
 }
 
-void stdDisplay_ResetGlobals(void)
-{
-    memset(&stdDisplay_g_frontBuffer, 0, sizeof(stdDisplay_g_frontBuffer));
-    memset(&stdDisplay_g_backBuffer, 0, sizeof(stdDisplay_g_backBuffer));
-}
+tVBuffer stdDisplay_g_frontBuffer;
+tVBuffer stdDisplay_g_backBuffer;
 
 // Added
 static void J3DAPI stdDisplay_SetPixels16(uint16_t* pPixels16, uint16_t pixel, size_t size)

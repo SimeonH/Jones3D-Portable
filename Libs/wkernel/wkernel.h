@@ -18,9 +18,13 @@ void J3DAPI wkernel_SetWindowProc(WKERNELWNDPROC pfProc); // Window process
 int wkernel_PeekProcessEvents(void);
 int wkernel_ProcessEvents(void);
 
+// Added: Module which holds the game resources (dialogs, icons).
+// Defaults to the process module (Indy3D.exe when Jones3D.dll is injected).
+void J3DAPI wkernel_SetResourceInstance(HINSTANCE hInstance);
+HINSTANCE wkernel_GetResourceInstance(void);
+
 // Helper hooking functions
 void wkernel_InstallHooks(void);
-void wkernel_ResetGlobals(void);
 
 J3D_EXTERN_C_END
 #endif // WKERNEL_WKERNEL_H

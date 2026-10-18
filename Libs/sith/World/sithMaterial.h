@@ -26,7 +26,6 @@ rdMaterial* J3DAPI sithMaterial_GetMaterialByIndex(int idx);
 
 // Helper hooking functions
 void sithMaterial_InstallHooks(void);
-void sithMaterial_ResetGlobals(void);
 
 J3D_EXTERN_C_END
 #endif // SITH_SITHMATERIAL_H

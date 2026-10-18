@@ -9,11 +9,9 @@
 
 J3D_EXTERN_C_START
 
-#define JonesMain_g_aErrorBuffer J3D_DECL_FAR_ARRAYVAR(JonesMain_g_aErrorBuffer, char(*)[1024])
-// extern char JonesMain_g_aErrorBuffer[1024] ;
+extern char JonesMain_g_aErrorBuffer[1024];
 
-#define JonesMain_g_mainMutex J3D_DECL_FAR_VAR(JonesMain_g_mainMutex, HANDLE)
-// extern HANDLE JonesMain_g_mainMutex;
+extern HANDLE JonesMain_g_mainMutex;
 
 int J3DAPI JonesMain_Startup(const char* lpCmdLine);
 void JonesMain_Shutdown(void);
@@ -62,7 +60,6 @@ size_t J3DAPI JonesMain_FindClosestVideoMode(const StdDisplayEnvironment* pList,
 
 // Helper hooking functions
 void JonesMain_InstallHooks(void);
-void JonesMain_ResetGlobals(void);
 
 J3D_EXTERN_C_END
 #endif // JONES3D_JONESMAIN_H

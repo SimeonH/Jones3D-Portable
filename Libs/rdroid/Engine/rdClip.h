@@ -9,8 +9,7 @@ J3D_EXTERN_C_START
 
 #define MAX_CLIP_VERTICIES 80u
 
-#define rdClip_g_faceStatus J3D_DECL_FAR_VAR(rdClip_g_faceStatus, int)
-// extern int rdClip_g_faceStatus;
+extern int rdClip_g_faceStatus;
 
 int J3DAPI rdClip_Line2(const rdCanvas* pCanvas, int* x1, int* y1, int* x2, int* y2);
 rdClipOutcode J3DAPI rdClip_CalcOutcode2(const rdCanvas* pCanvas, int x, int y);
@@ -57,7 +56,6 @@ void J3DAPI rdClip_VerticesToPlane(rdCacheProcEntry* pProcFace, const rdVector3*
 
 // Helper hooking functions
 void rdClip_InstallHooks(void);
-void rdClip_ResetGlobals(void);
 
 J3D_EXTERN_C_END
 #endif // RDROID_RDCLIP_H

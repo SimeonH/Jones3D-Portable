@@ -1,5 +1,6 @@
 #include <stdint.h>
 #include <stdio.h>
+#include <stdlib.h>
 
 #include "types.h" // Should be included first due to Windows.h / CommCtrl.h conflict
 
@@ -19,6 +20,7 @@
 #include "Play/jonesInventory.h"
 #include "RTI/addresses.h"
 #include "RTI/symbols.h"
+#include "Indy3D.h"
 
 #include <rdroid/Engine/rdCamera.h>
 #include <rdroid/Engine/rdCanvas.h>
@@ -143,11 +145,7 @@
 
 #include <string.h>
 
-static const char* appName = "Open Jones 3D";
-
 bool InstallHooks(void);
-bool ResetGlobals(void);
-static bool RemoveDirect3D3ResolutionCap(void);
 
 BOOL APIENTRY DllMain(HMODULE hModule, DWORD  dwReason, LPVOID lpReserved)
 {
@@ -158,9 +156,6 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD  dwReason, LPVOID lpReserved)
     {
         case DLL_PROCESS_ATTACH:
         {
-            // Enable HIDPI
-            SetProcessDpiAwarenessContext(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2);
-
         #ifdef _DEBUG
             // For debugging purposes to stop execution here
             MessageBox(NULL, "Attached to Indy3D.exe process.", "Jones3D",
@@ -168,28 +163,13 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD  dwReason, LPVOID lpReserved)
             );
         #endif
 
-            // Remove DX6 resolutions cap
-            if ( !RemoveDirect3D3ResolutionCap() )
-            {
-                printf("WARNING: Failed to remove Direct3D3 cap on width/height of DirectDrawSurface!\n");
-                MessageBox(NULL, "Failed to remove DirectX 6 draw surface resolution cap!", "Jones3D",
-                    MB_ICONINFORMATION | MB_DEFBUTTON1
-                );
-            }
+            Indy3D_InitProcess();
 
             // Init function hooks
             if ( !InstallHooks() )
             {
                 printf("CRITICAL ERROR: Failed to install hooks!\n");
                 MessageBox(NULL, "Failed to install function hooks!", "Jones3D",
-                    MB_ICONINFORMATION | MB_DEFBUTTON1
-                );
-            }
-
-            if ( !ResetGlobals() )
-            {
-                printf("CRITICAL ERROR: Failed to reset global vars!\n");
-                MessageBox(NULL, "Failed to reset global variables!", "Jones3D",
                     MB_ICONINFORMATION | MB_DEFBUTTON1
                 );
             }
@@ -201,32 +181,6 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD  dwReason, LPVOID lpReserved)
             break;
     }
     return TRUE;
-}
-
-int Startup(const char* aCmd)
-{
-    if ( JonesMain_Startup(aCmd) )
-    {
-        JonesMain_Shutdown();
-        return -1;
-    }
-    return 0;
-}
-
-// Indy3D.exe entry point
-int WINAPI Indy3D_WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nShowCmd)
-{
-    JonesMain_g_mainMutex = CreateMutex(NULL, /*CreateMutex=*/TRUE, "INDY3D");
-    if ( GetLastError() != ERROR_ALREADY_EXISTS )
-    {
-        wkernel_SetProcessProc(JonesMain_Process);
-        wkernel_SetStartupCallback(Startup);
-        wkernel_SetShutdownCallback(JonesMain_Shutdown);
-        return wkernel_Run(hInstance, hPrevInstance, lpCmdLine, nShowCmd, appName);
-    }
-
-    CloseHandle(JonesMain_g_mainMutex);
-    return -1;
 }
 
 bool InstallHooks(void)
@@ -374,210 +328,4 @@ bool InstallHooks(void)
     wuRegistry_InstallHooks();
 
     return J3DEndHookContext(&ctx);
-}
-
-bool ResetGlobals(void)
-{
-    J3DHookContext ctx;
-    if ( !J3DStartHookContext(&ctx, EXE_RDATA_START_ADDR, EXE_RDATA_END_ADDR) ) {
-        return false;
-    }
-
-    AudioLib_ResetGlobals();
-    Driver_ResetGlobals();
-    JonesConsole_ResetGlobals();
-    JonesControl_ResetGlobals();
-    JonesDialog_ResetGlobals();
-    JonesDisplay_ResetGlobals();
-    JonesFile_ResetGlobals();
-    JonesHud_ResetGlobals();
-    JonesMain_ResetGlobals();
-    Sound_ResetGlobals();
-    jonesCog_ResetGlobals();
-    jonesConfig_ResetGlobals();
-    jonesInventory_ResetGlobals();
-    jonesString_ResetGlobals();
-    rdCache_ResetGlobals();
-    rdCamera_ResetGlobals();
-    rdCanvas_ResetGlobals();
-    rdClip_ResetGlobals();
-    rdFace_ResetGlobals();
-    rdFont_ResetGlobals();
-    rdKeyframe_ResetGlobals();
-    rdLight_ResetGlobals();
-    rdMaterial_ResetGlobals();
-    rdMath_ResetGlobals();
-    rdMatrix_ResetGlobals();
-    rdModel3_ResetGlobals();
-    rdParticle_ResetGlobals();
-    rdPolyline_ResetGlobals();
-    rdPrimit2_ResetGlobals();
-    rdPrimit3_ResetGlobals();
-    rdPuppet_ResetGlobals();
-    rdQClip_ResetGlobals();
-    rdSprite_ResetGlobals();
-    rdThing_ResetGlobals();
-    rdVector_ResetGlobals();
-    rdWallpaper_ResetGlobals();
-    rdroid_ResetGlobals();
-    sithAIAwareness_ResetGlobals();
-    sithAIClass_ResetGlobals();
-    sithAIInstinct_ResetGlobals();
-    sithAIMove_ResetGlobals();
-    sithAIUtil_ResetGlobals();
-    sithAI_ResetGlobals();
-    sithActor_ResetGlobals();
-    sithAnimate_ResetGlobals();
-    sithCamera_ResetGlobals();
-    sithCogExec_ResetGlobals();
-    sithCogFunctionAI_ResetGlobals();
-    sithCogFunctionPlayer_ResetGlobals();
-    sithCogFunctionSector_ResetGlobals();
-    sithCogFunctionSound_ResetGlobals();
-    sithCogFunctionSurface_ResetGlobals();
-    sithCogFunctionThing_ResetGlobals();
-    sithCogFunction_ResetGlobals();
-    sithCogParse_ResetGlobals();
-    sithCogYacc_ResetGlobals();
-    sithCog_ResetGlobals();
-    sithCollision_ResetGlobals();
-    sithComm_ResetGlobals();
-    sithCommand_ResetGlobals();
-    sithConsole_ResetGlobals();
-    sithControl_ResetGlobals();
-    sithDSSCog_ResetGlobals();
-    sithDSSThing_ResetGlobals();
-    sithDSS_ResetGlobals();
-    sithEvent_ResetGlobals();
-    sithExplosion_ResetGlobals();
-    sithFX_ResetGlobals();
-    sithGamesave_ResetGlobals();
-    sithIntersect_ResetGlobals();
-    sithInventory_ResetGlobals();
-    sithItem_ResetGlobals();
-    sithMain_ResetGlobals();
-    sithMaterial_ResetGlobals();
-    sithModel_ResetGlobals();
-    sithMulti_ResetGlobals();
-    sithOverlayMap_ResetGlobals();
-    sithPVS_ResetGlobals();
-    sithParticle_ResetGlobals();
-    sithPathMove_ResetGlobals();
-    sithPhysics_ResetGlobals();
-    sithPlayerActions_ResetGlobals();
-    sithPlayerControls_ResetGlobals();
-    sithPlayer_ResetGlobals();
-    sithPuppet_ResetGlobals();
-    sithRender_ResetGlobals();
-    sithRenderSky_ResetGlobals();
-    sithSector_ResetGlobals();
-    sithShadow_ResetGlobals();
-    sithSoundClass_ResetGlobals();
-    sithSoundMixer_ResetGlobals();
-    sithSound_ResetGlobals();
-    sithSprite_ResetGlobals();
-    sithString_ResetGlobals();
-    sithSurface_ResetGlobals();
-    sithTemplate_ResetGlobals();
-    sithThing_ResetGlobals();
-    sithTime_ResetGlobals();
-    sithVehicleControls_ResetGlobals();
-    sithVoice_ResetGlobals();
-    sithWeapon_ResetGlobals();
-    sithWhip_ResetGlobals();
-    sithWorld_ResetGlobals();
-    std3D_ResetGlobals();
-    stdBmp_ResetGlobals();
-    stdCircBuf_ResetGlobals();
-    stdColor_ResetGlobals();
-    stdComm_ResetGlobals();
-    stdConffile_ResetGlobals();
-    stdConsole_ResetGlobals();
-    stdControl_ResetGlobals();
-    stdDisplay_ResetGlobals();
-    stdEffect_ResetGlobals();
-    stdFileUtil_ResetGlobals();
-    stdFnames_ResetGlobals();
-    stdGob_ResetGlobals();
-    stdHashtbl_ResetGlobals();
-    stdLinkList_ResetGlobals();
-    stdMath_ResetGlobals();
-    stdMemory_ResetGlobals();
-    stdPlatform_ResetGlobals();
-    stdStrTable_ResetGlobals();
-    stdUtil_ResetGlobals();
-    stdWin95_ResetGlobals();
-    std_ResetGlobals();
-    wkernel_ResetGlobals();
-    wuRegistry_ResetGlobals();
-
-    return J3DEndHookContext(&ctx);
-}
-
-void* memfind(const void* l, size_t l_len, const void* s, size_t s_len)
-{
-    register char* cur, * last;
-    const char* cl = (const char*)l;
-    const char* cs = (const char*)s;
-
-    if ( !l_len || !s_len )
-        return NULL;
-
-    if ( l_len < s_len )
-        return NULL;
-
-    // Special case where s_len == 1
-    if ( s_len == 1 )
-        return memchr(l, (int)*cs, l_len);
-
-    // The last position where it's possible to find "s" in "l"
-    last = (char*)cl + l_len - s_len;
-    for ( cur = (char*)cl; cur <= last; cur++ )
-        if ( cur[0] == cs[0] && !memcmp(cur, cs, s_len) )
-            return cur;
-
-    return NULL;
-}
-
-/**
- * @brief Removes IDirect3D3 2048-pixel resolution cap on device creation
- *
- * @details Loads d3dim.dll and patches in memory IDirect3D3_CreateDevice function
- *          to remove the 2048-pixel width/height limit check when creating a Direct3D device
- *          from DirectDrawSurface, allowing rendering to surfaces larger than 2048x2048.
- *
- * @return true if resolution cap was successfully removed, false if operation failed
- */
-bool RemoveDirect3D3ResolutionCap(void)
-{
-    // From: https://github.com/UCyborg/LegacyD3DResolutionHack
-
-    static const BYTE wantedBytes[] = { 0xB8, 0x00, 0x08, 0x00, 0x00, 0x39 };
-
-    char szPath[MAX_PATH];
-    GetSystemDirectory(szPath, MAX_PATH);
-    strcat_s(szPath, sizeof(szPath), "\\d3dim.dll");
-
-    HMODULE hD3DIm = LoadLibrary(szPath);
-    if ( !hD3DIm ) {
-        return false;
-    }
-
-    PIMAGE_DOS_HEADER pDosHeader = (PIMAGE_DOS_HEADER)hD3DIm;
-    PIMAGE_NT_HEADERS pNtHeader = (PIMAGE_NT_HEADERS)((char*)pDosHeader + pDosHeader->e_lfanew);
-    DWORD dwCodeBase = (DWORD)hD3DIm + pNtHeader->OptionalHeader.BaseOfCode;
-    DWORD dwCodeSize = pNtHeader->OptionalHeader.SizeOfCode;
-
-    uintptr_t dwPatchBase = (uintptr_t)memfind((void*)dwCodeBase, dwCodeSize, wantedBytes, sizeof(wantedBytes));
-    if ( dwPatchBase )
-    {
-        dwPatchBase++;
-
-        DWORD dwOldProtect;
-        VirtualProtect((LPVOID)dwPatchBase, 4, PAGE_EXECUTE_READWRITE, &dwOldProtect);
-        *(DWORD*)dwPatchBase = (DWORD)-1;
-        VirtualProtect((LPVOID)dwPatchBase, 4, dwOldProtect, &dwOldProtect);
-    }
-
-    return true;
 }

@@ -1,5 +1,6 @@
 #include "JonesDialog.h"
 #include <j3dcore/j3dhook.h>
+#include <wkernel/wkernel.h>
 
 #include <Jones3D/Main/JonesMain.h>
 #include <Jones3D/RTI/symbols.h>
@@ -54,10 +55,6 @@ void JonesDialog_InstallHooks(void)
     J3D_HOOKFUNC(JonesDialog_SubclassFileDialogProc);
 }
 
-void JonesDialog_ResetGlobals(void)
-{
-
-}
 
 int J3DAPI JonesDialog_InitCursorTracking(int* pAlreadyInited)
 {
@@ -481,7 +478,7 @@ int J3DAPI JonesDialog_ShowDialog(LPCSTR lpTemplateName, HWND hWnd, DLGPROC lpDi
     JonesDialogGameState state;
     int v9;
 
-    hInstance = (HINSTANCE)GetWindowLongPtr(hWnd, GWL_HINSTANCE);
+    hInstance = wkernel_GetResourceInstance();
     if ( !JonesMain_HasStarted() )
     {
         return DialogBoxParam(hInstance, lpTemplateName, hWnd, lpDialogFunc, dwInitParam);

@@ -17,10 +17,6 @@ void stdBmp_InstallHooks(void)
     J3D_HOOKFUNC(stdBmp_Load);
 }
 
-void stdBmp_ResetGlobals(void)
-{
-
-}
 
 int J3DAPI stdBmp_WriteVBuffer(const char* pFilename, tVBuffer* pVBuffer)
 {

@@ -52,7 +52,6 @@ void J3DAPI sithCogParse_ResolveMessageHandlers(SithCogScript* pScript);
 
 // Helper hooking functions
 void sithCogParse_InstallHooks(void);
-void sithCogParse_ResetGlobals(void);
 
 J3D_EXTERN_C_END
 #endif // SITH_SITHCOGPARSE_H

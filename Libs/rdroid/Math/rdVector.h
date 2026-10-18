@@ -16,17 +16,13 @@ extern const rdVector2 rdroid_zeroVector2;
 extern const rdVector2 rdroid_xVector2;
 extern const rdVector2 rdroid_yVector2;
 
-#define rdroid_g_zeroVector3 J3D_DECL_FAR_VAR(rdroid_g_zeroVector3, const rdVector3)
-// extern const rdVector3 rdroid_g_zeroVector3 ;
+extern const rdVector3 rdroid_g_zeroVector3;
 
-#define rdroid_g_xVector3 J3D_DECL_FAR_VAR(rdroid_g_xVector3, const rdVector3)
-// extern const rdVector3 rdroid_g_xVector3 ;
+extern const rdVector3 rdroid_g_xVector3;
 
-#define rdroid_g_yVector3 J3D_DECL_FAR_VAR(rdroid_g_yVector3, const rdVector3)
-// extern const rdVector3 rdroid_g_yVector3 ;
+extern const rdVector3 rdroid_g_yVector3;
 
-#define rdroid_g_zVector3 J3D_DECL_FAR_VAR(rdroid_g_zVector3, const rdVector3)
-// extern const rdVector3 rdroid_g_zVector3 ;
+extern const rdVector3 rdroid_g_zVector3;
 
 void J3DAPI rdVector_Set2(rdVector2* dest, float x, float y); // Added
 void J3DAPI rdVector_Set3(rdVector3* dest, float x, float y, float z);
@@ -574,7 +570,6 @@ inline void J3DAPI rdVector_Lerp4Acc(rdVector4* a, const rdVector4* b, float t)
 
 // Helper hooking functions
 void rdVector_InstallHooks(void);
-void rdVector_ResetGlobals(void);
 
 J3D_EXTERN_C_END
 #endif // RDROID_RDVECTOR_H

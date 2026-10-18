@@ -20,16 +20,13 @@ void sithTime_InstallHooks(void)
     J3D_HOOKFUNC(sithTime_IsPaused);
 }
 
-void sithTime_ResetGlobals(void)
-{
-    memset(&sithTime_g_frameTime, 0, sizeof(sithTime_g_frameTime));
-    memset(&sithTime_g_frameTimeFlex, 0, sizeof(sithTime_g_frameTimeFlex));
-    memset(&sithTime_g_fps, 0, sizeof(sithTime_g_fps));
-    memset(&sithTime_g_msecGameTime, 0, sizeof(sithTime_g_msecGameTime));
-    memset(&sithTime_g_secGameTime, 0, sizeof(sithTime_g_secGameTime));
-    memset(&sithTime_g_clockTime, 0, sizeof(sithTime_g_clockTime));
-    memset(&sithTime_g_bPaused, 0, sizeof(sithTime_g_bPaused));
-}
+uint32_t sithTime_g_frameTime;
+float sithTime_g_frameTimeFlex;
+float sithTime_g_fps;
+uint32_t sithTime_g_msecGameTime;
+float sithTime_g_secGameTime;
+uint32_t sithTime_g_clockTime;
+int sithTime_g_bPaused;
 
 void sithTime_Advance(void)
 {

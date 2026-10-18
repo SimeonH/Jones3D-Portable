@@ -15,7 +15,6 @@ void jonesString_Shutdown(void);
 
 // Helper hooking functions
 void jonesString_InstallHooks(void);
-void jonesString_ResetGlobals(void);
 
 J3D_EXTERN_C_END
 #endif // JONES3D_JONESSTRING_H

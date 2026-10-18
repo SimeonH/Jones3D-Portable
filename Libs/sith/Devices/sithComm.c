@@ -49,12 +49,9 @@ void sithComm_InstallHooks(void)
     J3D_HOOKFUNC(sithMessage_FileWrite);
 }
 
-void sithComm_ResetGlobals(void)
-{
-    memset(&sithMessage_g_localPlayerId, 0, sizeof(sithMessage_g_localPlayerId));
-    memset(&sithMessage_g_outputstream, 0, sizeof(sithMessage_g_outputstream));
-    memset(&sithMessage_g_inputstream, 0, sizeof(sithMessage_g_inputstream));
-}
+DPID sithMessage_g_localPlayerId;
+SithMessageStream sithMessage_g_outputstream;
+SithMessageStream sithMessage_g_inputstream;
 
 void sithMessage_Startup(void)
 {

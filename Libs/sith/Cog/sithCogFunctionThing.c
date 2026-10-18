@@ -5704,9 +5704,6 @@ void sithCogFunctionThing_InstallHooks(void)
     J3D_HOOKFUNC(sithCogFunctionThing_MakeFairyDustDeluxe);
 }
 
-void sithCogFunctionThing_ResetGlobals(void)
-{}
-
 int J3DAPI sithCogFunctionThing_RegisterFunctions(SithCogSymbolTable* pTable)
 {
     return sithCog_RegisterFunction(pTable, sithCogFunctionThing_WaitForStop, "waitforstop")

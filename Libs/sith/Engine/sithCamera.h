@@ -25,44 +25,31 @@ J3D_EXTERN_C_START
 #define SITHCAMERA_ATTENUATIONMIN 0.4f
 #define SITHCAMERA_ATTENUATIONMAX 0.8f
 
-#define sithCamera_g_pCurCamera J3D_DECL_FAR_VAR(sithCamera_g_pCurCamera, SithCamera*)
-// extern SithCamera *sithCamera_g_pCurCamera;
+extern SithCamera* sithCamera_g_pCurCamera;
 
-#define sithCamera_g_bExtCameraLookMode J3D_DECL_FAR_VAR(sithCamera_g_bExtCameraLookMode, int)
-// extern int sithCamera_g_bExtCameraLookMode;
+extern int sithCamera_g_bExtCameraLookMode;
 
-#define sithCamera_g_camSpot J3D_DECL_FAR_VAR(sithCamera_g_camSpot, rdVector3)
-// extern rdVector3 sithCamera_g_camSpot;
+extern rdVector3 sithCamera_g_camSpot;
 
-#define sithCamera_g_aCameras J3D_DECL_FAR_ARRAYVAR(sithCamera_g_aCameras, SithCamera(*)[7])
-// extern SithCamera sithCamera_g_aCameras[7];
+extern SithCamera sithCamera_g_aCameras[7];
 
-#define sithCamera_g_bCurCameraSet J3D_DECL_FAR_VAR(sithCamera_g_bCurCameraSet, int)
-// extern int sithCamera_g_bCurCameraSet;
+extern int sithCamera_g_bCurCameraSet;
 
-#define sithCamera_g_stateFlags J3D_DECL_FAR_VAR(sithCamera_g_stateFlags, SithCameraState)
-// extern SithCameraState sithCamera_g_stateFlags;
+extern SithCameraState sithCamera_g_stateFlags;
 
-#define sithCamera_g_curCycleCamNum J3D_DECL_FAR_VAR(sithCamera_g_curCycleCamNum, size_t)
-// extern int sithCamera_g_curCycleCamNum;
+extern size_t sithCamera_g_curCycleCamNum;
 
-#define sithCamera_g_vecCameraPosOffset J3D_DECL_FAR_VAR(sithCamera_g_vecCameraPosOffset, rdVector3)
-// extern rdVector3 sithCamera_g_vecCameraPosOffset;
+extern rdVector3 sithCamera_g_vecCameraPosOffset;
 
-#define sithCamera_g_vecCameraAngleOffset J3D_DECL_FAR_VAR(sithCamera_g_vecCameraAngleOffset, rdVector3)
-// extern rdVector3 sithCamera_g_vecCameraAngleOffset;
+extern rdVector3 sithCamera_g_vecCameraAngleOffset;
 
-#define sithCamera_g_cameraPosDelta J3D_DECL_FAR_VAR(sithCamera_g_cameraPosDelta, float)
-// extern float sithCamera_g_cameraPosDelta;
+extern float sithCamera_g_cameraPosDelta;
 
-#define sithCamera_g_cameraAngleDelta J3D_DECL_FAR_VAR(sithCamera_g_cameraAngleDelta, float)
-// extern float sithCamera_g_cameraAngleDelta;
+extern float sithCamera_g_cameraAngleDelta;
 
-#define sithCamera_g_orbCamOrient J3D_DECL_FAR_VAR(sithCamera_g_orbCamOrient, rdMatrix34)
-// extern rdMatrix34 sithCamera_g_orbCamOrient;
+extern rdMatrix34 sithCamera_g_orbCamOrient;
 
-#define sithCamera_g_camLookSpot J3D_DECL_FAR_VAR(sithCamera_g_camLookSpot, rdVector3)
-// extern rdVector3 sithCamera_g_camLookSpot;
+extern rdVector3 sithCamera_g_camLookSpot;
 
 int sithCamera_Startup(void);
 void sithCamera_Shutdown(void);
@@ -110,7 +97,6 @@ SithCameraState J3DAPI sithCamera_GetCameraStateFlags();
 
 // Helper hooking functions
 void sithCamera_InstallHooks(void);
-void sithCamera_ResetGlobals(void);
 
 J3D_EXTERN_C_END
 #endif // SITH_SITHCAMERA_H

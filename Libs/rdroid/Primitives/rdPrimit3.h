@@ -14,7 +14,6 @@ void J3DAPI rdPrimit3_ClipFace(const rdClipFrustum* pFrustrum, rdGeometryMode ge
 
 // Helper hooking functions
 void rdPrimit3_InstallHooks(void);
-void rdPrimit3_ResetGlobals(void);
 
 J3D_EXTERN_C_END
 #endif // RDROID_RDPRIMIT3_H

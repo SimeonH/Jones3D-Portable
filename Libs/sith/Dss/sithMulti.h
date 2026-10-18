@@ -9,11 +9,9 @@
 
 J3D_EXTERN_C_START
 
-#define sithMulti_g_serverId J3D_DECL_FAR_VAR(sithMulti_g_serverId, DPID)
-// extern DPID sithMulti_g_serverId;
+extern DPID sithMulti_g_serverId;
 
-#define sithMulti_g_message J3D_DECL_FAR_VAR(sithMulti_g_message, SithMessage)
-// extern SithMessage sithMulti_g_message;
+extern SithMessage sithMulti_g_message;
 
 void sithMulti_OpenGame(void); // Added
 void sithMulti_CloseGame();
@@ -57,7 +55,6 @@ void J3DAPI sithMulti_StopWelcomingPlayer(int bError);
 
 // Helper hooking functions
 void sithMulti_InstallHooks(void);
-void sithMulti_ResetGlobals(void);
 
 J3D_EXTERN_C_END
 #endif // SITH_SITHMULTI_H

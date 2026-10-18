@@ -27,9 +27,6 @@ void rdThing_InstallHooks(void)
     J3D_HOOKFUNC(rdThing_AccumulateMatrices);
 }
 
-void rdThing_ResetGlobals(void)
-{}
-
 rdThing* J3DAPI rdThing_New(SithThing* pThing)
 {
     rdThing* prdThing = (rdThing*)STDMALLOC(sizeof(rdThing));

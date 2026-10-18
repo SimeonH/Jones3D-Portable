@@ -42,9 +42,6 @@ void sithMaterial_InstallHooks(void)
     J3D_HOOKFUNC(sithMaterial_CacheRemove);
 }
 
-void sithMaterial_ResetGlobals(void)
-{}
-
 int sithMaterial_Startup(void)
 {
     // Added

@@ -93,9 +93,6 @@ void sithVoice_InstallHooks(void)
     J3D_HOOKFUNC(sithVoice_GetTextFont);
 }
 
-void sithVoice_ResetGlobals(void)
-{}
-
 int sithVoice_Startup(void)
 {
     // Added:

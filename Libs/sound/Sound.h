@@ -102,7 +102,6 @@ tSoundChannel* J3DAPI Sound_GetChannelBySoundHandle(tSoundHandle hSnd);
 
 // Helper hooking functions
 void Sound_InstallHooks(void);
-void Sound_ResetGlobals(void);
 
 J3D_EXTERN_C_END
 #endif // SOUND_SOUND_H

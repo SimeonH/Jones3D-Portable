@@ -14,10 +14,6 @@ void stdFnames_InstallHooks(void)
     J3D_HOOKFUNC(stdFnames_MakePath);
 }
 
-void stdFnames_ResetGlobals(void)
-{
-
-}
 
 const char* J3DAPI stdFnames_FindMedName(const char* pFilePath)
 {

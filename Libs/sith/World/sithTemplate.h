@@ -30,7 +30,6 @@ SithThing* J3DAPI sithTemplate_GetTemplate(const char* pName);
 
 // Helper hooking functions
 void sithTemplate_InstallHooks(void);
-void sithTemplate_ResetGlobals(void);
 
 J3D_EXTERN_C_END
 #endif // SITH_SITHTEMPLATE_H

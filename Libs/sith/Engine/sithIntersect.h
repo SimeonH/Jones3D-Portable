@@ -24,7 +24,6 @@ int J3DAPI sithIntersect_CheckThingBoundBoxIntersection(const SithThing* pThing1
 
 // Helper hooking functions
 void sithIntersect_InstallHooks(void);
-void sithIntersect_ResetGlobals(void);
 
 J3D_EXTERN_C_END
 #endif // SITH_SITHINTERSECT_H

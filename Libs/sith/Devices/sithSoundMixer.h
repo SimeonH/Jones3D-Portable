@@ -54,7 +54,6 @@ signed int J3DAPI sithSoundMixer_GameRestore(tFileHandle fh);
 
 // Helper hooking functions
 void sithSoundMixer_InstallHooks(void);
-void sithSoundMixer_ResetGlobals(void);
 
 J3D_EXTERN_C_END
 #endif // SITH_SITHSOUNDMIXER_H

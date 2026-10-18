@@ -13,10 +13,6 @@ void rdCanvas_InstallHooks(void)
     J3D_HOOKFUNC(rdCanvas_Free);
 }
 
-void rdCanvas_ResetGlobals(void)
-{
-
-}
 
 rdCanvas* J3DAPI rdCanvas_New(int flags, tVBuffer* pVBuffer, int left, int top, int right, int bottom)
 {

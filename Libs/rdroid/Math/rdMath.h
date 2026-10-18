@@ -85,7 +85,6 @@ inline float J3DAPI rdMath_DeltaAngleNormalizedAbs(const rdVector3* pVectorX, co
 
 // Helper hooking functions
 void rdMath_InstallHooks(void);
-void rdMath_ResetGlobals(void);
 
 J3D_EXTERN_C_END
 #endif // RDROID_RDMATH_H

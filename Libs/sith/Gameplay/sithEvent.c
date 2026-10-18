@@ -33,10 +33,7 @@ void sithEvent_InstallHooks(void)
     J3D_HOOKFUNC(sithEvent_AddEvent);
 }
 
-void sithEvent_ResetGlobals(void)
-{
-    memset(&sithEvent_g_pFirstQueuedEvent, 0, sizeof(sithEvent_g_pFirstQueuedEvent));
-}
+SithEvent* sithEvent_g_pFirstQueuedEvent;
 
 int sithEvent_Startup(void)
 {
@@ -169,7 +166,9 @@ void sithEvent_Process(void)
 
 void sithEvent_ResetFreeBufferTable(void)
 {
-    for ( int i = STD_ARRAYLEN(aFreeEventBufferIdxs); i >= 0; --i )
+    // Fixed: was `i >= 0`, which ran 257 times and wrote aFreeEventBufferIdxs[256] (one past the end).
+    // Harmless under MSVC, but clang -O2 exploits the UB and turns this into a runaway loop.
+    for ( int i = STD_ARRAYLEN(aFreeEventBufferIdxs); i > 0; --i )
     {
         aFreeEventBufferIdxs[STD_ARRAYLEN(aFreeEventBufferIdxs) - i] = i - 1;
     }

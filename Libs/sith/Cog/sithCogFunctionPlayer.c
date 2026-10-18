@@ -708,9 +708,6 @@ void sithCogFunctionPlayer_InstallHooks(void)
     J3D_HOOKFUNC(sithCogFunctionPlayer_GetLastWeapon);
 }
 
-void sithCogFunctionPlayer_ResetGlobals(void)
-{}
-
 int J3DAPI sithCogFunctionPlayer_RegisterFunctions(SithCogSymbolTable* pTable)
 {
     return sithCog_RegisterFunction(pTable, sithCogFunctionPlayer_SetInvActivated, "setinvactivated")

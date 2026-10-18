@@ -33,7 +33,6 @@ UINT_PTR CALLBACK JonesDialog_SubclassFileDialogProc(HWND hDlg, UINT uMsg, WPARA
 
 // Helper hooking functions
 void JonesDialog_InstallHooks(void);
-void JonesDialog_ResetGlobals(void);
 
 J3D_EXTERN_C_END
 #endif // JONES3D_JONESDIALOG_H

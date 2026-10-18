@@ -28,9 +28,6 @@ void rdMaterial_InstallHooks(void)
     J3D_HOOKFUNC(rdMaterial_GetMipSize);
 }
 
-void rdMaterial_ResetGlobals(void)
-{}
-
 rdMaterialLoaderFunc J3DAPI rdMaterial_RegisterLoader(rdMaterialLoaderFunc pFunc)
 {
     rdMaterialLoaderFunc pPrevFunc = rdMaterial_pMaterialsLoader;

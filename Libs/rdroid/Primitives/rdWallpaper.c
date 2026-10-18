@@ -27,9 +27,6 @@ void rdWallpaper_InstallHooks(void)
     J3D_HOOKFUNC(rdWallpaper_DrawWallLine);
 }
 
-void rdWallpaper_ResetGlobals(void)
-{}
-
 rdWallpaper* J3DAPI rdWallpaper_New(const char* pName)
 {
     rdWallpaper* pWallpapaer = (rdWallpaper*)STDMALLOC(sizeof(rdWallpaper));

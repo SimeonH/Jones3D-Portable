@@ -28,11 +28,9 @@ typedef struct sStdConffileEntry
 static_assert(sizeof(StdConffileEntry) == 4100, "sizeof(StdConffileEntry) == 4100");
 
 
-#define stdConffile_g_entry J3D_DECL_FAR_VAR(stdConffile_g_entry, StdConffileEntry)
-// extern StdConffileEntry stdConffile_g_entry;
+extern StdConffileEntry stdConffile_g_entry;
 
-#define stdConffile_g_aLine J3D_DECL_FAR_VAR(stdConffile_g_aLine, char*)
-// extern char *stdConffile_g_aLine;
+extern char* stdConffile_g_aLine;
 
 int J3DAPI stdConffile_Open(const char* pFilename);
 int J3DAPI stdConffile_OpenWrite(const char* pFilename);
@@ -60,7 +58,6 @@ const char* stdConffile_GetWriteFilename(void); // Added
 
 // Helper hooking functions
 void stdConffile_InstallHooks(void);
-void stdConffile_ResetGlobals(void);
 
 /**
  * @brief Reads a line and parses data based on the provided format.

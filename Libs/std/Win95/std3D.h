@@ -6,11 +6,9 @@
 
 J3D_EXTERN_C_START
 
-#define std3D_g_fogDensity J3D_DECL_FAR_VAR(std3D_g_fogDensity, float)
-// extern float std3D_g_fogDensity ;
+extern float std3D_g_fogDensity;
 
-#define std3D_g_maxVertices J3D_DECL_FAR_VAR(std3D_g_maxVertices, size_t)
-// extern size_t std3D_g_maxVertices;
+extern size_t std3D_g_maxVertices;
 
 int std3D_Startup(void);
 void std3D_Shutdown(void);
@@ -58,7 +56,6 @@ void J3DAPI std3D_FreeDisplayEnvironment(StdDisplayEnvironment* pEnv);
 
 // Helper hooking functions
 void std3D_InstallHooks(void);
-void std3D_ResetGlobals(void);
 
 J3D_EXTERN_C_END
 #endif // STD_STD3D_H

@@ -19,7 +19,6 @@ int J3DAPI sithItem_ParseArg(const StdConffileArg* pArg, SithThing* pThing, int 
 
 // Helper hooking functions
 void sithItem_InstallHooks(void);
-void sithItem_ResetGlobals(void);
 
 J3D_EXTERN_C_END
 #endif // SITH_SITHITEM_H

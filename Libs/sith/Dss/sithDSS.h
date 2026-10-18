@@ -89,6 +89,7 @@ typedef enum eSithDSSType
     SITHDSS_WELCOME             = 33,
     SITHDSS_JOIN                = 34,
     SITHDSS_DESTROYTHING        = 35,
+    SITHDSS_UNKNOWN_36          = 36, // Join status reply, sent by sithMulti_FinishJoining
     SITHDSS_PLAYSOUNDMODE       = 37,
     SITHDSS_PING                = 38,
     SITHDSS_PONG                = 39,
@@ -174,7 +175,6 @@ void J3DAPI sithDSS_WriteWString(uint8_t** stream, const wchar_t* str, int lengt
 
 // Helper hooking functions
 void sithDSS_InstallHooks(void);
-void sithDSS_ResetGlobals(void);
 
 
 // Serialization functions

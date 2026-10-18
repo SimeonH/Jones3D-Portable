@@ -51,20 +51,7 @@ void rdClip_InstallHooks(void)
     J3D_HOOKFUNC(rdClip_VerticesToPlane);
 }
 
-void rdClip_ResetGlobals(void)
-{
-    //memset(&rdClip_pSourceTVert, 0, sizeof(rdClip_pSourceTVert));
-    //memset(&rdClip_pDestTVert, 0, sizeof(rdClip_pDestTVert));
-    //memset(&rdClip_pDestVertIntensity, 0, sizeof(rdClip_pDestVertIntensity));
-    //memset(&rdClip_pDestVert, 0, sizeof(rdClip_pDestVert));
-    //memset(&rdClip_aWorkTVerts, 0, sizeof(rdClip_aWorkTVerts));
-    //memset(&rdClip_pSourceVert, 0, sizeof(rdClip_pSourceVert));
-    //memset(&rdClip_pSourceVertIntensity, 0, sizeof(rdClip_pSourceVertIntensity));
-    //memset(&rdClip_aWorkVerts, 0, sizeof(rdClip_aWorkVerts));
-    //memset(&rdClip_aWorkVertIntensities, 0, sizeof(rdClip_aWorkVertIntensities));
-    memset(&rdClip_g_faceStatus, 0, sizeof(rdClip_g_faceStatus));
-    //memset(&rdClip_aWorkFaceVerts, 0, sizeof(rdClip_aWorkFaceVerts));
-}
+int rdClip_g_faceStatus;
 
 int J3DAPI rdClip_Line2(const rdCanvas* pCanvas, int* x1, int* y1, int* x2, int* y2)
 {

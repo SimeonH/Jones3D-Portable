@@ -11,10 +11,6 @@ void rdFace_InstallHooks(void)
     J3D_HOOKFUNC(rdFace_FreeEntry);
 }
 
-void rdFace_ResetGlobals(void)
-{
-
-}
 
 rdFace* J3DAPI J3DAPIrdFace_New(void)
 {

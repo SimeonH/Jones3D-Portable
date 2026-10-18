@@ -124,10 +124,7 @@ void sithControl_InstallHooks(void)
     J3D_HOOKFUNC(sithControl_RegisterJoystickBindings);
 }
 
-void sithControl_ResetGlobals(void)
-{
-    memset(&sithControl_g_controlOptions, 0, sizeof(sithControl_g_controlOptions));
-}
+int sithControl_g_controlOptions;
 
 int J3DAPI sithControl_Startup(int bKeyboardForeground)
 {

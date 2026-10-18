@@ -44,10 +44,6 @@ void rdFont_InstallHooks(void)
     J3D_HOOKFUNC(rdFont_Close);
 }
 
-void rdFont_ResetGlobals(void)
-{
-
-}
 
 void rdFont_Startup(void)
 {

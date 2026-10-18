@@ -199,9 +199,6 @@ void sithSoundClass_InstallHooks(void)
     J3D_HOOKFUNC(sithSoundClass_CacheRemove);
 }
 
-void sithSoundClass_ResetGlobals(void)
-{}
-
 int sithSoundClass_Startup(void)
 {
     sithSoundClass_pHashtblModes = stdHashtbl_New(64u);

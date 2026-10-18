@@ -29,9 +29,6 @@ void sithSound_InstallHooks(void)
     J3D_HOOKFUNC(sithSound_SetSkipRestoringSounds);
 }
 
-void sithSound_ResetGlobals(void)
-{}
-
 int J3DAPI sithSound_Initialize(tHostServices* pHS)
 {
     return Sound_Initialize(pHS);

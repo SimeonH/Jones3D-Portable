@@ -10,9 +10,6 @@ void stdLinkList_InstallHooks(void)
     J3D_HOOKFUNC(stdLinkList_RemoveNode);
 }
 
-void stdLinkList_ResetGlobals(void)
-{}
-
 void J3DAPI stdLinkList_AddNode(tLinkListNode* pCur, tLinkListNode* pNodeToAdd)
 {
     STD_ASSERTREL(pCur != NULL);

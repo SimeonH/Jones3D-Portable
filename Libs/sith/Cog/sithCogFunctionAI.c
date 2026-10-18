@@ -1296,9 +1296,6 @@ void sithCogFunctionAI_InstallHooks(void)
     J3D_HOOKFUNC(sithCogFunctionAI_AISpat);
 }
 
-void sithCogFunctionAI_ResetGlobals(void)
-{}
-
 int J3DAPI sithCogFunctionAI_RegisterFunctions(SithCogSymbolTable* pTable)
 {
     return sithCog_RegisterFunction(pTable, sithCogFunctionAI_AIGetMode, "aigetmode")

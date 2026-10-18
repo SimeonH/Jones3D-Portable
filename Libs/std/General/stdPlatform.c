@@ -26,10 +26,6 @@ void stdPlatform_InstallHooks(void)
     J3D_HOOKFUNC(stdPlatform_UnlockHandle);
 }
 
-void stdPlatform_ResetGlobals(void)
-{
-    //memset(&stdPlatform_bAssert, 0, sizeof(stdPlatform_bAssert));
-}
 
 // TODO: stdFile* functions should be moved here to stdPlatform
 

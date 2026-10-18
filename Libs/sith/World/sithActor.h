@@ -34,7 +34,6 @@ int J3DAPI sithActor_ParseArg(const StdConffileArg* pArg, SithThing* pThing, int
 
 // Helper hooking functions
 void sithActor_InstallHooks(void);
-void sithActor_ResetGlobals(void);
 
 J3D_EXTERN_C_END
 #endif // SITH_SITHACTOR_H

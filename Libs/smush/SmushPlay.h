@@ -4,19 +4,10 @@
 #include <j3dcore/j3d.h>
 #include <std/types.h>
 
+#include <mmreg.h>
+#include <dsound.h>
+
 J3D_EXTERN_C_START
-
-#define SmushPlay_SysStartup_ADDR 0x004E30B0
-#define SmushPlay_SysStartup_TYPE int (J3DAPI*)(HWND, LPDIRECTSOUND)
-
-#define SmushPlay_SysShutdown_ADDR 0x004E33A0
-#define SmushPlay_SysShutdown_TYPE int (*)(void)
-
-#define SmushPlay_SetGlobalVolume_ADDR 0x004E33C0
-#define SmushPlay_SetGlobalVolume_TYPE void (J3DAPI*)(size_t)
-
-#define SmushPlay_PlayMovie_ADDR 0x004E3140
-#define SmushPlay_PlayMovie_TYPE int (J3DAPI*)(const char*, int, int, int, int, int, int, int, int, int (__cdecl*)(const SmushBitmap*, int), int, int, int)
 
 typedef struct sSmushColorFormat
 {
@@ -51,25 +42,16 @@ typedef struct sSmushBitmap
 } SmushBitmap;
 
 
-inline int J3DAPI SmushPlay_SysStartup(HWND hwnd, LPDIRECTSOUND pDSound)
-{
-    return J3D_TRAMPOLINE_CALL(SmushPlay_SysStartup, hwnd, pDSound);
-}
+// SMUSH (SANM) movie player.
+// Video is decoded with Blocky16 codec ported from ScummVM, audio (VIMA) with AudioLib.
 
-inline void SmushPlay_SysShutdown(void)
-{
-    J3D_TRAMPOLINE_CALL(SmushPlay_SysShutdown);
-}
+int J3DAPI SmushPlay_SysStartup(HWND hwnd, LPDIRECTSOUND pDSound);
+void SmushPlay_SysShutdown(void);
+void J3DAPI SmushPlay_SetGlobalVolume(size_t volume); // 0 - 127
 
-inline void J3DAPI SmushPlay_SetGlobalVolume(size_t volume)
-{
-    J3D_TRAMPOLINE_CALL(SmushPlay_SetGlobalVolume, volume);
-}
-
-inline int J3DAPI SmushPlay_PlayMovie(const char* pFilename, int a1, int a3, int a4, int a5, int width, int height, int a8, int a9, int(__cdecl* pBlit)(const SmushBitmap* pBitmap, int a2), int a11, int a12, int a13)
-{
-    return J3D_TRAMPOLINE_CALL(SmushPlay_PlayMovie, pFilename, a1, a3, a4, a5, width, height, a8, a9, pBlit, a11, a12, a13);
-}
+// Plays movie, blocks until movie ends or pBlit returns non-zero.
+// pBlit is called for every frame with decoded RGB565 frame bitmap.
+int J3DAPI SmushPlay_PlayMovie(const char* pFilename, int a1, int a3, int a4, int a5, int width, int height, int a8, int a9, int(__cdecl* pBlit)(const SmushBitmap* pBitmap, int a2), int a11, int a12, int a13);
 
 J3D_EXTERN_C_END
 

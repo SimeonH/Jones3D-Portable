@@ -17,14 +17,11 @@ typedef enum eSithMessageStream
     SITHMESSAGE_STREAM_ALL  = 0xFF,
 } SithMessageStream;
 
-#define sithMessage_g_localPlayerId J3D_DECL_FAR_VAR(sithMessage_g_localPlayerId, DPID)
-// extern DPID sithMessage_g_localPlayerId;
+extern DPID sithMessage_g_localPlayerId;
 
-#define sithMessage_g_outputstream J3D_DECL_FAR_VAR(sithMessage_g_outputstream, SithMessageStream)
-// extern int sithMessage_g_outputstream;
+extern SithMessageStream sithMessage_g_outputstream;
 
-#define sithMessage_g_inputstream J3D_DECL_FAR_VAR(sithMessage_g_inputstream, SithMessageStream)
-// extern int sithMessage_g_inputstream;
+extern SithMessageStream sithMessage_g_inputstream;
 
 // NOTE: all sithMessage functions should be in sithComm module
 void sithMessage_Startup(void);
@@ -48,7 +45,6 @@ void J3DAPI sithMessage_RegisterFunction(int type, SithMessageProcessFunc pFunc)
 
 // Helper hooking functions
 void sithComm_InstallHooks(void);
-void sithComm_ResetGlobals(void);
 
 J3D_EXTERN_C_END
 #endif // SITH_SITHCOMM_H

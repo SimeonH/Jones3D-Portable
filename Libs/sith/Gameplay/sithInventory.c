@@ -49,17 +49,12 @@ void sithInventory_InstallHooks(void)
     J3D_HOOKFUNC(sithInventory_SetSwimmingInventory);
 }
 
-void sithInventory_ResetGlobals(void)
-{
-    int sithInventory_g_bResetInventory_tmp = 1;
-    memcpy(&sithInventory_g_bInitInventory, &sithInventory_g_bResetInventory_tmp, sizeof(sithInventory_g_bInitInventory));
-
-    memset(&sithInventory_g_bSendDeactivateMessage, 0, sizeof(sithInventory_g_bSendDeactivateMessage));
-    memset(&sithInventory_g_dword_56B750, 0, sizeof(sithInventory_g_dword_56B750));
-    memset(&sithInventory_g_dword_56B754, 0, sizeof(sithInventory_g_dword_56B754));
-    memset(&sithInventory_g_aTypes, 0, sizeof(sithInventory_g_aTypes));
-    memset(&sithInventory_g_aUnknown, 0, sizeof(sithInventory_g_aUnknown));
-}
+int sithInventory_g_bInitInventory = 1;
+int sithInventory_g_bSendDeactivateMessage;
+int sithInventory_g_dword_56B750;
+int sithInventory_g_dword_56B754;
+SithInventoryType sithInventory_g_aTypes[SITHINVENTORY_MAXTYPES];
+SithInventoryUnknown sithInventory_g_aUnknown[20];
 
 void J3DAPI sithInventory_RegisterType(size_t typeId, const char* pName, float min, float max, SithInventoryTypeFlag flags, SithCog* pItemCog, rdModel3* pInvModel, rdModel3* pItemModel)
 {

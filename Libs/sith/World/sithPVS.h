@@ -18,7 +18,6 @@ void J3DAPI sithPVS_SetTable(uint8_t* paAdjoinTable, const uint8_t* aElements, s
 
 // Helper hooking functions
 void sithPVS_InstallHooks(void);
-void sithPVS_ResetGlobals(void);
 
 J3D_EXTERN_C_END
 #endif // SITH_SITHPVS_H

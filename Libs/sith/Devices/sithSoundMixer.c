@@ -59,9 +59,6 @@ void sithSoundMixer_InstallHooks(void)
     J3D_HOOKFUNC(sithSoundMixer_GetThingIndex);
 }
 
-void sithSoundMixer_ResetGlobals(void)
-{}
-
 int sithSoundMixer_Startup(void)
 {
     if ( sithSoundMixer_bStartup )

@@ -22,7 +22,6 @@ const char* J3DAPI stdGob_FileGets(GobFileHandle* pGobFileHandle, char* pStr, si
 
 // Helper hooking functions
 void stdGob_InstallHooks(void);
-void stdGob_ResetGlobals(void);
 
 J3D_EXTERN_C_END
 #endif // STD_STDGOB_H

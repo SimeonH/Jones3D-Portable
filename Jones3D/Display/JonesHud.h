@@ -93,7 +93,6 @@ void JonesHud_RestoreTreasuresStatistics(void);
 
 // Helper hooking functions
 void JonesHud_InstallHooks(void);
-void JonesHud_ResetGlobals(void);
 
 J3D_EXTERN_C_END
 #endif // JONES3D_JONESHUD_H

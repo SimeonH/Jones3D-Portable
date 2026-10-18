@@ -26,8 +26,7 @@ J3D_EXTERN_C_START
 #define SITHPUPPET_PLAYERROR_ALREADYPLAYING -99
 
 
-#define sithPuppet_g_bPlayerLeapForward J3D_DECL_FAR_VAR(sithPuppet_g_bPlayerLeapForward, int)
-// extern int sithPuppet_g_bPlayerLeapForward;
+extern int sithPuppet_g_bPlayerLeapForward;
 
 int sithPuppet_Startup(void);
 void sithPuppet_Shutdown(void);
@@ -109,7 +108,6 @@ void J3DAPI sithPuppet_ClearTrackList(SithThing* pThing);
 
 // Helper hooking functions
 void sithPuppet_InstallHooks(void);
-void sithPuppet_ResetGlobals(void);
 
 J3D_EXTERN_C_END
 #endif // SITH_SITHPUPPET_H

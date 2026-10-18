@@ -13,7 +13,6 @@ int J3DAPI sithCogFunctionSound_RegisterFunctions(SithCogSymbolTable* pTable);
 
 // Helper hooking functions
 void sithCogFunctionSound_InstallHooks(void);
-void sithCogFunctionSound_ResetGlobals(void);
 
 J3D_EXTERN_C_END
 #endif // SITH_SITHCOGFUNCTIONSOUND_H

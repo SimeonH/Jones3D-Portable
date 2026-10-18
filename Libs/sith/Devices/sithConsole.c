@@ -53,9 +53,6 @@ void sithConsole_InstallHooks(void)
     J3D_HOOKFUNC(sithConsole_FreeCommandTable);
 }
 
-void sithConsole_ResetGlobals(void)
-{}
-
 int sithConsole_Startup(void)
 {
     SITH_ASSERTREL(!bStarted);

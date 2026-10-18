@@ -59,10 +59,6 @@ void rdCache_InstallHooks(void)
     J3D_HOOKFUNC(rdCache_ProcFaceCompare);
 }
 
-void rdCache_ResetGlobals(void)
-{
-
-}
 
 void J3DAPI rdCache_Startup()
 {
@@ -217,6 +213,7 @@ void J3DAPI rdCache_SendFaceListToHardware(size_t numPolys, rdCacheProcEntry* pC
 {
     size_t polyNum   = 0;
     int curMatCelNum = -1;
+    int batchMatCelNum = -1; // Fixed: raw (unclamped) matCelNum of the batch, used for the batch-break check below
     const tStdFadeFactor* pFadeFactor = stdEffect_GetFadeFactor();
 
     if ( pfSort == rdCache_ProcFaceDistanceCompare )
@@ -271,7 +268,8 @@ LABEL_4:
             }
 
             tSystemTexture* pTex = NULL;
-            curMatCelNum = pCurPoly->matCelNum;
+            curMatCelNum   = pCurPoly->matCelNum;
+            batchMatCelNum = pCurPoly->matCelNum;
             if ( curMatCelNum == -1 )
             {
                 if ( pCurPoly->pMaterial->curCelNum < 0 )
@@ -415,7 +413,10 @@ LABEL_4:
             if ( 3 * (pCurPoly->numVertices - 2) + totalIndices >= std3D_g_maxVertices // i.e. totalIndices + num required triangle indices for next poly >= std3D_g_maxVertices
                 || polyNum >= numPolys
                 || pCurMat != pCurPoly->pMaterial
-                || curMatCelNum != pCurPoly->matCelNum
+                // Fixed: Was comparing the resolved/clamped cel num (curMatCelNum) against the next poly's raw matCelNum,
+                // so faces with matCelNum == -1 (use material's current cel) never batched, issuing one draw call per face.
+                // The original compares the raw value, as done here.
+                || batchMatCelNum != pCurPoly->matCelNum
                 || fflags != pCurPoly->flags )
             {
                 RD_ASSERTREL(rdCache_totalVerts < RDCACHE_VERTBUFFERSIZE);

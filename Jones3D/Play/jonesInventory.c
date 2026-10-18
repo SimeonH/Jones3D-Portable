@@ -39,9 +39,6 @@ void jonesInventory_InstallHooks(void)
     J3D_HOOKFUNC(jonesInventory_ResetStatisticsGameTime);
 }
 
-void jonesInventory_ResetGlobals(void)
-{}
-
 int jonesInventory_Open(void)
 {
     STD_FORMAT(std_g_genBuffer, "misc\\%s", "items.dat");

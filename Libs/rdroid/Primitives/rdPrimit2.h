@@ -19,7 +19,6 @@ int J3DAPI rdPrimit2_DrawTriangle(rdCanvas* pCanvas, int x1, int y1, int x2, int
 
 // Helper hooking functions
 void rdPrimit2_InstallHooks(void);
-void rdPrimit2_ResetGlobals(void);
 
 J3D_EXTERN_C_END
 #endif // RDROID_RDPRIMIT2_H

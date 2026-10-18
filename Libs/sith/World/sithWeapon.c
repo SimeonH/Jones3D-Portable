@@ -123,9 +123,6 @@ void sithWeapon_InstallHooks(void)
     J3D_HOOKFUNC(sithWeapon_ActivateWhip);
 }
 
-void sithWeapon_ResetGlobals(void)
-{}
-
 void sithWeapon_Open(void)
 {
     sithWeapon_secWeaponActivationWaitEndTime = 0.0f;

@@ -170,9 +170,6 @@ void sithAnimate_InstallHooks(void)
     J3D_HOOKFUNC(sithAnimate_FindAndEnterFloorSurface);
 }
 
-void sithAnimate_ResetGlobals(void)
-{}
-
 void sithAnimate_Startup(void)
 {
     sithAnimate_FreeAllAnims();

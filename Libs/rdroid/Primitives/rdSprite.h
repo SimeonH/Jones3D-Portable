@@ -15,7 +15,6 @@ int J3DAPI rdSprite_Draw(rdThing* prdThing, const rdMatrix34* orient);
 
 // Helper hooking functions
 void rdSprite_InstallHooks(void);
-void rdSprite_ResetGlobals(void);
 
 J3D_EXTERN_C_END
 #endif // RDROID_RDSPRITE_H

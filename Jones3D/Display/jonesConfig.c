@@ -1,5 +1,6 @@
 #include "jonesConfig.h"
 #include <j3dcore/j3dhook.h>
+#include <wkernel/wkernel.h>
 
 #include <Jones3D/Display/JonesHud.h>
 #include <Jones3D/Display/JonesHudConstants.h>
@@ -17,7 +18,7 @@
 
 #include <sith/Devices/sithControl.h>
 #include <sith/Devices/sithSoundMixer.h>
-#include <sith/DSS/sithGamesave.h>
+#include <sith/Dss/sithGamesave.h>
 #include <sith/Engine/sithRender.h>
 #include <sith/Gameplay/sithOverlayMap.h>
 #include <sith/Gameplay/sithPlayer.h>
@@ -1173,9 +1174,6 @@ void jonesConfig_InstallHooks(void)
     J3D_HOOKFUNC(jonesConfig_InsertCD_HandleWM_COMMAND);
 }
 
-void jonesConfig_ResetGlobals(void)
-{}
-
 int jonesConfig_Startup(void)
 {
     if ( jonesConfig_bStartup )
@@ -2008,7 +2006,7 @@ BOOL CALLBACK jonesConfig_MessageDialogProc(HWND hwnd, UINT uMsg, WPARAM wParam,
 
 void J3DAPI jonesConfig_InitMessageDialogIcon(HWND hWnd, JonesMessageDialogData* pData)
 {
-    HINSTANCE hInstance = (HINSTANCE)GetWindowLongPtr(hWnd, GWL_HINSTANCE);
+    HINSTANCE hInstance = wkernel_GetResourceInstance();
     if ( pData )
     {
         HANDLE hImage = LoadImage(hInstance, MAKEINTRESOURCE(pData->iconID), IMAGE_ICON, 64, 64, LR_DEFAULTCOLOR);
@@ -3655,7 +3653,7 @@ int J3DAPI jonesConfig_GetSaveGameFilePath(HWND hWnd, char* pOutFilePath)
     OPENFILENAME ofn = { 0 };
     ofn.lStructSize   = sizeof(OPENFILENAME);
     ofn.hwndOwner     = hWnd;
-    ofn.hInstance     = (HINSTANCE)GetWindowLongPtr(hWnd, GWL_HINSTANCE);
+    ofn.hInstance     = wkernel_GetResourceInstance();
 
     char aFilterStr[128] = { 0 };
     STD_FORMAT(aFilterStr, aFileterStr, "(.nds)");
@@ -4123,7 +4121,7 @@ int J3DAPI jonesConfig_GetLoadGameFilePath(HWND hWnd, char* pDestNdsPath)
     OPENFILENAME ofn      = { 0 };
     ofn.lStructSize       = sizeof(OPENFILENAME);
     ofn.hwndOwner         = hWnd;
-    ofn.hInstance         = (HINSTANCE)GetWindowLongPtr(hWnd, GWL_HINSTANCE);
+    ofn.hInstance         = wkernel_GetResourceInstance();
     ofn.lpstrFilter       = aFilterStr;
     ofn.lpstrCustomFilter = NULL;
 
@@ -9289,7 +9287,7 @@ int J3DAPI jonesConfig_StoreInitItemIcons(HWND hWnd, tStoreCartState* pCart)
         return 0;
     }
 
-    HINSTANCE hInstance = (HINSTANCE)GetWindowLongPtr(hWnd, GWL_HINSTANCE);
+    HINSTANCE hInstance = wkernel_GetResourceInstance();
     int result = hInstance != NULL;
     for ( size_t i = 0; i < STD_ARRAYLEN(JonesHud_aStoreItems); ++i )
     {

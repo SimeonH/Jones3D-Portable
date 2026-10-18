@@ -37,16 +37,12 @@ void rdMatrix_InstallHooks(void)
     J3D_HOOKFUNC(rdMatrix_TransformPointList34);
 }
 
-void rdMatrix_ResetGlobals(void)
-{
-    static const rdMatrix34 rdroid_g_identMatrix34_tmp = {
+const rdMatrix34 rdroid_g_identMatrix34 = {
       { { 1.0f }, { 0.0f }, { 0.0f } },
       { { 0.0f }, { 1.0f }, { 0.0f } },
       { { 0.0f }, { 0.0f }, { 1.0f } },
       { { 0.0f }, { 0.0f }, { 0.0f } }
     };
-    memcpy((rdMatrix34*)&rdroid_g_identMatrix34, &rdroid_g_identMatrix34_tmp, sizeof(rdroid_g_identMatrix34));
-}
 
 void J3DAPI rdMatrix_Build34(rdMatrix34* res, const rdVector3* pyr, const rdVector3* pos)
 {

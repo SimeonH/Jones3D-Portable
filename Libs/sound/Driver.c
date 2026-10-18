@@ -132,9 +132,6 @@ void Driver_InstallHooks(void)
     J3D_HOOKFUNC(SoundDriver_Sleep);
 }
 
-void Driver_ResetGlobals(void)
-{}
-
 static void SoundDriver_LogError(const char* pFormat, ...)
 {
     if ( SoundDriver_pfLogError )

@@ -20,7 +20,6 @@ void J3DAPI stdHashtbl_DumpTable(tHashTable* pTable); // Added
 
 // Helper hooking functions
 void stdHashtbl_InstallHooks(void);
-void stdHashtbl_ResetGlobals(void);
 
 J3D_EXTERN_C_END
 #endif // STD_STDHASHTBL_H

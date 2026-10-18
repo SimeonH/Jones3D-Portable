@@ -15,6 +15,12 @@ set(JONES3D_POST_BUILD_COPY_DIR "" CACHE PATH "Destination folder for the post-b
 file(GLOB_RECURSE JONES3D_DLL_SOURCES *.c)
 file(GLOB_RECURSE JONES3D_DLL_HEADERS *.h)
 list(REMOVE_ITEM JONES3D_DLL_SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/sha256.h")
+list(REMOVE_ITEM JONES3D_DLL_SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/standalone.c")
+
+# Standalone OpenJones3D.exe sources: everything from the DLL except its injection entry point
+set(JONES3D_STANDALONE_SOURCES ${JONES3D_DLL_SOURCES})
+list(REMOVE_ITEM JONES3D_STANDALONE_SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/dllmain.c")
+list(APPEND JONES3D_STANDALONE_SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/standalone.c")
 
 # Jones3D EXE sources
 set(JONES3D_EXE_SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/exemain.cpp")
@@ -26,8 +32,17 @@ add_library(Jones3D_DLL SHARED ${JONES3D_DLL_SOURCES} ${JONES3D_DLL_HEADERS})
 # Make Jones3D.exe depending on Jones3D.dll
 add_dependencies(Jones3D Jones3D_DLL)
 
+# exemain.cpp calls MessageBoxW (via the UNICODE-mapped MessageBox macro) directly, with
+# nothing else pulling in user32.lib for this target.
+target_link_libraries(Jones3D PRIVATE User32.lib)
+
 # Add Unicode character set for Jones3D.exe
-target_compile_definitions(Jones3D PRIVATE _UNICODE )
+# NOTE: UNICODE (no underscore) controls the Win32 API's TCHAR-style A/W macro selection
+# (MessageBox, CreateProcess, etc. in winuser.h/processthreadsapi.h); _UNICODE alone only
+# affects the CRT's tchar.h. exemain.cpp calls these with wide (L"...") strings, so without
+# UNICODE they resolve to the ANSI *A entry points and fail to compile (and would equally
+# fail to compile correctly under real MSVC, not just here).
+target_compile_definitions(Jones3D PRIVATE _UNICODE UNICODE)
 
 # Set DPI awareness
 set_property(TARGET Jones3D PROPERTY VS_DPI_AWARE "PerMonitor")
@@ -41,6 +56,20 @@ target_include_directories(Jones3D_DLL PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/..)
 # Link against Libs project
 target_link_libraries(Jones3D_DLL PRIVATE Libs)
 target_link_libraries(Jones3D_DLL PRIVATE Comctl32.lib)
+# JonesDialog.c/JonesHud.c call GDI/USER32/SHELL32 APIs (DeleteObject, SelectObject,
+# GetWindowLongA, SendMessageA, ShellExecuteExA, etc.) directly with no #pragma comment(lib)
+# anywhere to pull these in implicitly; link them explicitly.
+target_link_libraries(Jones3D_DLL PRIVATE Gdi32.lib User32.lib Shell32.lib Comdlg32.lib Advapi32.lib Ole32.lib)
+
+# Standalone OpenJones3D.exe, runs the game without Indy3D.exe code (Indy3D.exe is only read for its resources)
+option(JONES3D_BUILD_STANDALONE "Build standalone OpenJones3D.exe" ON)
+if(JONES3D_BUILD_STANDALONE)
+    add_executable(OpenJones3D WIN32 ${JONES3D_STANDALONE_SOURCES} ${JONES3D_DLL_HEADERS})
+    target_include_directories(OpenJones3D PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/..)
+    target_link_libraries(OpenJones3D PRIVATE Libs)
+    target_link_libraries(OpenJones3D PRIVATE Comctl32.lib Gdi32.lib User32.lib Shell32.lib Comdlg32.lib Advapi32.lib Ole32.lib)
+    set_property(TARGET OpenJones3D PROPERTY VS_DPI_AWARE "PerMonitor")
+endif()
 
 # Organize source files in Visual Studio
 source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR} FILES ${JONES3D_DLL_SOURCES} ${JONES3D_DLL_HEADERS})

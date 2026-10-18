@@ -22,6 +22,8 @@ static WKERNELSTARTUPPROC wkernel_pfOnStartup   = NULL;
 static WKERNELSHUTDOWNPROC wkernel_pfOnShutdown = NULL;
 static WKERNELWNDPROC wkernel_pfWndProc         = NULL;
 
+static HINSTANCE wkernel_hResInstance = NULL;
+
 static int wkernel_wndBorderWidth   = 0;
 static int wkernel_wndMenuBarHeight = 0;
 
@@ -39,9 +41,6 @@ void wkernel_InstallHooks(void)
     J3D_HOOKFUNC(wkernel_CreateWindow);
     J3D_HOOKFUNC(wkernel_MainWndProc);
 }
-
-void wkernel_ResetGlobals(void)
-{}
 
 int J3DAPI wkernel_Run(HINSTANCE hinstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nShowCmd, LPCSTR lpWindowName)
 {
@@ -215,6 +214,16 @@ void J3DAPI wkernel_SetWindowProc(WKERNELWNDPROC pfProc)
     wkernel_pfWndProc = pfProc;
 }
 
+void J3DAPI wkernel_SetResourceInstance(HINSTANCE hInstance)
+{
+    wkernel_hResInstance = hInstance;
+}
+
+HINSTANCE wkernel_GetResourceInstance(void)
+{
+    return wkernel_hResInstance ? wkernel_hResInstance : GetModuleHandle(NULL);
+}
+
 int J3DAPI wkernel_CreateWindow(HINSTANCE hInstance, int nShowCmd, LPCSTR lpWindowName)
 {
     J3D_UNUSED(nShowCmd);
@@ -230,18 +239,19 @@ int J3DAPI wkernel_CreateWindow(HINSTANCE hInstance, int nShowCmd, LPCSTR lpWind
     wndcls.style         = 0;
 
     // Added: Load app icon from resource
-    wndcls.hIcon = LoadIcon(hInstance, MAKEINTRESOURCEA(IDI_APPICON));
+    HINSTANCE hResInstance = wkernel_GetResourceInstance();
+    wndcls.hIcon = LoadIcon(hResInstance, MAKEINTRESOURCEA(IDI_APPICON));
     if ( !wndcls.hIcon )
     {
-        wndcls.hIcon = LoadIcon(hInstance, "APPICON");
+        wndcls.hIcon = LoadIcon(hResInstance, "APPICON");
         if ( !wndcls.hIcon ) {
             wndcls.hIcon = LoadIcon(NULL, (LPCSTR)IDI_APPLICATION);
         }
     }
-    wndcls.hIconSm = LoadIcon(hInstance, MAKEINTRESOURCEA(IDI_APPICON));
+    wndcls.hIconSm = LoadIcon(hResInstance, MAKEINTRESOURCEA(IDI_APPICON));
     if ( !wndcls.hIconSm )
     {
-        wndcls.hIconSm = LoadIcon(hInstance, "APPICON");
+        wndcls.hIconSm = LoadIcon(hResInstance, "APPICON");
         if ( !wndcls.hIconSm ) {
             wndcls.hIconSm = LoadIcon(NULL, (LPCSTR)IDI_APPLICATION);
         }

@@ -11,44 +11,31 @@ J3D_EXTERN_C_START
 
 #define SITHPLAYER_MAX_PLAYERS 24
 
-#define sithPlayer_g_bPlayerInPor J3D_DECL_FAR_VAR(sithPlayer_g_bPlayerInPor, int)
-// extern int sithPlayer_g_bPlayerInPor ;
+extern int sithPlayer_g_bPlayerInPor;
 
-#define sithPlayer_g_impFireType J3D_DECL_FAR_VAR(sithPlayer_g_impFireType, int)
-// extern int sithPlayer_g_impFireType ;
+extern int sithPlayer_g_impFireType;
 
-#define sithPlayer_g_playerNum J3D_DECL_FAR_VAR(sithPlayer_g_playerNum, size_t)
-// extern size_t sithPlayer_g_playerNum;
+extern size_t sithPlayer_g_playerNum;
 
-#define sithPlayer_g_numPlayers J3D_DECL_FAR_VAR(sithPlayer_g_numPlayers, size_t)
-// extern size_t sithPlayer_g_numPlayers;
+extern size_t sithPlayer_g_numPlayers;
 
-#define sithPlayer_g_pLocalPlayerThing J3D_DECL_FAR_VAR(sithPlayer_g_pLocalPlayerThing, SithThing*)
-// extern SithThing *sithPlayer_g_pLocalPlayerThing;
+extern SithThing* sithPlayer_g_pLocalPlayerThing;
 
-#define sithPlayer_g_pLocalPlayer J3D_DECL_FAR_VAR(sithPlayer_g_pLocalPlayer, SithPlayer*)
-// extern SithPlayer *sithPlayer_g_pLocalPlayer;
+extern SithPlayer* sithPlayer_g_pLocalPlayer;
 
-#define sithPlayer_g_bPlayerInvulnerable J3D_DECL_FAR_VAR(sithPlayer_g_bPlayerInvulnerable, int)
-// extern int sithPlayer_g_bPlayerInvulnerable;
+extern int sithPlayer_g_bPlayerInvulnerable;
 
-#define sithPlayer_g_bInAetheriumSector J3D_DECL_FAR_VAR(sithPlayer_g_bInAetheriumSector, int)
-// extern int sithPlayer_g_bInAetheriumSector;
+extern int sithPlayer_g_bInAetheriumSector;
 
-#define sithPlayer_g_bGuybrush J3D_DECL_FAR_VAR(sithPlayer_g_bGuybrush, int)
-// extern int sithPlayer_g_bGuybrush;
+extern int sithPlayer_g_bGuybrush;
 
-#define sithPlayer_g_curLevelNum J3D_DECL_FAR_VAR(sithPlayer_g_curLevelNum, int)
-// extern int sithPlayer_g_curLevelNum;
+extern int sithPlayer_g_curLevelNum;
 
-#define sithPlayer_g_bBonusMapBought J3D_DECL_FAR_VAR(sithPlayer_g_bBonusMapBought, int)
-// extern int sithPlayer_g_bBonusMapBought;
+extern int sithPlayer_g_bBonusMapBought;
 
-#define sithPlayer_g_aPlayers J3D_DECL_FAR_ARRAYVAR(sithPlayer_g_aPlayers, SithPlayer(*)[SITHPLAYER_MAX_PLAYERS])
-// extern SithPlayer sithPlayer_g_aPlayers[24];
+extern SithPlayer sithPlayer_g_aPlayers[SITHPLAYER_MAX_PLAYERS];
 
-#define sithPlayer_g_impState J3D_DECL_FAR_VAR(sithPlayer_g_impState, float)
-// extern float sithPlayer_g_impState;
+extern float sithPlayer_g_impState;
 
 void J3DAPI sithPlayer_Open(const wchar_t* awName);
 void sithPlayer_Close(void);
@@ -85,7 +72,6 @@ void J3DAPI sithPlayer_IMPEndFiring(int fireType);
 
 // Helper hooking functions
 void sithPlayer_InstallHooks(void);
-void sithPlayer_ResetGlobals(void);
 
 J3D_EXTERN_C_END
 #endif // SITH_SITHPLAYER_H

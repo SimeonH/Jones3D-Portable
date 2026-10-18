@@ -11,14 +11,11 @@
 
 J3D_EXTERN_C_START
 
-#define sithAI_g_bOpen J3D_DECL_FAR_VAR(sithAI_g_bOpen, int)
-// extern int sithAI_g_bOpen;
+extern int sithAI_g_bOpen;
 
-#define sithAI_g_aControlBlocks J3D_DECL_FAR_ARRAYVAR(sithAI_g_aControlBlocks, SithAIControlBlock(*)[256])
-// extern SithAIControlBlock sithAI_g_aControlBlocks[256];
+extern SithAIControlBlock sithAI_g_aControlBlocks[256];
 
-#define sithAI_g_lastUsedAIIndex J3D_DECL_FAR_VAR(sithAI_g_lastUsedAIIndex, int)
-// extern int sithAI_g_lastUsedAIIndex;
+extern int sithAI_g_lastUsedAIIndex;
 
 int sithAI_Startup(void);
 void sithAI_Shutdown(void);
@@ -51,7 +48,6 @@ int J3DAPI sithAI_AIStatus(const SithConsoleCommand* pFunc, const char* pArg); /
 
 // Helper hooking functions
 void sithAI_InstallHooks(void);
-void sithAI_ResetGlobals(void);
 
 J3D_EXTERN_C_END
 #endif // SITH_SITHAI_H

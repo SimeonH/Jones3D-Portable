@@ -1,7 +1,7 @@
 #include "stdGob.h"
 #include <j3dcore/j3dhook.h>
 #include <std/General/std.h>
-#include <std/General/stdHashTbl.h>
+#include <std/General/stdHashtbl.h>
 #include <std/General/stdMemory.h>
 #include <std/General/stdUtil.h>
 #include <std/RTI/symbols.h>
@@ -31,13 +31,6 @@ void stdGob_InstallHooks(void)
     J3D_HOOKFUNC(stdGob_FileGets);
 }
 
-void stdGob_ResetGlobals(void)
-{
-    /*memset(&stdGob_aEntryNameBuff, 0, sizeof(stdGob_aEntryNameBuff));
-    memset(&stdGob_hs, 0, sizeof(stdGob_hs));
-    memset(&bStartup, 0, sizeof(bStartup));
-    memset(&stdGob_pHS, 0, sizeof(stdGob_pHS));*/
-}
 
 void J3DAPI stdGob_Startup(tHostServices* pHS)
 {

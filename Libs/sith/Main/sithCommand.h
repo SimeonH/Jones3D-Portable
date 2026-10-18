@@ -36,7 +36,6 @@ inline bool sithCommand_ParseBool(const char* pStr, bool* pOut) // Added
 
 // Helper hooking functions
 void sithCommand_InstallHooks(void);
-void sithCommand_ResetGlobals(void);
 
 J3D_EXTERN_C_END
 #endif // SITH_SITHCOMMAND_H

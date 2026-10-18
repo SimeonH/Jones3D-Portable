@@ -9,17 +9,13 @@
 
 J3D_EXTERN_C_START
 
-#define jonesCog_g_bShowHealthHUD J3D_DECL_FAR_VAR(jonesCog_g_bShowHealthHUD, int)
-// extern int jonesCog_g_bShowHealthHUD;
+extern int jonesCog_g_bShowHealthHUD;
 
-#define jonesCog_g_bMenuVisible J3D_DECL_FAR_VAR(jonesCog_g_bMenuVisible, int)
-// extern int jonesCog_g_bMenuVisible;
+extern int jonesCog_g_bMenuVisible;
 
-#define jonesCog_g_bEnableGamesave J3D_DECL_FAR_VAR(jonesCog_g_bEnableGamesave, int)
-// extern int jonesCog_g_bEnableGamesave;
+extern int jonesCog_g_bEnableGamesave;
 
-#define jonesCog_g_dword_17EFFCC J3D_DECL_FAR_VAR(jonesCog_g_dword_17EFFCC, int)
-// extern int jonesCog_g_dword_17EFFCC;
+extern int jonesCog_g_dword_17EFFCC;
 
 int jonesCog_Startup(void);
 void jonesCog_Shutdown(void);
@@ -34,7 +30,6 @@ void J3DAPI jonesCog_EnableIndicatrors(bool bEnable); // Added
 
 // Helper hooking functions
 void jonesCog_InstallHooks(void);
-void jonesCog_ResetGlobals(void);
 
 J3D_EXTERN_C_END
 #endif // JONES3D_JONESCOG_H

@@ -8,8 +8,7 @@
 
 J3D_EXTERN_C_START
 
-#define sithAIClass_g_pHashtable J3D_DECL_FAR_VAR(sithAIClass_g_pHashtable, tHashTable*)
-// extern tHashTable *sithAIClass_g_pHashtable;
+extern tHashTable* sithAIClass_g_pHashtable;
 
 int sithAIClass_Startup(void);
 void sithAIClass_Shutdown(void);
@@ -28,7 +27,6 @@ int J3DAPI sithAIClass_LoadEntry(const char* pPath, SithAIClass* pClass);
 
 // Helper hooking functions
 void sithAIClass_InstallHooks(void);
-void sithAIClass_ResetGlobals(void);
 
 J3D_EXTERN_C_END
 #endif // SITH_SITHAICLASS_H

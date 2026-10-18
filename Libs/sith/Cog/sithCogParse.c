@@ -68,9 +68,6 @@ void sithCogParse_InstallHooks(void)
     J3D_HOOKFUNC(sithCogParse_ResolveMessageHandlers);
 }
 
-void sithCogParse_ResetGlobals(void)
-{}
-
 void sithCogParse_FreeParseTree(void)
 {
     if ( pSyntaxTree )

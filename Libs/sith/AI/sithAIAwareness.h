@@ -13,8 +13,7 @@ J3D_EXTERN_C_START
 #define SITHAIAWARENESS_NUMTYPES  4u
 #define SITHAIAWARENESS_MAXEVENTS 32u
 
-#define sithAIAwareness_g_aSectors J3D_DECL_FAR_VAR(sithAIAwareness_g_aSectors, SithAIAwarenessSector*)
-// extern SithAIAwarenessSector *sithAIAwareness_g_aSectors;
+extern SithAIAwarenessSector* sithAIAwareness_g_aSectors;
 
 int sithAIAwareness_Open(void);
 void sithAIAwareness_Close(void);
@@ -24,7 +23,6 @@ int J3DAPI sithAIAwareness_IsInTransmittingRange(const SithAIAwarenessSector* pA
 
 // Helper hooking functions
 void sithAIAwareness_InstallHooks(void);
-void sithAIAwareness_ResetGlobals(void);
 
 J3D_EXTERN_C_END
 #endif // SITH_SITHAIAWARENESS_H

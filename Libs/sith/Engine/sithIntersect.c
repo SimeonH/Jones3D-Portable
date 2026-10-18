@@ -30,9 +30,6 @@ void sithIntersect_InstallHooks(void)
     J3D_HOOKFUNC(sithIntersect_CheckSphereFaceIntersection);
 }
 
-void sithIntersect_ResetGlobals(void)
-{}
-
 void J3DAPI sithIntersect_GetProjectionAxes(const rdVector3* pNormal, int* pOffs1, int* pOffs2);
 
 int J3DAPI sithIntersect_IsSphereInSector(const SithWorld* pWorld, const rdVector3* pos, float radius, const SithSector* pSector)

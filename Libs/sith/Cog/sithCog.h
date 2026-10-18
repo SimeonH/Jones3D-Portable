@@ -13,17 +13,13 @@ J3D_EXTERN_C_START
 #define SITHCOG_NORETURNVALUE      -9999
 #define SITHCOG_GLOBALSYMBOLSTARTID SITHCOGSCRIPT_MAXSYMREFS
 
-#define sithCog_g_bCogStartup J3D_DECL_FAR_VAR(sithCog_g_bCogStartup, int)
-// extern int sithCog_g_bCogStartup;
+extern int sithCog_g_bCogStartup;
 
-#define sithCog_g_pHashtable J3D_DECL_FAR_VAR(sithCog_g_pHashtable, tHashTable*)
-// extern tHashTable *sithCog_g_pHashtable;
+extern tHashTable* sithCog_g_pHashtable;
 
-#define sithCog_g_pSymbolTable J3D_DECL_FAR_VAR(sithCog_g_pSymbolTable, SithCogSymbolTable*)
-// extern SithCogSymbolTable *sithCog_g_pSymbolTable;
+extern SithCogSymbolTable* sithCog_g_pSymbolTable;
 
-#define sithCog_g_pMasterCog J3D_DECL_FAR_VAR(sithCog_g_pMasterCog, SithCog*)
-// extern SithCog *sithCog_g_pMasterCog;
+extern SithCog* sithCog_g_pMasterCog;
 
 int sithCog_Startup(void);
 void sithCog_Shutdown(void);
@@ -100,7 +96,6 @@ int J3DAPI sithCog_IsThingLinked(const SithThing* pThing);
 
 // Helper hooking functions
 void sithCog_InstallHooks(void);
-void sithCog_ResetGlobals(void);
 
 J3D_EXTERN_C_END
 #endif // SITH_SITHCOG_H

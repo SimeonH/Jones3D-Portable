@@ -21,9 +21,6 @@ void rdPrimit2_InstallHooks(void)
     J3D_HOOKFUNC(rdPrimit2_DrawClippedCircle2);
 }
 
-void rdPrimit2_ResetGlobals(void)
-{}
-
 // Added: Helper function to plot a pixel based on bit depth
 void J3DAPI rdPrimit2_DrawPixel(tVBuffer* pVBuffer, size_t index, uint32_t pixelColor)
 {

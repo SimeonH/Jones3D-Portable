@@ -93,11 +93,8 @@ void JonesConsole_InstallHooks(void)
     J3D_HOOKFUNC(JonesConsole_RemoveExpired);
 }
 
-void JonesConsole_ResetGlobals(void)
-{
-    memset(&JonesConsole_g_bVisible, 0, sizeof(JonesConsole_g_bVisible));
-    memset(&JonesConsole_g_bStarted, 0, sizeof(JonesConsole_g_bStarted));
-}
+int JonesConsole_g_bVisible;
+int JonesConsole_g_bStarted;
 
 int JonesConsole_Startup(void)
 {

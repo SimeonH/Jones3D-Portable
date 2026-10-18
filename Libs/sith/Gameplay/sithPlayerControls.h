@@ -9,8 +9,7 @@
 
 J3D_EXTERN_C_START
 
-#define sithPlayerControls_g_bCutsceneMode J3D_DECL_FAR_VAR(sithPlayerControls_g_bCutsceneMode, int)
-// extern int sithPlayerControls_g_bCutsceneMode;
+extern int sithPlayerControls_g_bCutsceneMode;
 
 void J3DAPI sithPlayerControls_PuppetCallback(SithThing* pThing, int track, rdKeyMarkerType markerType);
 int J3DAPI sithPlayerControls_Process(SithThing* pPlayerThing, float secDeltaTime);
@@ -43,7 +42,6 @@ signed int J3DAPI sithPlayerControls_CanStrafeMove(SithThing* pThing, int bMoveR
 
 // Helper hooking functions
 void sithPlayerControls_InstallHooks(void);
-void sithPlayerControls_ResetGlobals(void);
 
 J3D_EXTERN_C_END
 #endif // SITH_SITHPLAYERCONTROLS_H

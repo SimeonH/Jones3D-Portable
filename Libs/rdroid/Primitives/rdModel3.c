@@ -77,11 +77,8 @@ void rdModel3_InstallHooks(void)
     J3D_HOOKFUNC(rdModel3_EnableFogRendering);
 }
 
-void rdModel3_ResetGlobals(void)
-{
-    memset(&rdModel3_g_numDrawnFaces, 0, sizeof(rdModel3_g_numDrawnFaces));
-    memset(&rdModel3_g_numDrawnAlphaFaces, 0, sizeof(rdModel3_g_numDrawnAlphaFaces));
-}
+int rdModel3_g_numDrawnFaces;
+int rdModel3_g_numDrawnAlphaFaces;
 
 rdModel3LoaderFunc J3DAPI rdModel3_RegisterLoader(rdModel3LoaderFunc pfFunc)
 {

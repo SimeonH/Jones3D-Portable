@@ -24,7 +24,6 @@ int J3DAPI AudioLib_WVSMUncompressBlock(uint8_t* pOutBuffer, const uint8_t* pInB
 
 // Helper hooking functions
 void AudioLib_InstallHooks(void);
-void AudioLib_ResetGlobals(void);
 
 J3D_EXTERN_C_END
 #endif // SOUND_AUDIOLIB_H

@@ -41,9 +41,6 @@ void sithSprite_InstallHooks(void)
     J3D_HOOKFUNC(sithSprite_CacheRemove);
 }
 
-void sithSprite_ResetGlobals(void)
-{}
-
 int sithSprite_Startup(void)
 {
     sithSprite_pHashtable = stdHashtbl_New(128u);

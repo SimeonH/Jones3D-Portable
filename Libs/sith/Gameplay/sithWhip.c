@@ -71,9 +71,6 @@ void sithWhip_InstallHooks(void)
     J3D_HOOKFUNC(sithWhip_RemoveWhip);
 }
 
-void sithWhip_ResetGlobals(void)
-{}
-
 void J3DAPI sithWhip_UpdateWhipAim(SithThing* pThing)
 {
     SITH_ASSERTREL((pThing != NULL) && (pThing->type == SITH_THING_PLAYER));

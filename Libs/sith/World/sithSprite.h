@@ -30,7 +30,6 @@ int J3DAPI sithSprite_ReadStaticSpritesListBinary(tFileHandle fh, SithWorld* pWo
 
 // Helper hooking functions
 void sithSprite_InstallHooks(void);
-void sithSprite_ResetGlobals(void);
 
 J3D_EXTERN_C_END
 #endif // SITH_SITHSPRITE_H

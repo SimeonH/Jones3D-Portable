@@ -4,8 +4,8 @@
 #include <j3dcore/j3dhook.h>
 
 #include <Jones3D/Display/jonesConfig.h>
-#include <Jones3D/Main/jonesLevel.h>
-#include <Jones3D/Main/jonesMain.h>
+#include <Jones3D/Main/JonesLevel.h>
+#include <Jones3D/Main/JonesMain.h>
 #include <Jones3D/Main/jonesString.h>
 #include <Jones3D/Play/jonesCog.h>
 #include <Jones3D/Play/jonesInventory.h>
@@ -274,10 +274,6 @@ void JonesHud_InstallHooks(void)
     J3D_HOOKFUNC(JonesHud_RestoreTreasuresStatistics);
 }
 
-void JonesHud_ResetGlobals(void)
-{
-
-}
 
 int JonesHud_Startup(void)
 {

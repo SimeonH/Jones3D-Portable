@@ -31,14 +31,11 @@ J3D_EXTERN_C_START
     J3D_ASSERTREL(condition, std_g_pHS)
 
 
-#define std_g_aEmptyString J3D_DECL_FAR_ARRAYVAR(std_g_aEmptyString, const char(*)[8])
-// extern const char std_g_aEmptyString[8];
+extern const char std_g_aEmptyString[8];
 
-#define std_g_genBuffer J3D_DECL_FAR_ARRAYVAR(std_g_genBuffer, char(*)[2048])
-// extern char std_g_genBuffer[2048];
+extern char std_g_genBuffer[2048];
 
-#define std_g_pHS J3D_DECL_FAR_VAR(std_g_pHS, tHostServices*)
-// extern tHostServices *std_g_pHS;
+extern tHostServices* std_g_pHS;
 
 void J3DAPI stdStartup(tHostServices* pHS);
 void stdShutdown(void);
@@ -61,7 +58,6 @@ int J3DAPI stdFileSeek(tFileHandle pFile, int offset, int origin);
 
 // Helper hooking functions
 void std_InstallHooks(void);
-void std_ResetGlobals(void);
 
 J3D_EXTERN_C_END
 #endif // STD_STD_H

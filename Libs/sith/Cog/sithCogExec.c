@@ -64,9 +64,6 @@ void sithCogExec_InstallHooks(void)
     J3D_HOOKFUNC(sithCogExec_GetSymbolValue);
 }
 
-void sithCogExec_ResetGlobals(void)
-{}
-
 void J3DAPI sithCogExec_Execute(SithCog* pCog)
 {
     SITH_ASSERTREL(pCog != NULL);

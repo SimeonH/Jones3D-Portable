@@ -119,13 +119,10 @@ void sithCog_InstallHooks(void)
     J3D_HOOKFUNC(sithCog_IsThingLinked);
 }
 
-void sithCog_ResetGlobals(void)
-{
-    memset(&sithCog_g_bCogStartup, 0, sizeof(sithCog_g_bCogStartup));
-    memset(&sithCog_g_pHashtable, 0, sizeof(sithCog_g_pHashtable));
-    memset(&sithCog_g_pSymbolTable, 0, sizeof(sithCog_g_pSymbolTable));
-    memset(&sithCog_g_pMasterCog, 0, sizeof(sithCog_g_pMasterCog));
-}
+int sithCog_g_bCogStartup;
+tHashTable* sithCog_g_pHashtable;
+SithCogSymbolTable* sithCog_g_pSymbolTable;
+SithCog* sithCog_g_pMasterCog;
 
 int sithCog_Startup(void)
 {
@@ -1784,7 +1781,13 @@ void J3DAPI sithCog_ProcessCog(SithCog* pCog)
     {
         case SITHCOG_STATUS_SLEEPING:
         {
-            if ( (unsigned int)pCog->statusParams[0] >= sithTime_g_msecGameTime ) // Fixed: Make sure pCog->statusParams[0]  is unsigned when compare it to current time
+            // Fixed: Make sure pCog->statusParams[0]  is unsigned when compare it to current time
+            // Fixed: Was `>=`, so a cog only woke up once game time had passed its wake time, inconsistent with the
+            //        timer check above. On the first frame after level load game time is 1ms, so a level cog doing
+            //        Sleep(0.001) in startup (e.g. 00_cyn_opening.cog) didn't wake before the start-of-level autosave sent
+            //        it user0. user0 then interrupted the sleeping startup handler and on return resumed it, re-running
+            //        the rest of startup after the intro cutscene ended: switching to cutscene camera 2 pointing at the sky.
+            if ( (unsigned int)pCog->statusParams[0] > sithTime_g_msecGameTime )
             {
                 // Cog still needs to sleep
                 return;
