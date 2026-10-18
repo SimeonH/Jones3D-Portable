@@ -327,7 +327,7 @@ const uint8_t* J3DAPI AudioLib_ParseWaveFileHeader(const uint8_t* pData, int* pT
             *pSoundDataOffset  = extraSize;
             if ( extraSize )
             {
-                *pExtraDataOffset = (uint32_t)(pData + 26);
+                *pExtraDataOffset = 26; // Altered: Offset from pData, the original stored the absolute address
                 return pData + extraSize + 26;
             }
 
@@ -380,7 +380,7 @@ const uint8_t* J3DAPI AudioLib_ParseWaveFileHeader(const uint8_t* pData, int* pT
             chunkSize  = AudioLib_ReadU32(pChunkSize);
             if ( memcmp(pChunkSize - 4, "sync", 4) == 0 && pExtraDataOffset && pSoundDataOffset )
             {
-                *pExtraDataOffset = (uint32_t)(pChunkSize + 4);
+                *pExtraDataOffset = (uint32_t)(pChunkSize + 4 - pData); // Altered: Offset from pData, the original stored the absolute address
                 *pSoundDataOffset = chunkSize;
             }
 
@@ -1470,8 +1470,8 @@ int J3DAPI AudioLib_WVSMCompressBlock(uint8_t* pOutBuffer, const uint8_t* pInBuf
     compressedSize = pCurOut - pOutBuffer;
 
     // assign be compressed size to the begin of out block
-    *pOutBuffer = (uint16_t)((uint16_t)pCurOut - (uint16_t)pOutBuffer - 2) >> 8;
-    pOutBuffer[1] = (uint8_t)pCurOut - (uint8_t)pOutBuffer - 2;
+    *pOutBuffer = (uint16_t)(compressedSize - 2) >> 8;
+    pOutBuffer[1] = (uint8_t)(compressedSize - 2);
 
     return compressedSize;
 }

@@ -345,9 +345,8 @@ int J3DAPI sithDSSThing_UpdateState(const SithThing* pThing, DPID toID, unsigned
                 SITHDSS_PUSHINT16(numItems);
                 for ( int i = 0; i < numItems; ++i )
                 {
-                    // Note, the raw item pointer is sent
                     SITHDSS_PUSHINT16(pThing->thingInfo.itemInfo.aBackpackItems[i].typeId);
-                    SITHDSS_PUSHUINT32((uint32_t)pThing->thingInfo.itemInfo.aBackpackItems[i].pItem);
+                    SITHDSS_PUSHFLOAT(pThing->thingInfo.itemInfo.aBackpackItems[i].amount);
                 }
             }
             break;
@@ -470,7 +469,7 @@ int J3DAPI sithDSSThing_ProcessStateUpdate(const SithMessage* pMsg)
                 for ( int i = 0; i < numItems; ++i )
                 {
                     *(int16_t*)&pThing->thingInfo.itemInfo.aBackpackItems[i].typeId = SITHDSS_POPINT16();
-                    pThing->thingInfo.itemInfo.aBackpackItems[i].pItem = (SithInventoryItem*)SITHDSS_POPUINT32();
+                    pThing->thingInfo.itemInfo.aBackpackItems[i].amount = SITHDSS_POPFLOAT();
                 }
             }
             break;

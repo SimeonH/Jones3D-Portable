@@ -20,6 +20,10 @@ const char* JonesFile_GetResourcePath(void);
 
 const char* JonesFile_GetWorkingDirPath(void);
 
+// Added: Calls pfFound with the name of each file in folder pDir of the loaded GOB archives which has extension pExt
+typedef void (*JonesFileFoundFunc)(const char* pName, void* pUserData);
+void J3DAPI JonesFile_EnumGobFiles(const char* pDir, const char* pExt, JonesFileFoundFunc pfFound, void* pUserData);
+
 void J3DAPI JonesFile_SetCDPath(const char* pPath);
 const char* JonesFile_GetCDPath(void);
 

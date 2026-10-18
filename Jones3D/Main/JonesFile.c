@@ -226,6 +226,32 @@ const char* JonesFile_GetWorkingDirPath(void)
     return JonesFile_aResources[JF_RES_CWD].aPath;
 }
 
+void J3DAPI JonesFile_EnumGobFiles(const char* pDir, const char* pExt, JonesFileFoundFunc pfFound, void* pUserData)
+{
+    const size_t dirLen = strlen(pDir);
+    const size_t extLen = strlen(pExt);
+    for ( size_t resNum = 0; resNum < STD_ARRAYLEN(JonesFile_aResources); ++resNum )
+    {
+        const JonesResource* pRes = &JonesFile_aResources[resNum];
+        for ( size_t gobNum = 0; gobNum < pRes->numGobFiles; ++gobNum )
+        {
+            const Gob* pGob = pRes->aGobFiles[gobNum];
+            for ( size_t i = 0; pGob && i < pGob->directory.numEntries; ++i )
+            {
+                // Entry names are paths, e.g.: ndy\\00_cyn.cnd
+                const char* pName = pGob->directory.aEntries[i].aName;
+                const size_t nameLen = strlen(pName);
+                if ( nameLen > dirLen + 1 + extLen + 1
+                    && strneqi(pName, pDir, dirLen) && (pName[dirLen] == '\\' || pName[dirLen] == '/')
+                    && pName[nameLen - extLen - 1] == '.' && streqi(&pName[nameLen - extLen], pExt) )
+                {
+                    pfFound(&pName[dirLen + 1], pUserData);
+                }
+            }
+        }
+    }
+}
+
 void J3DAPI JonesFile_SetCDPath(const char* pPath)
 {
 

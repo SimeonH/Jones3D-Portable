@@ -422,8 +422,8 @@ int J3DAPI sithSurface_ReadSurfacesListBinary(tFileHandle fh, SithWorld* pWorld)
     }
     pWorld->apMatArray = NULL;
 
-    size_t totalVerts;
-    nRead = sith_g_pHS->pFileRead(fh, &totalVerts, sizeof(int)); static_assert(sizeof(int) == 4, "sizeof(int) == 4");
+    uint32_t totalVerts;
+    nRead = sith_g_pHS->pFileRead(fh, &totalVerts, sizeof(uint32_t));
     if ( nRead != 4 ) {
         return 1;
     }
@@ -612,7 +612,7 @@ int J3DAPI sithSurface_ReadSurfacesListText(SithWorld* pWorld, int bSkip)
 
     int nRead = 0;
     size_t numAdjoins;
-    if ( nRead = stdConffile_ScanLine(" world adjoins %d", &numAdjoins), nRead != 1 ) {
+    if ( nRead = stdConffile_ScanLine(" world adjoins %" J3D_SCN_SIZE, &numAdjoins), nRead != 1 ) {
         if ( nRead < 0 ) {
             goto eof_error;
         }
@@ -651,7 +651,7 @@ int J3DAPI sithSurface_ReadSurfacesListText(SithWorld* pWorld, int bSkip)
     // Parse surface
 
     size_t numSurfaces;
-    if ( nRead = stdConffile_ScanLine(" world surfaces %d", &numSurfaces), nRead != 1 ) {
+    if ( nRead = stdConffile_ScanLine(" world surfaces %" J3D_SCN_SIZE, &numSurfaces), nRead != 1 ) {
         if ( nRead < 0 ) {
             goto eof_error;
         }

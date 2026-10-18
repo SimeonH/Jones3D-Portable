@@ -18,14 +18,14 @@ typedef struct sStdConffileArg
     const char* argName;
     const char* argValue;
 } StdConffileArg;
-static_assert(sizeof(StdConffileArg) == 8, "sizeof(StdConffileArg) == 8");
+J3D_ASSERT_SIZE32(StdConffileArg, 8);
 
 typedef struct sStdConffileEntry
 {
     size_t numArgs;
     StdConffileArg aArgs[STDCONFILE_MAXARGS];
 } StdConffileEntry;
-static_assert(sizeof(StdConffileEntry) == 4100, "sizeof(StdConffileEntry) == 4100");
+J3D_ASSERT_SIZE32(StdConffileEntry, 4100);
 
 
 extern StdConffileEntry stdConffile_g_entry;

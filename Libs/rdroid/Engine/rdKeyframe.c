@@ -91,7 +91,7 @@ int J3DAPI rdKeyframe_LoadEntry(const char* pFilename, rdKeyframe* pKeyframe)
         goto syntax_error;
     }
 
-    if ( stdConffile_ScanLine(" frames %d", &pKeyframe->numFrames) != 1 )
+    if ( stdConffile_ScanLine(" frames %" J3D_SCN_SIZE, &pKeyframe->numFrames) != 1 )
     {
         goto syntax_error;
     }
@@ -101,7 +101,7 @@ int J3DAPI rdKeyframe_LoadEntry(const char* pFilename, rdKeyframe* pKeyframe)
         goto syntax_error;
     }
 
-    if ( stdConffile_ScanLine(" joints %d", &pKeyframe->numJoints) != 1
+    if ( stdConffile_ScanLine(" joints %" J3D_SCN_SIZE, &pKeyframe->numJoints) != 1
         || pKeyframe->numJoints > RDPUPPET_MAX_KFNODES ) // Added: bounds check 
     {
         goto syntax_error;
@@ -124,7 +124,7 @@ int J3DAPI rdKeyframe_LoadEntry(const char* pFilename, rdKeyframe* pKeyframe)
 
     if ( strcmp(std_g_genBuffer, "markers") == 0 )
     {
-        if ( stdConffile_ScanLine(" markers %d", &pKeyframe->numMarkers) != 1 || pKeyframe->numMarkers > RDKEYFRAME_MAX_MARKERS )
+        if ( stdConffile_ScanLine(" markers %" J3D_SCN_SIZE, &pKeyframe->numMarkers) != 1 || pKeyframe->numMarkers > RDKEYFRAME_MAX_MARKERS )
         {
             goto syntax_error;
         }
@@ -147,7 +147,7 @@ int J3DAPI rdKeyframe_LoadEntry(const char* pFilename, rdKeyframe* pKeyframe)
     }
 
     size_t numNodes = 0;
-    if ( stdConffile_ScanLine(" nodes %d", &numNodes) != 1
+    if ( stdConffile_ScanLine(" nodes %" J3D_SCN_SIZE, &numNodes) != 1
         || numNodes > pKeyframe->numJoints ) // Added: bounds check 
     {
         goto syntax_error;
@@ -170,7 +170,7 @@ int J3DAPI rdKeyframe_LoadEntry(const char* pFilename, rdKeyframe* pKeyframe)
             goto syntax_error;
         }
 
-        if ( stdConffile_ScanLine(" entries %d", &pNode->numEntries) != 1 )
+        if ( stdConffile_ScanLine(" entries %" J3D_SCN_SIZE, &pNode->numEntries) != 1 )
         {
             memset(pNode, 0, sizeof(*pNode)); // Added
             goto syntax_error;

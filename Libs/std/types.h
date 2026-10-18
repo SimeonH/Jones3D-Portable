@@ -145,7 +145,7 @@ typedef struct sGobFileDirectory
     uint32_t numEntries;
     tGobFileEntry* aEntries;
 } GobFileDirectory;
-static_assert(sizeof(GobFileDirectory) == 8, "sizeof(GobFileDirectory) == 8");
+J3D_ASSERT_SIZE32(GobFileDirectory, 8);
 
 struct sLinkListNode
 {
@@ -154,7 +154,7 @@ struct sLinkListNode
     const char* name;
     void* data;
 };
-static_assert(sizeof(tLinkListNode) == 16, "sizeof(tLinkListNode) == 16");
+J3D_ASSERT_SIZE32(tLinkListNode, 16);
 
 typedef struct sHashTable
 {
@@ -162,7 +162,7 @@ typedef struct sHashTable
     tLinkListNode* paNodes;
     tHashFunc pfHashFunc;
 } tHashTable;
-static_assert(sizeof(tHashTable) == 12, "sizeof(tHashTable) == 12");
+J3D_ASSERT_SIZE32(tHashTable, 12);
 
 typedef struct sGobFileHandle
 {
@@ -171,7 +171,7 @@ typedef struct sGobFileHandle
     tGobFileEntry* pEntry;
     int offset;
 } GobFileHandle;
-static_assert(sizeof(GobFileHandle) == 16, "sizeof(GobFileHandle) == 16");
+J3D_ASSERT_SIZE32(GobFileHandle, 16);
 
 struct sGob
 {
@@ -187,14 +187,14 @@ struct sGob
     HANDLE hFile;
     HANDLE hMapFile;
 };
-static_assert(sizeof(Gob) == 172, "sizeof(Gob) == 172");
+J3D_ASSERT_SIZE32(Gob, 172);
 
 typedef struct sGobFileHandles
 {
     int numHandles;
     GobFileHandle* aHandles;
 } GobFileHandles;
-static_assert(sizeof(GobFileHandles) == 8, "sizeof(GobFileHandles) == 8");
+J3D_ASSERT_SIZE32(GobFileHandles, 8);
 
 typedef struct sFindFileData
 {
@@ -203,7 +203,7 @@ typedef struct sFindFileData
     char aSearchFilter[128];
     HANDLE handle;
 } FindFileData;
-static_assert(sizeof(FindFileData) == 140, "sizeof(FindFileData) == 140");
+J3D_ASSERT_SIZE32(FindFileData, 140);
 
 typedef struct sHostServices
 {
@@ -236,7 +236,7 @@ typedef struct sHostServices
     tLockHandleFunc pLockHandle;
     tUnlockHandleFunc pUnlockHandle;
 } tHostServices;
-static_assert(sizeof(tHostServices) == 112, "sizeof(tHostServices) == 112");
+J3D_ASSERT_SIZE32(tHostServices, 112);
 
 struct sMemoryHeader
 {
@@ -249,7 +249,7 @@ struct sMemoryHeader
     tMemoryHeader* pNext;
     uint32_t magic;
 };
-static_assert(sizeof(tMemoryHeader) == 32, "sizeof(tMemoryHeader) == 32");
+J3D_ASSERT_SIZE32(tMemoryHeader, 32);
 
 struct sSystemTexture
 {
@@ -300,7 +300,7 @@ typedef struct sStringTableNode
     wchar_t* value;
     int unknown;
 } tStringTableNode;
-static_assert(sizeof(tStringTableNode) == 12, "sizeof(tStringTableNode) == 12");
+J3D_ASSERT_SIZE32(tStringTableNode, 12);
 
 typedef struct sStringTable
 {
@@ -309,7 +309,7 @@ typedef struct sStringTable
     tHashTable* pHashtbl;
     int magic;
 } tStringTable;
-static_assert(sizeof(tStringTable) == 16, "sizeof(tStringTable) == 16");
+J3D_ASSERT_SIZE32(tStringTable, 16);
 
 typedef struct sRasterInfo
 {
@@ -320,7 +320,7 @@ typedef struct sRasterInfo
     size_t rowWidth;
     ColorInfo colorInfo;
 } tRasterInfo;
-static_assert(sizeof(tRasterInfo) == 76, "sizeof(tRasterInfo) == 76");
+J3D_ASSERT_SIZE32(tRasterInfo, 76);
 
 #ifdef _WIN32
 typedef struct sVSurface
@@ -358,7 +358,7 @@ typedef struct sCircularBuffer
     size_t numValidElements;
     size_t elementSize;
 } tCircularBuffer;
-static_assert(sizeof(tCircularBuffer) == 20, "sizeof(tCircularBuffer) == 20");
+J3D_ASSERT_SIZE32(tCircularBuffer, 20);
 
 typedef struct sStdDisplayDevice
 {
@@ -381,7 +381,7 @@ typedef struct sStdVideoMode
     float aspectRatio;
     tRasterInfo rasterInfo;
 } StdVideoMode;
-static_assert(sizeof(StdVideoMode) == 80, "sizeof(StdVideoMode) == 80");
+J3D_ASSERT_SIZE32(StdVideoMode, 80);
 
 typedef struct sDevice3D
 {
@@ -486,7 +486,7 @@ typedef struct sDXStatus
     HRESULT code;
     const char* text;
 } DXStatus;
-static_assert(sizeof(DXStatus) == 8, "sizeof(DXStatus) == 8");
+J3D_ASSERT_SIZE32(DXStatus, 8);
 
 typedef struct sStdDisplayInfo
 {
@@ -516,7 +516,7 @@ typedef struct sStdDisplayEnvironment
     size_t numInfos;
     StdDisplayInfo* aDisplayInfos;
 } StdDisplayEnvironment;
-static_assert(sizeof(StdDisplayEnvironment) == 8, "sizeof(StdDisplayEnvironment) == 8");
+J3D_ASSERT_SIZE32(StdDisplayEnvironment, 8);
 
 #ifdef _WIN32
 typedef struct sStdInputDevice
@@ -566,7 +566,7 @@ typedef struct sMemoryHeap
     tMemoryHeader header;
     void* pMemory;
 } tMemoryHeap;
-static_assert(sizeof(tMemoryHeap) == 36, "sizeof(tMemoryHeap) == 36");
+J3D_ASSERT_SIZE32(tMemoryHeap, 36);
 
 typedef struct sMemoryState
 {
@@ -575,14 +575,14 @@ typedef struct sMemoryState
     size_t maxBytes;
     tMemoryHeader header;
 } tMemoryState;
-static_assert(sizeof(tMemoryState) == 44, "sizeof(tMemoryState) == 44");
+J3D_ASSERT_SIZE32(tMemoryState, 44);
 
 typedef struct sMemoryBlockHeader
 {
     size_t size;
     void* pHeap;
 } tMemoryBlockHeader;
-static_assert(sizeof(tMemoryBlockHeader) == 8, "sizeof(tMemoryBlockHeader) == 8");
+J3D_ASSERT_SIZE32(tMemoryBlockHeader, 8);
 
 typedef struct sMemoryBlock
 {
@@ -590,7 +590,7 @@ typedef struct sMemoryBlock
     size_t size;
     int bAlloced;
 } tMemoryBlock;
-static_assert(sizeof(tMemoryBlock) == 16, "sizeof(tMemoryBlock) == 16");
+J3D_ASSERT_SIZE32(tMemoryBlock, 16);
 
 typedef struct sStdCommPlayerInfo
 {

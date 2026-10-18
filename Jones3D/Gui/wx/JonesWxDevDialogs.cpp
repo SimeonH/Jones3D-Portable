@@ -348,6 +348,18 @@ namespace
                 stdFileUtil_DisposeFind(pFileData);
             }
 
+            // Levels in the GOB archives, e.g. installed game with no loose level files
+            for ( const char* pExt : { "ndy", "cnd" } )
+            {
+                JonesFile_EnumGobFiles("ndy", pExt, [](const char* pName, void* pUserData) {
+                    wxListBox* pList = static_cast<wxListBox*>(pUserData);
+                    const wxString name = JonesWx::FromGame(pName);
+                    if ( !streqi(pName, "jones3dstatic.cnd") && pList->FindString(name) == wxNOT_FOUND ) { // static data, not a level
+                        pList->Append(name);
+                    }
+                }, pLevelList);
+            }
+
             // Select cur level from config, or level in the middle of the list
             int sel = pLevelList->FindString(JonesWx::FromGame(pState->aCurLevelFilename), /*bCase=*/true);
             if ( sel == wxNOT_FOUND ) {

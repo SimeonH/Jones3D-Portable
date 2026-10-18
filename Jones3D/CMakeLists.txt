@@ -19,6 +19,18 @@ list(REMOVE_ITEM JONES3D_DLL_SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/standalone.c")
 list(REMOVE_ITEM JONES3D_DLL_SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/linuxmain.c")
 
 set(JONES3D_WX_LIBS wx::core wx::base)
+
+# Copies the help file viewer next to the game executable, where JonesHud_OpenHelp looks for it
+function(jones3d_add_hlp_viewer target)
+    if(TARGET hlp_viewer)
+        get_property(hlpViewerExe GLOBAL PROPERTY JONES3D_HLP_VIEWER_EXE)
+        add_dependencies(${target} hlp_viewer)
+        add_custom_command(TARGET ${target} POST_BUILD
+            COMMAND ${CMAKE_COMMAND} -E copy_if_different ${hlpViewerExe} $<TARGET_FILE_DIR:${target}>
+        )
+    endif()
+endfunction()
+
 file(GLOB JONES3D_WX_SOURCES CONFIGURE_DEPENDS Gui/wx/*.cpp)
 
 if(NOT WIN32)
@@ -30,6 +42,7 @@ if(NOT WIN32)
     add_executable(OpenJones3D ${JONES3D_NATIVE_SOURCES} ${JONES3D_DLL_HEADERS})
     target_include_directories(OpenJones3D PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/..)
     target_link_libraries(OpenJones3D PRIVATE Libs ${JONES3D_WX_LIBS})
+    jones3d_add_hlp_viewer(OpenJones3D)
     return()
 endif()
 
@@ -91,6 +104,7 @@ if(JONES3D_BUILD_STANDALONE)
     target_link_libraries(OpenJones3D PRIVATE Comctl32.lib Gdi32.lib User32.lib Shell32.lib Comdlg32.lib Advapi32.lib Ole32.lib)
     target_link_libraries(OpenJones3D PRIVATE ${JONES3D_WX_LIBS})
     set_property(TARGET OpenJones3D PROPERTY VS_DPI_AWARE "PerMonitor")
+    jones3d_add_hlp_viewer(OpenJones3D)
 endif()
 
 # Organize source files in Visual Studio

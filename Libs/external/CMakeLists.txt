@@ -9,6 +9,13 @@ endif()
 
 if(JONES3D_BUILD_GAME)
     add_subdirectory(wxWidgets) # game dialogs
+
+    if(JONES3D_BUILD_HLP_VIEWER)
+        if(NOT JONES3D_CARGO)
+            message(FATAL_ERROR "JONES3D_BUILD_HLP_VIEWER needs cargo")
+        endif()
+        add_subdirectory(HlpViewer) # in-game help
+    endif()
 endif()
 
 if(JONES3D_RENDERER STREQUAL "Vulkan")

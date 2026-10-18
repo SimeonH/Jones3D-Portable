@@ -570,7 +570,9 @@ int J3DAPI sithGamesave_RestoreFile(const char* pFilename, int bNotify)
         SithCogSymbol* pSymbol = sithCogParse_GetSymbol(sithCog_g_pSymbolTable, aText);
         if ( pSymbol )
         {
-            pSymbol->value = header.aCogGlobalValues[i];
+            memset(&pSymbol->value, 0, sizeof(pSymbol->value));
+            pSymbol->value.type         = header.aCogGlobalValues[i].type;
+            pSymbol->value.val.vecValue = header.aCogGlobalValues[i].val.vecValue;
         }
     }
 
@@ -734,7 +736,8 @@ int J3DAPI sithGamesave_SaveFile(const char* pFilename)
         SithCogSymbol* pCogSym = sithCogParse_GetSymbol(sithCog_g_pSymbolTable, aGlobalSym);
         if ( pCogSym )
         {
-            header.aCogGlobalValues[i] = pCogSym->value;
+            header.aCogGlobalValues[i].type         = pCogSym->value.type;
+            header.aCogGlobalValues[i].val.vecValue = pCogSym->value.val.vecValue;
             if ( pCogSym->value.type >= SITHCOG_VALUE_POINTER && (pCogSym->value.type <= SITHCOG_VALUE_SYMBOLID || pCogSym->value.type == SITHCOG_VALUE_STRING) )
             {
                 // For some reason reset symbol if it is a string, pointer or symbol id

@@ -86,7 +86,7 @@ typedef struct sSithRaftExitSearch
     rdVector3 dir;         // Search direction
     float distance;        // Distance to wall
 } SithRaftExitSearch;
-static_assert(sizeof(SithRaftExitSearch) == 24, "sizeof(SithRaftExitSearch) == 24");
+J3D_ASSERT_SIZE32(SithRaftExitSearch, 24);
 
 static inline bool sithVehicleControls_IsZeroVector(const rdVector3* pVec)
 {

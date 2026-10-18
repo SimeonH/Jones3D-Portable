@@ -630,7 +630,7 @@ SithThing* J3DAPI sithInventory_CreateBackpack(SithThing* pThing)
             if ( pItemInfo->numItems < STD_ARRAYLEN(pItemInfo->aBackpackItems) && amount > 0.0f )
             {
                 pItemInfo->aBackpackItems[pItemInfo->numItems].typeId = typeId;
-                pItemInfo->aBackpackItems[pItemInfo->numItems++].pItem->amount = amount;
+                pItemInfo->aBackpackItems[pItemInfo->numItems++].amount = amount;
             }
         }
     }
@@ -652,7 +652,7 @@ void J3DAPI sithInventory_PickupBackpack(SithThing* pPlayerThing, SithThing* pBa
     {
         if ( sithInventory_IsBackpackItem(pPlayerThing, pItemInfo->aBackpackItems[i].typeId) )
         {
-            sithInventory_ChangeInventory(pPlayerThing, pItemInfo->aBackpackItems[i].typeId, pItemInfo->aBackpackItems[i].pItem->amount);
+            sithInventory_ChangeInventory(pPlayerThing, pItemInfo->aBackpackItems[i].typeId, pItemInfo->aBackpackItems[i].amount);
         }
     }
 }
@@ -678,7 +678,7 @@ float J3DAPI sithInventory_GetBackpackItemValue(SithThing* pBackpackThing, size_
         return -1.0f;
     }
 
-    return pBackpackThing->thingInfo.itemInfo.aBackpackItems[itemNum].pItem->amount;
+    return pBackpackThing->thingInfo.itemInfo.aBackpackItems[itemNum].amount;
 }
 
 int J3DAPI sithInventory_GetNumBackpackItems(SithThing* pBackpackThing)

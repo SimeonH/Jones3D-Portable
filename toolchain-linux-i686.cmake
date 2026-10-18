@@ -1,5 +1,5 @@
 # Native 32-bit Linux build (i686) with clang and the multilib libraries.
-# The game code still assumes a 32-bit memory layout (struct sizes, file formats), so it's built as 32-bit.
+# The default native build is 64-bit, this toolchain builds the game with the original 32-bit memory layout instead.
 #
 #   cmake -S . -B build-linux -G Ninja -DCMAKE_TOOLCHAIN_FILE=toolchain-linux-i686.cmake -DJONES3D_RENDERER=Vulkan
 #

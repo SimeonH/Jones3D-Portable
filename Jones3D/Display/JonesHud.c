@@ -1,6 +1,12 @@
 #ifndef _WIN32
 #include <SDL3/SDL_misc.h>
+#include <SDL3/SDL_filesystem.h>
+#include <SDL3/SDL_process.h>
 #include <std/General/stdPlatform.h>
+
+#include <limits.h>
+#include <stdlib.h>
+#include <unistd.h>
 #endif
 #include "JonesHud.h"
 #include "JonesHudConstants.h"
@@ -45,6 +51,7 @@
 #include <sound/Sound.h>
 
 #include <std/General/std.h>
+#include <std/General/stdFileUtil.h>
 #include <std/General/stdMath.h>
 #include <std/General/stdMemory.h>
 #include <std/General/stdPlatform.h>
@@ -2896,8 +2903,6 @@ void JonesHud_MenuActivateItem(void)
         } break;
 
         case JONESHUD_MENU_HELP: // help
-            // TODO: Help menu item is not put in place in ResetMenuitems
-            //       so this scope could be skipped
             if ( JonesHud_hProcessHelp )
             {
             #ifdef _WIN32
@@ -3218,11 +3223,6 @@ void JonesHud_ResetMenuItems(void)
         JonesHudMenuItem* pCurItem = JonesHud_apMenuItems[JonesHud_selectedSystemMenuItemID];
         for ( size_t i = 0; i < 8; ++i ) // 8 = 9 sys items - 1 
         {
-            // Added: Skip help menu option, i.e. remove it
-            if ( curItemId == JONESHUD_MENU_HELP ) {
-                ++curItemId;
-            }
-
             if ( curItemId > JONESHUD_MENU_EXIT )
             {
                 curItemId = JONESHUD_MENU_IQ;
@@ -3833,55 +3833,155 @@ int JonesHud_ShowLevelCompleted(void)
     return bBoughtBounusMap;
 }
 
+// Added: Finds the help file in the install dir, the game root (parent of the Resource working dir) or the working dir
+static bool JonesHud_FindHelpFile(const char* pFilename, char* pOutPath, size_t outSize)
+{
+    char aInstallPath[128] = { 0 };
+    wuRegistry_GetStr("Install Path", aInstallPath, sizeof(aInstallPath), std_g_aEmptyString);
+
+    const char* aDirs[] = { aInstallPath, "..", "." };
+    for ( size_t i = 0; i < STD_ARRAYLEN(aDirs); ++i )
+    {
+        if ( strlen(aDirs[i]) )
+        {
+            stdUtil_Format(pOutPath, outSize, "%s\\%s", aDirs[i], pFilename);
+            if ( stdFileUtil_FileExists(pOutPath) ) {
+                return true;
+            }
+        }
+    }
+
+    return false;
+}
+
 HANDLE J3DAPI JonesHud_OpenHelp(HANDLE process)
 {
+    // Changed: The help file is opened with the program set by the 'Help Viewer' setting.
+    //          When it isn't set, Rust HLP Viewer (hlp-viewer, built with the game and placed next to its executable)
+    //          is tried before the system's default application for .hlp files, since current Windows versions
+    //          and Linux don't come with a WinHelp viewer.
     J3D_UNUSED(process);
-#ifdef _WIN32
-    struct _SHELLEXECUTEINFOA execInfo;
-#endif
-    const char* pFilename;
-    char aPath[128];
-    wchar_t* pwString;
-    HANDLE hProcess;
 
-    pwString = sithString_GetString("SITHSTRING_HELPFILE");
-    hProcess = 0;
+    const wchar_t* pwString = sithString_GetString("SITHSTRING_HELPFILE");
     if ( !pwString )
     {
-        return hProcess;
+        return NULL;
     }
 
-    pFilename = stdUtil_ToAString(pwString);
-    memset(aPath, 0, sizeof(aPath));
-    wuRegistry_GetStr("Install Path", aPath, sizeof(aPath), std_g_aEmptyString);
-    if ( pFilename && strlen(aPath) )
+    char* pFilename = stdUtil_ToAString(pwString);
+    if ( !pFilename )
     {
-    #ifndef _WIN32
-        // Open the help file with the default application
-        char aFilePath[512];
-        char aNativePath[512];
-        STD_FORMAT(aFilePath, "%s\\%s", aPath, pFilename);
-        stdPlatform_NativePath(aFilePath, aNativePath, sizeof(aNativePath));
-        STD_FORMAT(aFilePath, "file://%s", aNativePath);
-        SDL_OpenURL(aFilePath);
-    #else
-        memset(&execInfo, 0, sizeof(execInfo));
-        execInfo.cbSize = 60;
-        execInfo.fMask  = 80;
-        execInfo.lpVerb = "open";
-        execInfo.lpFile = pFilename;
-        execInfo.lpDirectory = aPath;
-        execInfo.nShow = 1;
-        ShellExecuteExA(&execInfo);
-        hProcess = execInfo.hProcess;
-    #endif
+        return NULL;
     }
 
-
-    if ( pFilename )
+    char aHelpPath[512];
+    bool bFound = JonesHud_FindHelpFile(pFilename, aHelpPath, sizeof(aHelpPath));
+    stdMemory_Free(pFilename);
+    if ( !bFound )
     {
-        stdMemory_Free((void*)pFilename);
+        STDLOG_ERROR("JonesHud: Couldn't find the help file.\n");
+        return NULL;
     }
+
+    char aViewer[256] = { 0 };
+    wuRegistry_GetStr("Help Viewer", aViewer, sizeof(aViewer), std_g_aEmptyString);
+
+    HANDLE hProcess = NULL;
+
+#ifdef _WIN32
+    char aFullPath[MAX_PATH];
+    if ( !GetFullPathNameA(aHelpPath, sizeof(aFullPath), aFullPath, NULL) ) {
+        return NULL;
+    }
+
+    if ( !strlen(aViewer) )
+    {
+        // hlp-viewer.exe next to the game executable
+        char aExePath[MAX_PATH];
+        DWORD len = GetModuleFileNameA(NULL, aExePath, sizeof(aExePath));
+        char* pSep = len && len < sizeof(aExePath) ? strrchr(aExePath, '\\') : NULL;
+        if ( pSep )
+        {
+            *pSep = '\0';
+            STD_FORMAT(aViewer, "%s\\hlp-viewer.exe", aExePath);
+            if ( GetFileAttributesA(aViewer) == INVALID_FILE_ATTRIBUTES ) {
+                aViewer[0] = '\0';
+            }
+        }
+    }
+
+    char aParams[MAX_PATH + 2];
+    STD_FORMAT(aParams, "\"%s\"", aFullPath);
+
+    struct _SHELLEXECUTEINFOA execInfo;
+    memset(&execInfo, 0, sizeof(execInfo));
+    execInfo.cbSize = sizeof(execInfo);
+    execInfo.fMask  = SEE_MASK_NOCLOSEPROCESS | SEE_MASK_FLAG_NO_UI;
+    execInfo.lpVerb = "open";
+    execInfo.nShow  = SW_SHOWNORMAL;
+    if ( strlen(aViewer) )
+    {
+        execInfo.lpFile       = aViewer;
+        execInfo.lpParameters = aParams;
+    }
+    else
+    {
+        execInfo.lpFile = aFullPath;
+    }
+
+    if ( !ShellExecuteExA(&execInfo) )
+    {
+        STDLOG_ERROR("JonesHud: Couldn't open the help file '%s', set 'Help Viewer' to the path of a WinHelp viewer.\n", aFullPath);
+        return NULL;
+    }
+
+    hProcess = execInfo.hProcess;
+
+#else
+    // Reap the previous viewer, only one is opened at a time
+    static SDL_Process* pViewerProcess = NULL;
+    if ( pViewerProcess )
+    {
+        if ( !SDL_WaitProcess(pViewerProcess, false, NULL) ) {
+            return NULL; // Still running
+        }
+
+        SDL_DestroyProcess(pViewerProcess);
+        pViewerProcess = NULL;
+    }
+
+    char aNativePath[512];
+    stdPlatform_NativePath(aHelpPath, aNativePath, sizeof(aNativePath));
+
+    char aFullPath[PATH_MAX];
+    if ( !realpath(aNativePath, aFullPath) ) {
+        return NULL;
+    }
+
+    if ( !strlen(aViewer) )
+    {
+        // hlp-viewer next to the game executable, else from PATH
+        const char* pBasePath = SDL_GetBasePath();
+        STD_FORMAT(aViewer, "%shlp-viewer", pBasePath ? pBasePath : "");
+        if ( !pBasePath || access(aViewer, X_OK) != 0 ) {
+            STD_FORMAT(aViewer, "hlp-viewer");
+        }
+    }
+
+    const char* aArgs[] = { aViewer, aFullPath, NULL };
+    pViewerProcess = SDL_CreateProcess(aArgs, false);
+    if ( !pViewerProcess )
+    {
+        STDLOG_STATUS("JonesHud: Couldn't start help viewer '%s': %s\n", aViewer, SDL_GetError());
+
+        // Fall back to the default application for .hlp files
+        char aUrl[PATH_MAX + 8];
+        STD_FORMAT(aUrl, "file://%s", aFullPath);
+        if ( !SDL_OpenURL(aUrl) ) {
+            STDLOG_ERROR("JonesHud: Couldn't open the help file '%s', set 'Help Viewer' to the path of a WinHelp viewer.\n", aFullPath);
+        }
+    }
+#endif
 
     return hProcess;
 }

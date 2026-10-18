@@ -44,6 +44,22 @@ This project does ***not*** include any original game assets. A valid copy of th
 
 3. Build the project.
 
+### Building on Linux
+The native Linux build uses SDL3, OpenAL Soft (built from source by CMake), the Vulkan renderer and wxWidgets with GTK3.
+
+ - **64-bit** (default): requires clang, SDL3, the Vulkan loader and GTK3 development packages.
+   ```bash
+   cmake -S . -B build-linux64 -G Ninja -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++
+   cmake --build build-linux64
+   ```
+ - **32-bit**: configure with the i686 toolchain file, which requires the 32-bit (multilib) versions of the libraries above.
+   ```bash
+   cmake -S . -B build-linux -G Ninja -DCMAKE_TOOLCHAIN_FILE=toolchain-linux-i686.cmake
+   cmake --build build-linux
+   ```
+
+Both builds read the original game files and use the same save game format, so saves can be shared between them and with the Windows build.
+
 ## High-Level Overview of Engine Architecture
 The Jones3D game engine is an upgraded version of the *Sith* game engine, originally used in games like *Star Wars Jedi Knight: Dark Forces II* and *Star Wars Jedi Knight: Mysteries of the Sith*. The engine consists of various modules that do specific tasks, with 8 original modules and 1 module (`j3dcore`) specific to this implementation of the engine.
 

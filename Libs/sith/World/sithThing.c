@@ -349,7 +349,7 @@ int J3DAPI sithThing_WriteThingsListBinary(tFileHandle fh, const SithWorld* pWor
 
     CndThingInfo* aThingInfos         = NULL;
     CndPhysicsInfo* aPhysicsInfos     = NULL;
-    size_t* aPathNumFrames            = NULL;
+    uint32_t* aPathNumFrames          = NULL;
     SithPathFrame* aPathFrames        = NULL;
     CndActorInfo* aActorInfos         = NULL;
     CndWeaponInfo* aWeaponInfos       = NULL;
@@ -424,7 +424,7 @@ int J3DAPI sithThing_WriteThingsListBinary(tFileHandle fh, const SithWorld* pWor
     }
 
     size_t physicsInfosSize    = sizeof(CndPhysicsInfo) * header.numPhysics;
-    size_t pathNumFramesSize   = sizeof(size_t) * header.numPaths;
+    size_t pathNumFramesSize   = sizeof(uint32_t) * header.numPaths;
     size_t pathFramesSize      = sizeof(SithPathFrame) * header.numPathFrames;
     size_t actorInfosSize      = sizeof(CndActorInfo) * header.numActors;
     size_t weaponInfosSize     = sizeof(CndWeaponInfo) * header.numWeapons;
@@ -436,7 +436,7 @@ int J3DAPI sithThing_WriteThingsListBinary(tFileHandle fh, const SithWorld* pWor
     size_t aiFramesSize        = sizeof(rdVector3) * header.numAIFrames;
 
     if ( (aPhysicsInfos = (CndPhysicsInfo*)sithThing_AllocCndBuffer(physicsInfosSize)) == NULL
-        || (aPathNumFrames = (size_t*)sithThing_AllocCndBuffer(pathNumFramesSize)) == NULL
+        || (aPathNumFrames = (uint32_t*)sithThing_AllocCndBuffer(pathNumFramesSize)) == NULL
         || (aPathFrames = (SithPathFrame*)sithThing_AllocCndBuffer(pathFramesSize)) == NULL
         || (aActorInfos = (CndActorInfo*)sithThing_AllocCndBuffer(actorInfosSize)) == NULL
         || (aWeaponInfos = (CndWeaponInfo*)sithThing_AllocCndBuffer(weaponInfosSize)) == NULL
@@ -452,7 +452,7 @@ int J3DAPI sithThing_WriteThingsListBinary(tFileHandle fh, const SithWorld* pWor
 
     // Collect infos
     CndPhysicsInfo* pPhysicsInfo     = aPhysicsInfos;
-    size_t* pPathNumFrames           = aPathNumFrames;
+    uint32_t* pPathNumFrames         = aPathNumFrames;
     SithPathFrame* pPathFrame        = aPathFrames;
     CndActorInfo* pActorInfo         = aActorInfos;
     CndWeaponInfo* pWeaponInfo       = aWeaponInfos;
@@ -736,7 +736,7 @@ int J3DAPI sithThing_ReadThingsListBinary(tFileHandle fh, SithWorld* pWorld, siz
 
     CndThingInfo* aThingInfos         = NULL;
     CndPhysicsInfo* aPhysicsInfos     = NULL;
-    size_t* aPathNumFrames            = NULL;
+    uint32_t* aPathNumFrames          = NULL;
     SithPathFrame* aPathFrames        = NULL;
     CndActorInfo* aActorInfos         = NULL;
     CndWeaponInfo* aWeaponInfos       = NULL;
@@ -761,7 +761,7 @@ int J3DAPI sithThing_ReadThingsListBinary(tFileHandle fh, SithWorld* pWorld, siz
     }
 
     size_t physicsInfosSize    = sizeof(CndPhysicsInfo) * header.numPhysics;
-    size_t pathNumFramesSize   = sizeof(size_t) * header.numPaths;
+    size_t pathNumFramesSize   = sizeof(uint32_t) * header.numPaths;
     size_t pathFramesSize      = sizeof(SithPathFrame) * header.numPathFrames;
     size_t actorInfosSize      = sizeof(CndActorInfo) * header.numActors;
     size_t weaponInfosSize     = sizeof(CndWeaponInfo) * header.numWeapons;
@@ -774,7 +774,7 @@ int J3DAPI sithThing_ReadThingsListBinary(tFileHandle fh, SithWorld* pWorld, siz
 
     // Note, some of the buffers are not zero initialized as they are fully overwritten by the read
     if ( (aPhysicsInfos = (CndPhysicsInfo*)sithThing_AllocCndBuffer(physicsInfosSize)) == NULL
-        || (aPathNumFrames = (size_t*)STDMALLOC(pathNumFramesSize)) == NULL
+        || (aPathNumFrames = (uint32_t*)STDMALLOC(pathNumFramesSize)) == NULL
         || (aPathFrames = (SithPathFrame*)STDMALLOC(pathFramesSize)) == NULL
         || (aActorInfos = (CndActorInfo*)STDMALLOC(actorInfosSize)) == NULL
         || (aWeaponInfos = (CndWeaponInfo*)STDMALLOC(weaponInfosSize)) == NULL
@@ -804,7 +804,7 @@ int J3DAPI sithThing_ReadThingsListBinary(tFileHandle fh, SithWorld* pWorld, siz
     }
 
     const CndPhysicsInfo* pPhysicsInfo     = aPhysicsInfos;
-    const size_t* pPathNumFrames           = aPathNumFrames;
+    const uint32_t* pPathNumFrames         = aPathNumFrames;
     const SithPathFrame* pPathFrame        = aPathFrames;
     const CndActorInfo* pActorInfo         = aActorInfos;
     const CndWeaponInfo* pWeaponInfo       = aWeaponInfos;

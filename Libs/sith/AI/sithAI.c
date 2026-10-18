@@ -380,7 +380,7 @@ int J3DAPI sithAI_ForceInstinctUpdate(SithAIControlBlock* pLocal, const char* pI
 //                }
 //                break;
 //            default:
-//                cogParam = (int)pObject;
+//                cogParam = (int)(intptr_t)pObject;
 //                bSendCogEvent = true;
 //                break;
 //        }
@@ -410,7 +410,7 @@ int J3DAPI sithAI_ForceInstinctUpdate(SithAIControlBlock* pLocal, const char* pI
 //                }
 //                break;
 //            default:
-//                cogParam = (int)pObject;
+//                cogParam = (int)(intptr_t)pObject;
 //                bSendCogEvent = true;
 //                break;
 //        }
@@ -519,7 +519,7 @@ void J3DAPI sithAI_EmitEvent(SithAIControlBlock* pLocal, SithAIEventType event, 
             }
             break;
         default:
-            cogParam = (int)pObject;
+            cogParam = (int)(intptr_t)pObject;
             bSendCogEvent = true;
             break;
     };
@@ -697,7 +697,7 @@ int J3DAPI sithAI_ProcessUnhandledEvent(SithAIControlBlock* pLocal, SithAIEventT
         }
         case SITHAI_EVENT_MODECHANGED:
         {
-            if ( (pLocal->mode & SITHAI_MODE_CHASE_GOAL) == 0 || ((SithAIMode)pObject & SITHAI_MODE_CHASE_GOAL) != 0 )
+            if ( (pLocal->mode & SITHAI_MODE_CHASE_GOAL) == 0 || ((SithAIMode)(intptr_t)pObject & SITHAI_MODE_CHASE_GOAL) != 0 )
             {
                 return 0;
             }

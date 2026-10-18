@@ -75,7 +75,7 @@ int J3DAPI sithPVS_ReadPVSText(SithWorld* pWorld, int bSkip)
         return 1;
     }
 
-    int rlen = stdConffile_ScanLine("pvs size: %d", &pWorld->sizePVS);
+    int rlen = stdConffile_ScanLine("pvs size: %" J3D_SCN_SIZE, &pWorld->sizePVS);
     if ( rlen != 1 ) {
         if ( rlen < 0 ) {
             goto eof_error;
@@ -140,8 +140,8 @@ syntax_error:
 
 int J3DAPI sithPVS_WritePVSBinary(tFileHandle fh, const SithWorld* pWorld)
 {
-    static_assert(sizeof(pWorld->sizePVS) == sizeof(uint32_t), "sizeof(pWorld->sizePVS) == sizeof(uint32_t)");
-    if ( sith_g_pHS->pFileWrite(fh, &pWorld->sizePVS, sizeof(uint32_t)) != sizeof(uint32_t) )
+    uint32_t sizePVS = (uint32_t)pWorld->sizePVS;
+    if ( sith_g_pHS->pFileWrite(fh, &sizePVS, sizeof(uint32_t)) != sizeof(uint32_t) )
     {
         return 1;
     }
@@ -151,10 +151,13 @@ int J3DAPI sithPVS_WritePVSBinary(tFileHandle fh, const SithWorld* pWorld)
 
 int J3DAPI sithPVS_ReadPVSBinary(tFileHandle fh, SithWorld* pWorld)
 {
-    if ( sith_g_pHS->pFileRead(fh, &pWorld->sizePVS, sizeof(uint32_t)) != sizeof(uint32_t) )
+    uint32_t sizePVS;
+    if ( sith_g_pHS->pFileRead(fh, &sizePVS, sizeof(uint32_t)) != sizeof(uint32_t) )
     {
         return 1;
     }
+
+    pWorld->sizePVS = sizePVS;
 
     if ( !pWorld->sizePVS )
     {

@@ -32,6 +32,16 @@ namespace
         wxDateTime modTime;
     };
 
+    enum SaveGameColumn
+    {
+        SAVEGAME_COLUMN_NAME = 0,
+        SAVEGAME_COLUMN_DATE = 1,
+    };
+
+    // File list sort order, kept between dialogs for the session. Default is newest first.
+    int saveGameSortColumn      = SAVEGAME_COLUMN_DATE;
+    bool bSaveGameSortAscending = false;
+
     wxString GetSaveGamesDir()
     {
         return JonesWx::NativePath(sithGetSaveGamesDir());
@@ -61,11 +71,23 @@ namespace
             aFiles.push_back({ fn.GetName(), fn.GetModificationTime() });
         }
 
-        // Newest first
-        std::sort(aFiles.begin(), aFiles.end(), [](const SaveGameFile& a, const SaveGameFile& b) {
-            return a.modTime.IsLaterThan(b.modTime);
-        });
         return aFiles;
+    }
+
+    void SortSaveGames(std::vector<SaveGameFile>& aFiles, int column, bool bAscending)
+    {
+        std::stable_sort(aFiles.begin(), aFiles.end(), [column, bAscending](const SaveGameFile& a, const SaveGameFile& b) {
+            int cmp = 0;
+            if ( column == SAVEGAME_COLUMN_DATE && a.modTime.IsValid() && b.modTime.IsValid() ) {
+                cmp = a.modTime.IsEarlierThan(b.modTime) ? -1 : (a.modTime.IsLaterThan(b.modTime) ? 1 : 0);
+            }
+
+            if ( cmp == 0 ) {
+                cmp = a.name.CmpNoCase(b.name);
+            }
+
+            return bAscending ? cmp < 0 : cmp > 0;
+        });
     }
 
     // Returns true if name is one of the game's auto or quick save file names
@@ -100,6 +122,7 @@ namespace
             // Note, game has no localized strings for these
             pFileList->AppendColumn("Name", wxLIST_FORMAT_LEFT, Scaled(220));
             pFileList->AppendColumn("Date", wxLIST_FORMAT_LEFT, Scaled(130));
+            pFileList->Bind(wxEVT_LIST_COL_CLICK, [this](wxListEvent& event) { OnColumnClick(event.GetColumn()); });
             pFileList->Bind(wxEVT_LIST_ITEM_SELECTED, [this](wxListEvent& event) { OnFileSelected(event.GetIndex()); });
             pFileList->Bind(wxEVT_LIST_ITEM_ACTIVATED, [this](wxListEvent&) { OnButton(1); });
 
@@ -178,17 +201,31 @@ namespace
                 lastName = wxFileName(JonesWx::NativePath(pLastFile)).GetName();
             }
 
+            PopulateFileList(lastName, /*bSelectFirst=*/!bSave);
+        }
+
+        // Sorts files and fills the list, selecting the file named selName
+        void PopulateFileList(const wxString& selName, bool bSelectFirst)
+        {
+            SortSaveGames(aFiles, saveGameSortColumn, bSaveGameSortAscending);
+            pFileList->ShowSortIndicator(saveGameSortColumn, bSaveGameSortAscending);
+
+            pFileList->Freeze();
+            pFileList->DeleteAllItems();
+
             long selIdx = -1;
             for ( size_t i = 0; i < aFiles.size(); ++i )
             {
                 pFileList->InsertItem((long)i, aFiles[i].name);
-                pFileList->SetItem((long)i, 1, aFiles[i].modTime.IsValid() ? aFiles[i].modTime.Format("%x %H:%M") : wxString());
-                if ( selIdx < 0 && aFiles[i].name.IsSameAs(lastName, /*caseSensitive=*/false) ) {
+                pFileList->SetItem((long)i, SAVEGAME_COLUMN_DATE, aFiles[i].modTime.IsValid() ? aFiles[i].modTime.Format("%x %H:%M") : wxString());
+                if ( selIdx < 0 && !selName.empty() && aFiles[i].name.IsSameAs(selName, /*caseSensitive=*/false) ) {
                     selIdx = (long)i;
                 }
             }
 
-            if ( !bSave && selIdx < 0 && !aFiles.empty() ) {
+            pFileList->Thaw();
+
+            if ( bSelectFirst && selIdx < 0 && !aFiles.empty() ) {
                 selIdx = 0;
             }
 
@@ -198,6 +235,34 @@ namespace
                 pFileList->EnsureVisible(selIdx);
                 OnFileSelected(selIdx);
             }
+        }
+
+        // Clicking a column header sorts by it, clicking the sorted column again reverses the order
+        void OnColumnClick(int column)
+        {
+            if ( column != SAVEGAME_COLUMN_NAME && column != SAVEGAME_COLUMN_DATE ) {
+                return;
+            }
+
+            if ( column == saveGameSortColumn ) {
+                bSaveGameSortAscending = !bSaveGameSortAscending;
+            }
+            else
+            {
+                saveGameSortColumn     = column;
+                bSaveGameSortAscending = column == SAVEGAME_COLUMN_NAME; // A-Z by name, newest first by date
+            }
+
+            // Keep the selected file selected, but don't change the name typed in save mode
+            wxString selName;
+            const long selIdx = pFileList->GetNextItem(-1, wxLIST_NEXT_ALL, wxLIST_STATE_SELECTED);
+            if ( selIdx >= 0 && (size_t)selIdx < aFiles.size() ) {
+                selName = aFiles[selIdx].name;
+            }
+
+            const wxString typedName = pNameEdit->GetValue();
+            PopulateFileList(selName, /*bSelectFirst=*/false);
+            pNameEdit->ChangeValue(typedName);
         }
 
         void OnFileSelected(long idx)

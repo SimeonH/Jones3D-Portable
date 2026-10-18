@@ -370,7 +370,7 @@ int J3DAPI JonesMain_Startup(const char* lpCmdLine)
     {
         case JONES_STARTMODE_STARTGAME:
         {
-            sscanf_s(lpCmdLine, "%d", &JonesMain_curLevelNum);
+            sscanf_s(lpCmdLine, "%" J3D_SCN_SIZE, &JonesMain_curLevelNum);
             if ( !JonesLevel_IsValidLevelNum(JonesMain_curLevelNum) ) // Fixed out of bound read by setting the upper bound to equal or greater
             {
                 JonesMain_curLevelNum = JONESLEVEL_FIRSTLEVELNUM;
@@ -1552,7 +1552,7 @@ int J3DAPI JonesMain_EnsureLevelFileEx(const char* pFilename, bool bFindAll, cha
     if ( bFindAll && pFoundFilename )
     {
         const char* pCurExt = stdFnames_FindExt(aPath);
-        if ( streqi(pCurExt, "cnd") ) {
+        if ( pCurExt && streqi(pCurExt, "cnd") ) {
             stdFnames_ChangeExt(aPath, "ndy");
         }
         else {
@@ -2268,207 +2268,102 @@ void J3DAPI JonesMain_IntroHandleWMKeydown(HWND hwnd, WPARAM vk, int a3, uint16_
     }
 }
 
-int J3DAPI JonesMain_IntroMovieBlt565(const SmushBitmap* pBitmap, int a2)
+// Added: Pixel conversion of intro movie frame
+typedef enum eJonesIntroMovieBltFormat
 {
-    J3D_UNUSED(a2);
+    JONES_INTROMOVIE_BLT_RGB565 = 0, // 16-bit pixels copied as is
+    JONES_INTROMOVIE_BLT_TABLE16,    // 16-bit pixels converted via JonesMain_aIntroMovieColorTable
+    JONES_INTROMOVIE_BLT_TABLE32,    // 32-bit pixels converted via JonesMain_aIntroMovieColorTable
+} JonesIntroMovieBltFormat;
 
-    uint32_t i;
-    uint32_t j;
-    size_t curHeight;
-    size_t curWidth;
-    uint8_t* pPixels;
-    uint32_t height;
-    uint32_t width;
+// Added: Draws the intro movie frame to the back buffer scaled to the largest centered rect with the movie's aspect ratio (4:3),
+//        the rest of back buffer is filled with black. The original stretched the frame over the whole back buffer.
+static void JonesMain_DrawIntroMovieFrame(const SmushBitmap* pBitmap, JonesIntroMovieBltFormat format)
+{
     void* pSurface;
-    uint8_t* pCurPixelIn;
-    uint16_t* pCurPixelOut;
-    uint8_t* pRow;
+    uint32_t width, height;
     int pitch;
-
-    stdDisplay_LockBackBuffer(&pSurface, &width, &height, &pitch);
-
-    pRow = (uint8_t*)pSurface;
-    pPixels = (uint8_t*)pBitmap->pPixels;
-    curHeight = 0;
-
-    for ( i = 0; i < height; ++i )
+    if ( stdDisplay_LockBackBuffer(&pSurface, &width, &height, &pitch) )
     {
-        curWidth = 0;
-        pCurPixelIn = pPixels;
-        pCurPixelOut = (uint16_t*)pRow;
+        return;
+    }
 
-        for ( j = 0; j < width; ++j )
+    // Calculate destination rect
+    uint32_t dstWidth  = width;
+    uint32_t dstHeight = height;
+    if ( pBitmap->width && pBitmap->height )
+    {
+        if ( (uint64_t)width * pBitmap->height > (uint64_t)height * pBitmap->width )
         {
-            *pCurPixelOut++ = *(uint16_t*)pCurPixelIn;
+            dstWidth = (uint32_t)((uint64_t)height * pBitmap->width / pBitmap->height); // pillarbox
+        }
+        else
+        {
+            dstHeight = (uint32_t)((uint64_t)width * pBitmap->height / pBitmap->width); // letterbox
+        }
+    }
+
+    const uint32_t dstX = (width - dstWidth) / 2;
+    const uint32_t dstY = (height - dstHeight) / 2;
+    const size_t outPixelSize = format == JONES_INTROMOVIE_BLT_TABLE32 ? sizeof(uint32_t) : sizeof(uint16_t);
+
+    uint8_t* pRow = (uint8_t*)pSurface;
+    const uint8_t* pPixels = (const uint8_t*)pBitmap->pPixels;
+    size_t curHeight = 0;
+
+    for ( uint32_t i = 0; i < height; ++i, pRow += pitch )
+    {
+        if ( i < dstY || i >= dstY + dstHeight )
+        {
+            memset(pRow, 0, outPixelSize * width);
+            continue;
+        }
+
+        // Left and right borders
+        memset(pRow, 0, outPixelSize * dstX);
+        memset(pRow + outPixelSize * (dstX + dstWidth), 0, outPixelSize * (width - dstX - dstWidth));
+
+        size_t curWidth = 0;
+        const uint8_t* pCurPixelIn = pPixels;
+        uint8_t* pCurPixelOut = pRow + outPixelSize * dstX;
+        for ( uint32_t j = 0; j < dstWidth; ++j )
+        {
+            const uint16_t pixel = *(const uint16_t*)pCurPixelIn;
+            switch ( format )
+            {
+                case JONES_INTROMOVIE_BLT_RGB565:
+                    ((uint16_t*)pCurPixelOut)[j] = pixel;
+                    break;
+                case JONES_INTROMOVIE_BLT_TABLE16:
+                    ((uint16_t*)pCurPixelOut)[j] = ((const uint16_t*)JonesMain_aIntroMovieColorTable)[pixel];
+                    break;
+                case JONES_INTROMOVIE_BLT_TABLE32:
+                    ((uint32_t*)pCurPixelOut)[j] = ((const uint32_t*)JonesMain_aIntroMovieColorTable)[pixel];
+                    break;
+            }
 
             curWidth += pBitmap->width;
-            while ( (int)curWidth >= (int)width )
+            while ( curWidth >= dstWidth )
             {
-                curWidth -= width;
+                curWidth -= dstWidth;
                 pCurPixelIn += pBitmap->pixelSize;
             }
         }
 
-        pRow += pitch;
-
         curHeight += pBitmap->height;
-        while ( (int)curHeight >= (int)height )
+        while ( curHeight >= dstHeight )
         {
-            curHeight -= height;
+            curHeight -= dstHeight;
             pPixels += pBitmap->pitch;
         }
     }
 
     stdDisplay_UnlockBackBuffer();
-
-    stdDisplay_Update();
-
-    if ( !JonesMain_bSkipIntro )
-    {
-        if ( !wkernel_PeekProcessEvents() )
-        {
-            return 0;
-        }
-
-        JonesMain_bNoProcessWndEvents = 1;
-    }
-
-    if ( JonesMain_aIntroMovieColorTable )
-    {
-        stdMemory_Free(JonesMain_aIntroMovieColorTable);
-    }
-
-    JonesMain_aIntroMovieColorTable = 0;
-    return 1;
 }
 
-int J3DAPI JonesMain_IntroMovieBlt555(const SmushBitmap* pBitmap, int a2)
+// Presents the drawn intro movie frame and processes window events. Returns 1 if the movie should stop.
+static int JonesMain_PresentIntroMovieFrame(void)
 {
-    J3D_UNUSED(a2);
-
-    uint32_t i;
-    uint32_t j;
-    size_t curHeight;
-    size_t curWidth;
-    uint8_t* pPixels;
-    uint32_t height;
-    uint32_t width;
-    void* pSurface;
-    uint8_t* pCurPixelIn;
-    uint16_t* pCurPixelOut;
-    uint8_t* pRow;
-    int pitch;
-
-    stdDisplay_LockBackBuffer(&pSurface, &width, &height, &pitch);
-
-    pRow = (uint8_t*)pSurface;
-    pPixels = (uint8_t*)pBitmap->pPixels;
-    curHeight = 0;
-
-    for ( i = 0; i < height; ++i )
-    {
-        curWidth = 0;
-        pCurPixelIn = pPixels;
-        pCurPixelOut = (uint16_t*)pRow;
-
-        for ( j = 0; j < width; ++j )
-        {
-            *pCurPixelOut++ = *(uint16_t*)&JonesMain_aIntroMovieColorTable[2 * *(uint16_t*)pCurPixelIn];
-
-            curWidth += pBitmap->width;
-            while ( (int)curWidth >= (int)width )
-            {
-                curWidth -= width;
-                pCurPixelIn += pBitmap->pixelSize;
-            }
-        }
-
-        pRow += pitch;
-
-        curHeight += pBitmap->height;
-        while ( (int)curHeight >= (int)height )
-        {
-            curHeight -= height;
-            pPixels += pBitmap->pitch;
-        }
-    }
-
-    stdDisplay_UnlockBackBuffer();
-
-    stdDisplay_Update();
-
-    if ( !JonesMain_bSkipIntro )
-    {
-        if ( !wkernel_PeekProcessEvents() )
-        {
-            return 0;
-        }
-
-        JonesMain_bNoProcessWndEvents = 1;
-    }
-
-    if ( JonesMain_aIntroMovieColorTable )
-    {
-        stdMemory_Free(JonesMain_aIntroMovieColorTable);
-    }
-
-    JonesMain_aIntroMovieColorTable = 0;
-    return 1;
-}
-
-int J3DAPI JonesMain_IntroMovieBlt32(const SmushBitmap* pBitmap, int a2)
-{
-    J3D_UNUSED(a2);
-
-    uint32_t i;
-    uint32_t j;
-    size_t curHeight;
-    size_t curWidth;
-    uint8_t* pPixels;
-    uint32_t height;
-    uint32_t width;
-    void* pSurface;
-    uint8_t* pCurPixelIn;
-    uint32_t* pCurPixelOut;
-    uint8_t* pRow;
-    int pitch;
-
-    stdDisplay_LockBackBuffer(&pSurface, &width, &height, &pitch);
-
-    pRow = (uint8_t*)pSurface;
-    pPixels = (uint8_t*)pBitmap->pPixels;
-    curHeight = 0;
-
-    for ( i = 0; i < height; ++i )
-    {
-        curWidth = 0;
-        pCurPixelIn = pPixels;
-        pCurPixelOut = (uint32_t*)pRow;
-
-        for ( j = 0; j < width; ++j )
-        {
-            *pCurPixelOut++ = *(uint32_t*)&JonesMain_aIntroMovieColorTable[4 * *(uint16_t*)pCurPixelIn];
-
-            curWidth += pBitmap->width;
-            while ( (int)curWidth >= (int)width )
-            {
-                curWidth -= width;
-                pCurPixelIn += pBitmap->pixelSize;
-            }
-        }
-
-        pRow += pitch;
-
-        curHeight += pBitmap->height;
-        while ( (int)curHeight >= (int)height )
-        {
-            curHeight -= height;
-            pPixels += pBitmap->pitch;
-        }
-    }
-
-    stdDisplay_UnlockBackBuffer();
-
     stdDisplay_Update();
 
     if ( !JonesMain_bSkipIntro )
@@ -2488,6 +2383,27 @@ int J3DAPI JonesMain_IntroMovieBlt32(const SmushBitmap* pBitmap, int a2)
 
     JonesMain_aIntroMovieColorTable = NULL;
     return 1;
+}
+
+int J3DAPI JonesMain_IntroMovieBlt565(const SmushBitmap* pBitmap, int a2)
+{
+    J3D_UNUSED(a2);
+    JonesMain_DrawIntroMovieFrame(pBitmap, JONES_INTROMOVIE_BLT_RGB565);
+    return JonesMain_PresentIntroMovieFrame();
+}
+
+int J3DAPI JonesMain_IntroMovieBlt555(const SmushBitmap* pBitmap, int a2)
+{
+    J3D_UNUSED(a2);
+    JonesMain_DrawIntroMovieFrame(pBitmap, JONES_INTROMOVIE_BLT_TABLE16);
+    return JonesMain_PresentIntroMovieFrame();
+}
+
+int J3DAPI JonesMain_IntroMovieBlt32(const SmushBitmap* pBitmap, int a2)
+{
+    J3D_UNUSED(a2);
+    JonesMain_DrawIntroMovieFrame(pBitmap, JONES_INTROMOVIE_BLT_TABLE32);
+    return JonesMain_PresentIntroMovieFrame();
 }
 
 J3DNORETURN void J3DAPI JonesMain_Assert(const char* pErrorText, const char* pSrcFile, int line)

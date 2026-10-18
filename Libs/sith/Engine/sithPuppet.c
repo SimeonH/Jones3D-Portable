@@ -328,7 +328,7 @@ void J3DAPI sithPuppet_RemoveAllTracks(SithThing* pThing)
             break;
         }
 
-        if ( pTrack->trackNum == (int)STDMEMORY_FREEDPTR )
+        if ( pTrack->trackNum == (int)(uintptr_t)STDMEMORY_FREEDPTR )
         {
             SITHLOG_ERROR("Pup track list is messed up, pointer to freed memory!\n");
             break;

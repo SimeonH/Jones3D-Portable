@@ -26,6 +26,22 @@
     #define J3D_32BIT 1
 #endif
 
+// Checks the size of an in-memory structure against the original 32-bit layout of Indy3D.exe.
+// Structures with pointers or size_t grow on 64-bit targets, so the check only applies to 32-bit builds.
+// Structures that are read from or written to files must use static_assert instead.
+// scanf conversion for size_t arguments, the original code used %d
+#ifdef J3D_32BIT
+    #define J3D_SCN_SIZE "d"
+#else
+    #define J3D_SCN_SIZE "zu"
+#endif
+
+#ifdef J3D_32BIT
+    #define J3D_ASSERT_SIZE32(type, size) static_assert(sizeof(type) == (size), "sizeof(" #type ") == " #size)
+#else
+    #define J3D_ASSERT_SIZE32(type, size) static_assert(1, "")
+#endif
+
 // Platform specific definitions
 #ifdef _WIN32
 #   ifndef NDEBUG

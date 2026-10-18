@@ -49,7 +49,7 @@ typedef struct sMemoryZoneBlockHeader
     uint16_t prevSize; // Size of previous block
     tMemoryBlock* pZone;
 } tMemoryZoneBlockHeader;
-static_assert(sizeof(tMemoryZoneBlockHeader) == 8, "sizeof(tMemoryZoneBlockHeader) == 8");
+J3D_ASSERT_SIZE32(tMemoryZoneBlockHeader, 8);
 
 // Zone fields: header.size - pointer to zone memory, header.pHeap - largest free block, size - size of largest free block (excl. header)
 #define STDMEMORY_ZONEMEM(pZone)     (*(tMemoryZoneBlockHeader**)&(pZone)->header.size)
@@ -374,7 +374,7 @@ void* J3DAPI stdMemory_Malloc(size_t size, const char* pFilename, size_t line)
     }
 
     pData->number = stdMemory_g_curState.totalAllocs;
-    pData->id = (uint32_t)pData;
+    pData->id = (uint32_t)(uintptr_t)pData;
     pData->size = size;
     pData->pFilename = pFilename;
     pData->line = line;
@@ -410,7 +410,7 @@ void* J3DAPI stdMemory_Malloc(size_t size, const char* pFilename, size_t line)
 void J3DAPI stdMemory_Free(void* pBytes)
 {
     tMemoryHeader* pHeader = (tMemoryHeader*)((char*)pBytes - sizeof(tMemoryHeader));
-    STD_ASSERTREL((pHeader != NULL) && ((uint32_t)pHeader == pHeader->id));
+    STD_ASSERTREL((pHeader != NULL) && ((uint32_t)(uintptr_t)pHeader == pHeader->id));
     STD_ASSERTREL(pHeader->magic == STDMEMORY_HEADERMAGIC);
     STD_ASSERTREL(*(uint32_t*)((uint8_t*)pBytes + pHeader->size) == STDMEMORY_HEADERMAGIC);
 
@@ -442,12 +442,12 @@ void* J3DAPI stdMemory_Realloc(void* pBytes, size_t size, const char* pFilename,
     if ( size )
     {
         pHeader = (tMemoryHeader*)((char*)pBytes - sizeof(tMemoryHeader));
-        STD_ASSERTREL((pHeader != NULL) && ((uint32_t)pHeader == pHeader->id));
+        STD_ASSERTREL((pHeader != NULL) && ((uint32_t)(uintptr_t)pHeader == pHeader->id));
         v8 = pHeader->size;
         pHeap = (tMemoryHeap*)std_g_pHS->pRealloc(pHeader, size + sizeof(tMemoryHeap));
         if ( pHeap )
         {
-            pHeap->header.id = (uint32_t)pHeap;
+            pHeap->header.id = (uint32_t)(uintptr_t)pHeap;
             pHeap->header.size = size;
             pHeap->header.pFilename = pFilename;
             pHeap->header.line = line;
