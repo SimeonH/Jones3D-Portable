@@ -7,9 +7,13 @@
 
 #include <std/General/std.h>
 #include <std/General/stdUtil.h>
+
+#include <string.h>
 #include <std/Win95/stdDisplay.h>
 #include <std/Win95/stdControl.h>
 #include <std/Win95/stdWin95.h>
+
+#ifdef _WIN32
 
 static int JonesDialog_bWindowResized = 1;
 static int JonesDialog_cursorPointIdx = 1;
@@ -800,3 +804,42 @@ int J3DAPI JonesDialog_FreeOffScreenDIBSection()
     JonesDialog_GDIDIBSectionInfoOffScreen.pPixels   = NULL;
     return 0;
 }
+
+#else // !_WIN32
+
+// Non-Windows builds: the dialogs (wx) are separate top-level windows, so there's no game frame or cursor
+// to draw behind them with GDI. Only the game state is paused and restored.
+
+void JonesDialog_InstallHooks(void)
+{
+}
+
+void J3DAPI JonesDialog_SetGameState(JonesDialogGameState* pState, int bWindowModeSupported)
+{
+    J3D_UNUSED(bWindowModeSupported);
+    memset(pState, 0, sizeof(*pState));
+
+    pState->bGamePaused = JonesMain_IsGamePaused();
+    if ( !pState->bGamePaused ) {
+        JonesMain_PauseGame();
+    }
+
+    pState->bControlsActive = stdControl_ControlsActive();
+    if ( pState->bControlsActive && !stdControl_SetActivation(0) ) {
+        stdControl_ShowMouseCursor(1);
+    }
+}
+
+void J3DAPI JonesDialog_ResetGameState(JonesDialogGameState* pState, int bWindowModeSupported)
+{
+    J3D_UNUSED(bWindowModeSupported);
+    if ( !stdControl_SetActivation(pState->bControlsActive) ) {
+        stdControl_ShowMouseCursor(pState->bControlsActive ? 0 : 1);
+    }
+
+    if ( !pState->bGamePaused ) {
+        JonesMain_ResumeGame();
+    }
+}
+
+#endif // _WIN32

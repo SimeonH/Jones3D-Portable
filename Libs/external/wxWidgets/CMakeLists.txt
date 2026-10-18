@@ -7,6 +7,14 @@ project(wxWidgets_external)
 
 include(FetchContent)
 
+if(NOT WIN32)
+    find_package(PkgConfig REQUIRED)
+    pkg_check_modules(GTK3 gtk+-3.0)
+    if(NOT GTK3_FOUND)
+        message(FATAL_ERROR "wxWidgets needs GTK 3 development files for the target architecture (32-bit: lib32-gtk3)")
+    endif()
+endif()
+
 FetchContent_Declare(wxWidgets
     URL      https://github.com/wxWidgets/wxWidgets/releases/download/v3.2.8/wxWidgets-3.2.8.tar.bz2
     URL_HASH SHA256=c74784904109d7229e6894c85cfa068f1106a4a07c144afd78af41f373ee0fe6
@@ -28,6 +36,8 @@ set(wxBUILD_PRECOMP        OFF CACHE STRING "" FORCE)
 foreach(feature
     WEBVIEW STC RICHTEXT AUI PROPGRID RIBBON MEDIACTRL XRC HTML WXHTML_HELP
     OPENGL GLCANVAS LIBTIFF REGEX XML DEBUGREPORT SOCKETS URL PROTOCOL FS_INET
+    LIBNOTIFY # GTK: not needed, and fails to build with some libnotify versions
+    LIBSDL    # Unix wxSound backend, not used (and would pull in the host SDL2)
 )
     set(wxUSE_${feature} OFF CACHE BOOL "" FORCE)
 endforeach()

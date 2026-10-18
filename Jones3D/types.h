@@ -1,8 +1,10 @@
 #ifndef JONES3D_TYPES_H
 #define JONES3D_TYPES_H
+#ifdef _WIN32
 #define STRICT
 #include <Windows.h>
 #include <CommCtrl.h>
+#endif
 #include <stdint.h>
 
 #include <j3dcore/j3d.h>
@@ -350,7 +352,9 @@ typedef struct sJonesState
     JonesSoundSettings soundSettings;
     JonesDisplaySettings displaySettings;
 } JonesState;
+#ifdef _WIN32 // wchar_t is 4 bytes elsewhere
 static_assert(sizeof(JonesState) == 512, "sizeof(JonesState) == 512");
+#endif
 
 typedef struct sJonesResourcesOld
 {
@@ -381,6 +385,7 @@ typedef struct sJonesConsoleTextLine
     int unknown4;
 } JonesConsoleTextLine;
 
+#ifdef _WIN32 // Win32 dialogs
 typedef struct sJonesDialogCursorInfo
 {
     POINT point[2];
@@ -392,7 +397,9 @@ typedef struct sJonesDialogCursorInfo
     HWND aHwnd[10];
     int numHandels;
 } JonesDialogCursorInfo;
+#endif
 
+#ifdef _WIN32 // Win32 dialogs
 struct sJonesDialogData
 {
     uint32_t dwSize;
@@ -404,6 +411,7 @@ struct sJonesDialogData
     int unknown9;
     JonesDialogData* pExtraData;
 };
+#endif
 
 typedef struct sJonesControlsScheme
 {

@@ -1,12 +1,24 @@
 #ifndef SOUND_TYPES_H
 #define SOUND_TYPES_H
 #include <stdint.h>
-#include <mmreg.h>
-#include <dsound.h>
 #include <j3dcore/j3d.h>
 #include <rdroid/types.h>
 
+#ifdef _WIN32
+#include <mmreg.h>
+#include <dsound.h>
+#endif
+
 J3D_EXTERN_C_START
+
+// Sound driver handles: DirectSound objects on Windows, OpenAL Soft (Driver_openal.c) elsewhere
+#ifdef _WIN32
+typedef LPDIRECTSOUNDBUFFER tSoundBuffer;
+typedef LPDIRECTSOUND tSoundDevice;
+#else
+typedef struct sSoundDriverBuffer* tSoundBuffer;
+typedef struct sSoundDriverDevice* tSoundDevice;
+#endif
 
 typedef enum eSoundOpenFlags
 {
@@ -71,7 +83,7 @@ typedef struct sSoundSpatialInfo SoundSpatialInfo;
 
 typedef int (J3DAPI* SoundGetThingInfoCallback)(int thingID, SoundThingInfo* pInfo);
 typedef void (J3DAPI* SoundCalcListenerSoundMixFunc)(const SoundSpatialInfo*, float* volume, float* pan, float* pitch);
-typedef uint8_t* (J3DAPI* SoundDriverGetSoundBufferDataFunc)(LPDIRECTSOUNDBUFFER pDSBuf, uint32_t* pSoundDataSize, uint32_t* pbCompressed);
+typedef uint8_t* (J3DAPI* SoundDriverGetSoundBufferDataFunc)(tSoundBuffer pDSBuf, uint32_t* pSoundDataSize, uint32_t* pbCompressed);
 
 
 typedef struct sSoundInfo
@@ -97,7 +109,7 @@ typedef struct sSoundChannel
     int priority;
     tSoundHandle hSnd;
     int thingId;
-    LPDIRECTSOUNDBUFFER pDSoundBuffer;
+    tSoundBuffer pDSoundBuffer;
     rdVector3 playPos;
     float volume;
     float pitch;

@@ -41,8 +41,13 @@
 *             as `func_ADDR`, which is expected to be globally defined or
 *             included in the source file where this macro is used.
 */
+#ifdef _WIN32
 #define J3D_HOOKFUNC(func) \
     J3DHookFunction(func##_ADDR, (void*)func)
+#else
+// Native builds don't run inside Indy3D.exe, there's nothing to hook
+#define J3D_HOOKFUNC(func) ((void)0)
+#endif
 
 /**
 * @brief Declares a variable at a specific memory address.
@@ -80,6 +85,7 @@
 
 J3D_EXTERN_C_START
 
+#ifdef _WIN32
 /**
  * @brief Structure to hold the context for hooking
  */
@@ -97,7 +103,7 @@ J3D_EXTERN_C_START
  * @param endAddress The end address of the region to modify
  * @return true if successful, false otherwise
  */
-inline bool J3DStartHookContext(J3DHookContext* pCtx, uintptr_t startAddress, uintptr_t endAddress)
+J3D_INLINE bool J3DStartHookContext(J3DHookContext* pCtx, uintptr_t startAddress, uintptr_t endAddress)
 {
     if ( endAddress <= startAddress ) {
         return false;
@@ -113,7 +119,7 @@ inline bool J3DStartHookContext(J3DHookContext* pCtx, uintptr_t startAddress, ui
  * @param pCtx The pointer to a J3DHookContext structure
  * @return true if successful, false otherwise
  */
-inline bool J3DEndHookContext(J3DHookContext* pCtx)
+J3D_INLINE bool J3DEndHookContext(J3DHookContext* pCtx)
 {
     DWORD temp;
     return VirtualProtect((LPVOID)pCtx->startAddress, pCtx->size, pCtx->oldProtect, &temp);
@@ -143,6 +149,27 @@ static bool J3DHookFunction(intptr_t pFuncAddr, void* pHookFunc)
 
     return true;
 }
+
+#else // !_WIN32
+
+typedef struct {
+    uintptr_t startAddress;
+    size_t size;
+} J3DHookContext;
+
+static inline bool J3DStartHookContext(J3DHookContext* pCtx, uintptr_t startAddress, uintptr_t endAddress)
+{
+    (void)pCtx; (void)startAddress; (void)endAddress;
+    return false;
+}
+
+static inline bool J3DEndHookContext(J3DHookContext* pCtx)
+{
+    (void)pCtx;
+    return false;
+}
+
+#endif // _WIN32
 
 J3D_EXTERN_C_END
 #endif //JONES3D_HOOK_H

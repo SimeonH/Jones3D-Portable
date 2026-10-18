@@ -1,4 +1,9 @@
+#ifdef _WIN32
 #include <dinput.h>
+#else
+#include <SDL3/SDL.h>
+#include <std/SDL/stdSDL.h>
+#endif
 
 #include "stdControl.h"
 #include "stdWin95.h"
@@ -15,15 +20,21 @@
 static bool stdControl_bStartup = false;
 static bool stdControl_bOpen    = false;
 
+#ifdef _WIN32
 static LPDIRECTINPUTA stdControl_pDI = NULL;
+#endif
 
 static bool stdControl_bReadMouse               = true;
 static POINT stdControl_mousePos                = { 0, 0 };
+#ifdef _WIN32
 static StdInputDevice stdControl_mouse          = { 0 };
+#endif
 static bool stdControl_bMouseSensitivityEnabled = false;
 static int stdControl_cursorDisplayCounter      = 0;
 
+#ifdef _WIN32
 static StdInputDevice stdControl_keyboard = { 0 };
+#endif
 static uint8_t stdControl_aKeyboardState[STDCONTROL_MAX_KEYBOARD_BUTTONS] = { 0 };
 
 static bool stdControl_bReadJoysticks        = false;
@@ -52,6 +63,7 @@ static float stdControl_mouseYRange = 0.0;
 
 static char stdControl_aStrBuf[128] = { 0 };
 
+#ifdef _WIN32
 static const DXStatus stdControl_aDIStatusTbl[34] = {
     { DI_OK,                        "DI_OK" },
     { DI_NOTATTACHED,               "DI_NOTATTACHED" },
@@ -88,6 +100,7 @@ static const DXStatus stdControl_aDIStatusTbl[34] = {
     { DIERR_NOTBUFFERED,            "DIERR_NOTBUFFERED" },
     { DIERR_EFFECTPLAYING,          "DIERR_EFFECTPLAYING" }
 };
+#endif
 
 void stdControl_InitJoysticks(void);
 void J3DAPI stdControl_InitKeyboard(int bForeground);
@@ -100,7 +113,9 @@ void stdControl_ReadJoysticks(void);
 void stdControl_ReadMouse(void);
 
 const char* J3DAPI stdControl_DIGetStatus(int HRESULT);
+#ifdef _WIN32
 BOOL CALLBACK stdControl_EnumDevicesCallback(LPCDIDEVICEINSTANCEA pdidInstance, LPVOID pContext);
+#endif
 
 void stdControl_InstallHooks(void)
 {
@@ -143,6 +158,7 @@ void stdControl_InstallHooks(void)
     J3D_HOOKFUNC(stdControl_IsGamePad);
 }
 
+#ifdef _WIN32
 int J3DAPI stdControl_Startup(int bKeyboardForeground)
 {
     if ( stdControl_bStartup )
@@ -186,12 +202,14 @@ int J3DAPI stdControl_Startup(int bKeyboardForeground)
     stdControl_bStartup = true;
     return 0;
 }
+#endif // _WIN32
 
 bool stdControl_HasStarted(void)
 {
     return stdControl_bStartup;
 }
 
+#ifdef _WIN32
 void stdControl_Shutdown(void)
 {
     if ( stdControl_bStartup )
@@ -231,6 +249,7 @@ void stdControl_Shutdown(void)
         }
     }
 }
+#endif // _WIN32
 
 int stdControl_Open(void)
 {
@@ -574,6 +593,7 @@ void J3DAPI stdControl_UpdateKeyState(int keyId, int bPressed, unsigned int tick
     }
 }
 
+#ifdef _WIN32
 int J3DAPI stdControl_SetActivation(int bActive)
 {
     HRESULT hr = 1;
@@ -642,7 +662,9 @@ int J3DAPI stdControl_SetActivation(int bActive)
 
     return hr;
 }
+#endif // _WIN32
 
+#ifdef _WIN32
 int stdControl_ToggleMouse(void)
 {
     if ( stdControl_bReadMouse )
@@ -664,6 +686,7 @@ int stdControl_ToggleMouse(void)
 
     return stdControl_bReadMouse;
 }
+#endif // _WIN32
 
 
 int J3DAPI stdControl_EnableMouse(int bEnable)
@@ -738,6 +761,7 @@ void J3DAPI stdControl_SetAxisFlags(size_t axis, StdControlAxisFlag flags)
     }
 }
 
+#ifdef _WIN32
 void stdControl_InitJoysticks(void)
 {
     for ( size_t joyNum = 0; joyNum < stdControl_numJoystickDevices; ++joyNum )
@@ -858,7 +882,9 @@ void stdControl_InitJoysticks(void)
         }
     }
 }
+#endif // _WIN32
 
+#ifdef _WIN32
 void J3DAPI stdControl_InitKeyboard(int bForeground)
 {
     if ( stdControl_pDI )
@@ -913,7 +939,9 @@ void J3DAPI stdControl_InitKeyboard(int bForeground)
         }
     }
 }
+#endif // _WIN32
 
+#ifdef _WIN32
 void stdControl_InitMouse(void)
 {
     if ( stdControl_pDI )
@@ -970,6 +998,7 @@ void stdControl_InitMouse(void)
         stdControl_RegisterAxis(STDCONTROL_AID_MOUSE_Z, -20, 20, 0.0f);
     }
 }
+#endif // _WIN32
 
 void J3DAPI stdControl_EnableAxisRead(size_t axis)
 {
@@ -984,6 +1013,7 @@ void J3DAPI stdControl_EnableAxisRead(size_t axis)
     }
 }
 
+#ifdef _WIN32
 void stdControl_ReadKeyboard(void)
 {
     HRESULT hr = IDirectInputDevice_GetDeviceState(stdControl_keyboard.pDIDevice, STD_ARRAYLEN(stdControl_aKeyboardState), stdControl_aKeyboardState);
@@ -1007,7 +1037,9 @@ void stdControl_ReadKeyboard(void)
         STDLOG_ERROR("Acquire keyboard returned %s.\n", stdControl_DIGetStatus(hr));
     }
 }
+#endif // _WIN32
 
+#ifdef _WIN32
 void stdControl_ReadJoysticks(void)
 {
     for ( size_t joyNum = 0; joyNum < stdControl_numJoystickDevices; joyNum++ )
@@ -1086,7 +1118,9 @@ void stdControl_ReadJoysticks(void)
         }
     }
 }
+#endif // _WIN32
 
+#ifdef _WIN32
 void stdControl_ReadMouse(void)
 {
     DIDEVICEOBJECTDATA aMouseBuffer[STDCONTROL_MOUSE_BUFFERSIZE] = { 0 }; // Added: Init to 0
@@ -1172,6 +1206,7 @@ void stdControl_ReadMouse(void)
         }
     }
 }
+#endif // _WIN32
 
 void J3DAPI stdControl_RegisterAxis(size_t aid, int min, int max, float deadzoneScale)
 {
@@ -1197,6 +1232,7 @@ void J3DAPI stdControl_RegisterAxis(size_t aid, int min, int max, float deadzone
     }
 }
 
+#ifdef _WIN32
 const char* J3DAPI stdControl_DIGetStatus(int HRESULT)
 {
     const char* pError = "Unknown Error";
@@ -1210,7 +1246,9 @@ const char* J3DAPI stdControl_DIGetStatus(int HRESULT)
 
     return pError;
 }
+#endif // _WIN32
 
+#ifdef _WIN32
 BOOL CALLBACK stdControl_EnumDevicesCallback(LPCDIDEVICEINSTANCEA pdidInstance, LPVOID pContext)
 {
     J3D_UNUSED(pContext);
@@ -1262,6 +1300,7 @@ BOOL CALLBACK stdControl_EnumDevicesCallback(LPCDIDEVICEINSTANCEA pdidInstance, 
 
     return TRUE;
 }
+#endif // _WIN32
 
 void stdControl_ResetMousePos(void)
 {
@@ -1271,6 +1310,7 @@ void stdControl_ResetMousePos(void)
     stdControl_aAxisStates[STDCONTROL_AID_MOUSE_Z] = 0;
 }
 
+#ifdef _WIN32
 size_t stdControl_GetMaxJoystickButtons(void)
 {
     size_t maxButtons = 0;
@@ -1284,12 +1324,14 @@ size_t stdControl_GetMaxJoystickButtons(void)
 
     return maxButtons;
 }
+#endif // _WIN32
 
 size_t stdControl_GetNumJoysticks(void)
 {
     return stdControl_numJoystickDevices;
 }
 
+#ifdef _WIN32
 const char* J3DAPI stdControl_GetJoysticDescription(int joyNum)
 {
     STD_FORMAT(
@@ -1300,6 +1342,7 @@ const char* J3DAPI stdControl_GetJoysticDescription(int joyNum)
     );
     return stdControl_aStrBuf;
 }
+#endif // _WIN32
 
 int stdControl_MouseSensitivityEnabled(void)
 {
@@ -1311,6 +1354,7 @@ void J3DAPI stdControl_EnableMouseSensitivity(int bEnable)
     stdControl_bMouseSensitivityEnabled = bEnable != 0;
 }
 
+#ifdef _WIN32
 void J3DAPI stdControl_ShowMouseCursor(int bShow)
 {
     stdControl_cursorDisplayCounter = ShowCursor(bShow);
@@ -1319,11 +1363,14 @@ void J3DAPI stdControl_ShowMouseCursor(int bShow)
         stdControl_cursorDisplayCounter = ShowCursor(bShow == 0);
     }
 }
+#endif // _WIN32
 
+#ifdef _WIN32
 int J3DAPI stdControl_IsGamePad(int joyNum)
 {
     return GET_DIDEVICE_SUBTYPE(stdControl_aJoystickDevices[joyNum].dinstance.dwDevType) == DIDEVTYPEJOYSTICK_GAMEPAD;
 }
+#endif // _WIN32
 
 void J3DAPI stdControl_SetMouseSensitivity(float xSensitivity, float ySensitivity)
 {
@@ -1347,3 +1394,308 @@ void J3DAPI stdControl_SetMouseSensitivity(float xSensitivity, float ySensitivit
         stdControl_aAxes[STDCONTROL_AID_MOUSE_Y].scale     = 1.0f / (float)(stdControl_aAxes[STDCONTROL_AID_MOUSE_Y].max - stdControl_aAxes[STDCONTROL_AID_MOUSE_Y].center);
     }
 }
+
+#ifndef _WIN32
+
+// SDL3 input: keyboard state, relative mouse and gamepads.
+// Gamepads are mapped like an XInput controller seen through DirectInput, so the joystick bindings keep their meaning:
+// axes X/Y left stick, Z triggers, RX/RY right stick; buttons A, B, X, Y, LB, RB, Back, Start, LS, RS; d-pad is POV 0.
+
+static int stdControl_mouseWheel = 0;
+static bool stdControl_bMouseActive = false;
+
+static bool SDLCALL stdControl_EventWatch(void* pUserData, SDL_Event* pEvent)
+{
+    J3D_UNUSED(pUserData);
+    if ( pEvent->type == SDL_EVENT_MOUSE_WHEEL ) {
+        stdControl_mouseWheel += (int)(pEvent->wheel.y * 120.0f); // WHEEL_DELTA units like DirectInput
+    }
+    return true;
+}
+
+static SDL_Window* stdControl_GetSDLWindow(void)
+{
+    return (SDL_Window*)stdWin95_GetWindow();
+}
+
+static void stdControl_UpdateRelativeMouse(void)
+{
+    SDL_Window* pWindow = stdControl_GetSDLWindow();
+    if ( pWindow ) {
+        SDL_SetWindowRelativeMouseMode(pWindow, stdControl_bControlsActive && stdControl_bReadMouse && stdControl_bMouseActive);
+    }
+}
+
+int J3DAPI stdControl_Startup(int bKeyboardForeground)
+{
+    J3D_UNUSED(bKeyboardForeground);
+    if ( stdControl_bStartup ) {
+        return 1;
+    }
+
+    memset(stdControl_aKeyIdleTimes, 0, sizeof(stdControl_aKeyIdleTimes));
+    memset(stdControl_aKeyInfo, 0, sizeof(stdControl_aKeyInfo));
+    memset(stdControl_aAxes, 0, sizeof(stdControl_aAxes));
+    memset(stdControl_aAxisStates, 0, sizeof(stdControl_aAxisStates));
+
+    stdControl_mousePos.x = 0;
+    stdControl_mousePos.y = 0;
+    stdControl_cursorDisplayCounter = 0;
+
+    stdControl_numJoystickDevices = 0;
+    memset(stdControl_aJoystickDevices, 0, sizeof(stdControl_aJoystickDevices));
+
+    SDL_InitSubSystem(SDL_INIT_GAMEPAD);
+    SDL_AddEventWatch(stdControl_EventWatch, NULL);
+
+    stdControl_InitKeyboard(bKeyboardForeground);
+    stdControl_InitJoysticks();
+    stdControl_InitMouse();
+    stdControl_Reset();
+
+    stdControl_bStartup = true;
+    return 0;
+}
+
+void stdControl_Shutdown(void)
+{
+    if ( stdControl_bStartup )
+    {
+        stdControl_bStartup = false;
+        SDL_RemoveEventWatch(stdControl_EventWatch, NULL);
+
+        for ( size_t i = 0; i < stdControl_numJoystickDevices; i++ )
+        {
+            if ( stdControl_aJoystickDevices[i].pGamepad ) {
+                SDL_CloseGamepad((SDL_Gamepad*)stdControl_aJoystickDevices[i].pGamepad);
+            }
+        }
+
+        stdControl_numJoystickDevices = 0;
+        memset(stdControl_aJoystickDevices, 0, sizeof(stdControl_aJoystickDevices));
+
+        stdControl_bMouseActive = false;
+        stdControl_UpdateRelativeMouse();
+    }
+}
+
+int J3DAPI stdControl_SetActivation(int bActive)
+{
+    if ( !stdControl_bOpen ) {
+        return 1;
+    }
+
+    for ( size_t keyId = 0; keyId < STDCONTROL_MAX_KEYBOARD_BUTTONS; ++keyId ) {
+        stdControl_UpdateKeyState(keyId, 0, stdControl_curReadTime);
+    }
+
+    for ( size_t keyId = 0; keyId < STDCONTROL_MAX_MOUSE_BUTTONS; ++keyId ) {
+        stdControl_UpdateKeyState(STDCONTROL_KID_MOUSE_LBUTTON + keyId, 0, stdControl_curReadTime);
+    }
+
+    stdControl_bControlsActive = bActive != 0;
+    stdControl_bMouseActive    = bActive != 0;
+    stdControl_UpdateRelativeMouse();
+    SDL_GetRelativeMouseState(NULL, NULL); // discard the motion while inactive
+    return 0;
+}
+
+int stdControl_ToggleMouse(void)
+{
+    stdControl_bReadMouse = !stdControl_bReadMouse;
+    stdControl_ShowMouseCursor(!stdControl_bReadMouse);
+    stdControl_UpdateRelativeMouse();
+    return stdControl_bReadMouse;
+}
+
+void stdControl_InitJoysticks(void)
+{
+    int numGamepads = 0;
+    SDL_JoystickID* aIds = SDL_GetGamepads(&numGamepads);
+    for ( int i = 0; aIds && i < numGamepads && stdControl_numJoystickDevices < STDCONTROL_MAX_JOYSTICK_DEVICES; ++i )
+    {
+        SDL_Gamepad* pGamepad = SDL_OpenGamepad(aIds[i]);
+        if ( !pGamepad )
+        {
+            STDLOG_STATUS("Error opening gamepad: %s\n", SDL_GetError());
+            continue;
+        }
+
+        size_t joyNum = stdControl_numJoystickDevices++;
+        stdControl_aJoystickDevices[joyNum].pGamepad   = pGamepad;
+        stdControl_aJoystickDevices[joyNum].numButtons = 10;
+
+        stdControl_RegisterAxis(STDCONTROL_GET_JOYSTICK_AXIS_X(joyNum), -32768, 32767, 0.2f);
+        stdControl_RegisterAxis(STDCONTROL_GET_JOYSTICK_AXIS_Y(joyNum), -32768, 32767, 0.2f);
+        stdControl_RegisterAxis(STDCONTROL_GET_JOYSTICK_AXIS_Z(joyNum), -32768, 32767, 0.2f);
+        stdControl_RegisterAxis(STDCONTROL_GET_JOYSTICK_AXIS_RX(joyNum), -32768, 32767, 0.2f);
+        stdControl_RegisterAxis(STDCONTROL_GET_JOYSTICK_AXIS_RY(joyNum), -32768, 32767, 0.2f);
+        stdControl_RegisterAxis(STDCONTROL_GET_JOYSTICK_AXIS_RZ(joyNum), -32768, 32767, 0.2f);
+
+        for ( size_t axis = 0; axis < STDCONTROL_JOYSTICK_NUMAXES; ++axis ) {
+            stdControl_aAxes[STDCONTROL_GET_JOYSTICK_AXIS(joyNum, axis)].flags |= STDCONTROL_AXIS_GAMEPAD;
+        }
+
+        STDLOG_STATUS("Found gamepad %s.\n", SDL_GetGamepadName(pGamepad));
+    }
+
+    SDL_free(aIds);
+}
+
+void J3DAPI stdControl_InitKeyboard(int bForeground)
+{
+    J3D_UNUSED(bForeground);
+}
+
+void stdControl_InitMouse(void)
+{
+    stdControl_RegisterAxis(STDCONTROL_AID_MOUSE_X, -250, 250, 0.0f);
+    stdControl_RegisterAxis(STDCONTROL_AID_MOUSE_Y, -200, 200, 0.0f);
+    stdControl_RegisterAxis(STDCONTROL_AID_MOUSE_Z, -20, 20, 0.0f);
+}
+
+void stdControl_ReadKeyboard(void)
+{
+    uint8_t aState[STDCONTROL_MAX_KEYBOARD_BUTTONS] = { 0 };
+
+    int numKeys = 0;
+    const bool* aKeys = SDL_GetKeyboardState(&numKeys);
+    for ( int sc = 0; sc < numKeys; ++sc )
+    {
+        if ( aKeys[sc] )
+        {
+            uint8_t dik = stdSDL_ScancodeToDIK((SDL_Scancode)sc);
+            if ( dik ) {
+                aState[dik] = 0x80;
+            }
+        }
+    }
+
+    for ( size_t keyId = 0; keyId < STDCONTROL_MAX_KEYBOARD_BUTTONS; ++keyId ) {
+        stdControl_UpdateKeyState(keyId, aState[keyId] & 0x80, stdControl_curReadTime);
+    }
+}
+
+void stdControl_ReadJoysticks(void)
+{
+    static const SDL_GamepadButton aButtons[] = {
+        SDL_GAMEPAD_BUTTON_SOUTH, SDL_GAMEPAD_BUTTON_EAST, SDL_GAMEPAD_BUTTON_WEST, SDL_GAMEPAD_BUTTON_NORTH,
+        SDL_GAMEPAD_BUTTON_LEFT_SHOULDER, SDL_GAMEPAD_BUTTON_RIGHT_SHOULDER, SDL_GAMEPAD_BUTTON_BACK, SDL_GAMEPAD_BUTTON_START,
+        SDL_GAMEPAD_BUTTON_LEFT_STICK, SDL_GAMEPAD_BUTTON_RIGHT_STICK
+    };
+
+    for ( size_t joyNum = 0; joyNum < stdControl_numJoystickDevices; joyNum++ )
+    {
+        SDL_Gamepad* pGamepad = (SDL_Gamepad*)stdControl_aJoystickDevices[joyNum].pGamepad;
+        if ( !pGamepad ) {
+            continue;
+        }
+
+        int leftTrigger  = SDL_GetGamepadAxis(pGamepad, SDL_GAMEPAD_AXIS_LEFT_TRIGGER);  // 0 - 32767
+        int rightTrigger = SDL_GetGamepadAxis(pGamepad, SDL_GAMEPAD_AXIS_RIGHT_TRIGGER);
+
+        stdControl_aAxisStates[STDCONTROL_GET_JOYSTICK_AXIS_X(joyNum)]  = SDL_GetGamepadAxis(pGamepad, SDL_GAMEPAD_AXIS_LEFTX);
+        stdControl_aAxisStates[STDCONTROL_GET_JOYSTICK_AXIS_Y(joyNum)]  = SDL_GetGamepadAxis(pGamepad, SDL_GAMEPAD_AXIS_LEFTY);
+        stdControl_aAxisStates[STDCONTROL_GET_JOYSTICK_AXIS_Z(joyNum)]  = leftTrigger - rightTrigger; // XInput triggers share the Z axis in DirectInput
+        stdControl_aAxisStates[STDCONTROL_GET_JOYSTICK_AXIS_RX(joyNum)] = SDL_GetGamepadAxis(pGamepad, SDL_GAMEPAD_AXIS_RIGHTX);
+        stdControl_aAxisStates[STDCONTROL_GET_JOYSTICK_AXIS_RY(joyNum)] = SDL_GetGamepadAxis(pGamepad, SDL_GAMEPAD_AXIS_RIGHTY);
+        stdControl_aAxisStates[STDCONTROL_GET_JOYSTICK_AXIS_RZ(joyNum)] = 0;
+
+        for ( size_t btnNum = 0; btnNum < STDCONTROL_NUM_JOYSTICK_BUTTONS; ++btnNum )
+        {
+            int bDown = btnNum < STD_ARRAYLEN(aButtons) && SDL_GetGamepadButton(pGamepad, aButtons[btnNum]);
+            stdControl_UpdateKeyState(STDCONTROL_JOYSTICK_GETBUTTON(joyNum, btnNum), bDown, stdControl_curReadTime);
+        }
+
+        // D-pad as POV 0: left, up, right, down
+        stdControl_UpdateKeyState(STDCONTROL_JOYSTICK_GETPOVLEFT(joyNum, 0), SDL_GetGamepadButton(pGamepad, SDL_GAMEPAD_BUTTON_DPAD_LEFT), stdControl_curReadTime);
+        stdControl_UpdateKeyState(STDCONTROL_JOYSTICK_GETPOVUP(joyNum, 0), SDL_GetGamepadButton(pGamepad, SDL_GAMEPAD_BUTTON_DPAD_UP), stdControl_curReadTime);
+        stdControl_UpdateKeyState(STDCONTROL_JOYSTICK_GETPOVRIGHT(joyNum, 0), SDL_GetGamepadButton(pGamepad, SDL_GAMEPAD_BUTTON_DPAD_RIGHT), stdControl_curReadTime);
+        stdControl_UpdateKeyState(STDCONTROL_JOYSTICK_GETPOVDOWN(joyNum, 0), SDL_GetGamepadButton(pGamepad, SDL_GAMEPAD_BUTTON_DPAD_DOWN), stdControl_curReadTime);
+    }
+}
+
+void stdControl_ReadMouse(void)
+{
+    if ( !stdControl_bReadMouse ) {
+        return;
+    }
+
+    float dx = 0.0f, dy = 0.0f;
+    SDL_MouseButtonFlags buttons = SDL_GetRelativeMouseState(&dx, &dy);
+    int lX = (int)dx;
+    int lY = (int)dy;
+    int lZ = stdControl_mouseWheel;
+    stdControl_mouseWheel = 0;
+
+    // Update axis state
+    if ( stdControl_bMouseSensitivityEnabled )
+    {
+        stdControl_aAxisStates[STDCONTROL_AID_MOUSE_X] += lX;
+        stdControl_aAxisStates[STDCONTROL_AID_MOUSE_X]  = STDMATH_CLAMP(stdControl_aAxisStates[STDCONTROL_AID_MOUSE_X], stdControl_aAxes[STDCONTROL_AID_MOUSE_X].min, stdControl_aAxes[STDCONTROL_AID_MOUSE_X].max);
+
+        stdControl_aAxisStates[STDCONTROL_AID_MOUSE_Y] += lY;
+        stdControl_aAxisStates[STDCONTROL_AID_MOUSE_Y]  = STDMATH_CLAMP(stdControl_aAxisStates[STDCONTROL_AID_MOUSE_Y], stdControl_aAxes[STDCONTROL_AID_MOUSE_Y].min, stdControl_aAxes[STDCONTROL_AID_MOUSE_Y].max);
+
+        stdControl_aAxisStates[STDCONTROL_AID_MOUSE_Z] += lZ;
+        stdControl_aAxisStates[STDCONTROL_AID_MOUSE_Z]  = STDMATH_CLAMP(stdControl_aAxisStates[STDCONTROL_AID_MOUSE_Z], stdControl_aAxes[STDCONTROL_AID_MOUSE_Z].min, stdControl_aAxes[STDCONTROL_AID_MOUSE_Z].max);
+    }
+    else
+    {
+        stdControl_aAxisStates[STDCONTROL_AID_MOUSE_X] = lX;
+        stdControl_aAxisStates[STDCONTROL_AID_MOUSE_Y] = lY;
+        stdControl_aAxisStates[STDCONTROL_AID_MOUSE_Z] = lZ;
+        if ( stdControl_readDeltaTime < 25 )
+        {
+            stdControl_aAxisStates[STDCONTROL_AID_MOUSE_X] = (stdControl_mousePos.x + lX) / 2;
+            stdControl_aAxisStates[STDCONTROL_AID_MOUSE_Y] = (stdControl_mousePos.y + lY) / 2;
+        }
+
+        stdControl_mousePos.x = lX;
+        stdControl_mousePos.y = lY;
+    }
+
+    stdControl_UpdateKeyState(STDCONTROL_KID_MOUSE_LBUTTON, (buttons & SDL_BUTTON_LMASK) != 0, stdControl_curReadTime);
+    stdControl_UpdateKeyState(STDCONTROL_KID_MOUSE_RBUTTON, (buttons & SDL_BUTTON_RMASK) != 0, stdControl_curReadTime);
+    stdControl_UpdateKeyState(STDCONTROL_KID_MOUSE_MBUTTON, (buttons & SDL_BUTTON_MMASK) != 0, stdControl_curReadTime);
+    stdControl_UpdateKeyState(STDCONTROL_KID_MOUSE_XBUTTON, (buttons & SDL_BUTTON_X1MASK) != 0, stdControl_curReadTime);
+}
+
+size_t stdControl_GetMaxJoystickButtons(void)
+{
+    size_t maxButtons = 0;
+    for ( size_t i = 0; i < stdControl_numJoystickDevices; i++ )
+    {
+        if ( stdControl_aJoystickDevices[i].numButtons > maxButtons ) {
+            maxButtons = stdControl_aJoystickDevices[i].numButtons;
+        }
+    }
+
+    return maxButtons;
+}
+
+const char* J3DAPI stdControl_GetJoysticDescription(int joyNum)
+{
+    const char* pName = SDL_GetGamepadName((SDL_Gamepad*)stdControl_aJoystickDevices[joyNum].pGamepad);
+    STD_FORMAT(stdControl_aStrBuf, "%s", pName ? pName : "Gamepad");
+    return stdControl_aStrBuf;
+}
+
+void J3DAPI stdControl_ShowMouseCursor(int bShow)
+{
+    if ( bShow ) {
+        SDL_ShowCursor();
+    }
+    else {
+        SDL_HideCursor();
+    }
+    stdControl_cursorDisplayCounter = bShow ? 0 : -1;
+}
+
+int J3DAPI stdControl_IsGamePad(int joyNum)
+{
+    J3D_UNUSED(joyNum);
+    return 1;
+}
+
+#endif // !_WIN32

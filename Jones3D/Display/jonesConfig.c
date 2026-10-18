@@ -43,7 +43,9 @@
 #include <w32util/wuRegistry.h>
 
 #include <math.h>
+#ifdef _WIN32
 #include <windowsx.h>
+#endif
 
 typedef struct sJonesConfigControlAction
 {

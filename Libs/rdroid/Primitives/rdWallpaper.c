@@ -97,7 +97,7 @@ void J3DAPI rdWallpaper_Draw(const rdWallpaper* pWallpaper)
             rdVector_Copy4(&pPoly->aVertIntensities[i], &rdWallpaper_extraLight);
         }
 
-        LPD3DTLVERTEX pCurVert = pPoly->aVertices;
+        StdTLVertex* pCurVert = pPoly->aVertices;
         switch ( matNum )
         {
             case 0u: // left top
@@ -450,7 +450,7 @@ void J3DAPI rdWallpaper_DrawWallLine(const rdWallLine* pLine, float progress)
         }
 
         // Set vertices positions for drawing the line
-        LPD3DTLVERTEX pCurVert = pPoly->aVertices;
+        StdTLVertex* pCurVert = pPoly->aVertices;
 
         // top left
         pCurVert->sx  = pLine->startX * swidth + deltaX;

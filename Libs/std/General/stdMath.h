@@ -21,7 +21,7 @@ J3D_EXTERN_C_START
 #define STDMATH_RADIANSF(deg) (float)STDMATH_RADIANS(deg)
 
 float J3DAPI stdMath_FlexPower(float base, int exponent);
-inline float stdMath_ClipNearZero(float val); // Added
+J3D_INLINE float stdMath_ClipNearZero(float val); // Added
 
 float J3DAPI stdMath_NormalizeAngle(float angle);
 float J3DAPI stdMath_NormalizeAngleAcute(float angle);
@@ -38,7 +38,7 @@ float J3DAPI stdMath_ArcTan4(float x, float y);
 float J3DAPI stdMath_Dist2D1(float x, float y);
 float J3DAPI stdMath_Dist3D1(float x, float y, float z);
 
-inline float stdMath_ClipNearZero(float val)
+J3D_INLINE float stdMath_ClipNearZero(float val)
 {
     if ( fabsf(val) <= 0.00001f )
     {

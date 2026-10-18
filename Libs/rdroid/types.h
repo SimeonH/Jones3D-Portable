@@ -1,7 +1,6 @@
 #ifndef RDROID_TYPES_H
 #define RDROID_TYPES_H
 #include <stdint.h>
-#include <d3dtypes.h>
 #include <j3dcore/j3d.h>
 #include <std/types.h>
 
@@ -603,7 +602,7 @@ struct srdCacheProcEntry
     rdFaceFlags flags;
     rdLightMode lightingMode;
     size_t numVertices;
-    LPD3DTLVERTEX aVertices;
+    StdTLVertex* aVertices;
     rdVector4* aVertIntensities;
     rdMaterial* pMaterial;
     int32_t matCelNum;

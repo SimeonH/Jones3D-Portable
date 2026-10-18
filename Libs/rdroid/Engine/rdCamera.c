@@ -54,7 +54,7 @@ rdVector3 rdCamera_g_camPYR;
 rdCamera* rdCamera_g_pCurCamera;
 rdMatrix34 rdCamera_g_camMatrix;
 
-inline float rdCamera_ClampFOV(float fov)
+J3D_INLINE float rdCamera_ClampFOV(float fov)
 {
     return STDMATH_CLAMP(fov, RDCAMERA_FOVMIN, RDCAMERA_FOVMAX);
 }

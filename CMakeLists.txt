@@ -13,11 +13,29 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
 option(JONES3D_BUILD_PROGRAMS "Build programs" ON)
+option(JONES3D_BUILD_GAME "Build the game (Jones3D); OFF builds only the libraries" ON)
 option(JONES3D_QOL_IMPROVEMENTS "Enable quality-of-life improvements" ON)
 
 if(JONES3D_QOL_IMPROVEMENTS)
     add_compile_definitions(J3D_QOL_IMPROVEMENTS=1)
 endif()
+
+# Renderer backend of std3D/stdDisplay: DirectDraw (original, Windows only) or Vulkan
+if(WIN32)
+    set(JONES3D_RENDERER "DirectDraw" CACHE STRING "Renderer backend (DirectDraw or Vulkan)")
+else()
+    set(JONES3D_RENDERER "Vulkan" CACHE STRING "Renderer backend (DirectDraw or Vulkan)")
+    if(NOT JONES3D_RENDERER STREQUAL "Vulkan")
+        message(FATAL_ERROR "Only the Vulkan renderer is supported on ${CMAKE_SYSTEM_NAME}")
+    endif()
+endif()
+set_property(CACHE JONES3D_RENDERER PROPERTY STRINGS DirectDraw Vulkan)
+if(JONES3D_RENDERER STREQUAL "Vulkan")
+    add_compile_definitions(J3D_RENDERER_VULKAN=1)
+elseif(NOT JONES3D_RENDERER STREQUAL "DirectDraw")
+    message(FATAL_ERROR "Unknown JONES3D_RENDERER '${JONES3D_RENDERER}', expected DirectDraw or Vulkan")
+endif()
+message(STATUS "Jones3D renderer: ${JONES3D_RENDERER}")
 
 # Configure the version header file
 configure_file(
@@ -44,6 +62,21 @@ if (MSVC)
         "$<$<CONFIG:DEBUG>:/ZI>"
     )
     add_link_options("/Brepro")
+elseif(CMAKE_C_COMPILER_ID MATCHES "Clang|GNU")
+    if(NOT CMAKE_SIZEOF_VOID_P EQUAL 4)
+        message(FATAL_ERROR "The game code requires a 32-bit target, use toolchain-linux-i686.cmake")
+    endif()
+
+    add_compile_definitions(_GNU_SOURCE)
+    add_compile_options(
+        -Wall
+        -Wextra
+        -fno-strict-aliasing # game code type-puns freely
+        -fwrapv
+        -fdiagnostics-color=always
+        $<$<COMPILE_LANGUAGE:C>:-Wno-incompatible-pointer-types>
+        $<$<COMPILE_LANGUAGE:C>:-Wno-incompatible-function-pointer-types>
+    )
 else()
     message(FATAL_ERROR "Unsupported compiler: ${CMAKE_CXX_COMPILER_ID}")
 endif()
@@ -52,7 +85,9 @@ endif()
 add_subdirectory(Libs)
 
 # Add main project Jones3D
-add_subdirectory(Jones3D)
+if(JONES3D_BUILD_GAME)
+    add_subdirectory(Jones3D)
+endif()
 
 if (JONES3D_BUILD_PROGRAMS)
     add_subdirectory(Programs)

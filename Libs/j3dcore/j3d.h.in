@@ -1,6 +1,7 @@
 
 #ifndef J3DCORE_H
 #define J3DCORE_H
+#include <assert.h> // static_assert
 #include <stdbool.h>
 #include <stdint.h>
 
@@ -40,10 +41,17 @@
 #   define wstrcmpi _wcsicmp
 #   define wstrncmpi _wcsnicmp
 #else
-    // TODO: define J3D_DEBUG
-    typedef int      BOOL;
-    typedef uint8_t  BYTE;
-    typedef uint16_t WORD;
+#   ifndef NDEBUG
+#       define J3D_DEBUG 1
+#   endif
+#   include <j3dcore/j3dwin32compat.h> // Win32 types used by the shared game code
+#   include <strings.h>
+#   define strcmpi strcasecmp
+#   define strncmpi strncasecmp
+#   define _stricmp strcasecmp
+#   define _strnicmp strncasecmp
+#   define wstrcmpi wcscasecmp
+#   define wstrncmpi wcsncasecmp
 #endif
 
 #ifdef _MSC_VER 
@@ -65,8 +73,22 @@
 
 
 #define J3D_UNUSED(x) (x)
+
+// Inline function defined in a header. MSVC emits an external definition for C `inline`,
+// C99 compilers don't, so they get a local definition in each translation unit instead.
+#ifdef _MSC_VER
+#   define J3D_INLINE inline
+#else
+#   define J3D_INLINE static inline
+#endif
 #define J3DNORETURN _Noreturn
-#define J3DAPI __cdecl
+#ifdef _MSC_VER
+#   define J3DAPI __cdecl
+#elif defined(__i386__)
+#   define J3DAPI __attribute__((cdecl))
+#else
+#   define J3DAPI
+#endif
 
 // TODO: Detect if C23 and N3030 - Enhanced Enumerations is supported
 //       In this case define macro as: #define J3D_ENUM_TYPE(x) : x

@@ -3976,7 +3976,7 @@ int J3DAPI rdClip_FaceToPlane(const rdClipFrustum* pFrustrum, rdCacheProcEntry* 
                 float invY = 1.0f / rdClip_aWorkFaceVerts[i].y;
                 float  scale = focalLength * invY;
 
-                LPD3DTLVERTEX pOutVert = &pProcFace->aVertices[i];
+                StdTLVertex* pOutVert = &pProcFace->aVertices[i];
                 pOutVert->sx = rdClip_aWorkFaceVerts[i].x * scale + ccenterX;
                 pOutVert->sy = ccenterY - rdClip_aWorkFaceVerts[i].z * scale;
                 pOutVert->sz = (invY - invNearPlane) * invFarPlane;
@@ -4004,7 +4004,7 @@ int J3DAPI rdClip_FaceToPlane(const rdClipFrustum* pFrustrum, rdCacheProcEntry* 
                 float invY = 1.0f / rdClip_aWorkFaceVerts[i].y;
                 float  scale = focalLength * invY;
 
-                LPD3DTLVERTEX pOutVert = &pProcFace->aVertices[i];
+                StdTLVertex* pOutVert = &pProcFace->aVertices[i];
                 pOutVert->sx = rdClip_aWorkFaceVerts[i].x * scale + ccenterX;
                 pOutVert->sy = ccenterY - rdClip_aWorkFaceVerts[i].z * scale;
                 pOutVert->sz = (invY - invNearPlane) * invFarPlane;
@@ -4031,7 +4031,7 @@ int J3DAPI rdClip_FaceToPlane(const rdClipFrustum* pFrustrum, rdCacheProcEntry* 
             float invY  = 1.0f / rdClip_aWorkFaceVerts[i].y;
             float  scale = focalLength * invY;
 
-            LPD3DTLVERTEX pOutVert = &pProcFace->aVertices[i];
+            StdTLVertex* pOutVert = &pProcFace->aVertices[i];
             pOutVert->sx = rdClip_aWorkFaceVerts[i].x * scale + ccenterX;
             pOutVert->sy = ccenterY - rdClip_aWorkFaceVerts[i].z * scale;
             pOutVert->sz = (invY - invNearPlane) * invFarPlane;
@@ -4062,7 +4062,7 @@ void J3DAPI rdClip_VerticesToPlane(rdCacheProcEntry* pProcFace, const rdVector3*
         float invY = 1.0f / aVerts[i].y;
         float scale = focalLength * invY;
 
-        LPD3DTLVERTEX pOutVert = &pProcFace->aVertices[i];
+        StdTLVertex* pOutVert = &pProcFace->aVertices[i];
         pOutVert->sx = aVerts[i].x * scale + ccenterX;
         pOutVert->sy = ccenterY - aVerts[i].z * scale;
         pOutVert->sz = (invY - invNearClipPlane) * invFarClipPlane;

@@ -794,7 +794,7 @@ void sithOverlayMap_DrawPlayerIcon(void)
 
             for ( size_t i = 0; i < pPoly->numVertices; ++i )
             {
-                LPD3DTLVERTEX pVert = &pPoly->aVertices[i];
+                StdTLVertex* pVert = &pPoly->aVertices[i];
 
                 rdVector3 vert;
                 vert.x = sithOverlayMap_aPlayerIconVerts[i].x;
@@ -899,7 +899,7 @@ void J3DAPI sithOverlayMap_DrawThingIcon(const SithThing* pThing, const rdMateri
             float posY = -pos.y + sithOverlayMap_canvasPos.y;
             for ( size_t i = 0; i < pPoly->numVertices; ++i )
             {
-                LPD3DTLVERTEX pVert = &pPoly->aVertices[i];
+                StdTLVertex* pVert = &pPoly->aVertices[i];
                 pVert->sx  = posX + aVertices[i].x * sithOverlayMap_vertexScale;
                 pVert->sy  = posY + aVertices[i].y * sithOverlayMap_vertexScale;
                 pVert->sz  = RD_FIXEDPOINT_RHW_SCALE_X2; // Altered: Changed to RD_FIXEDPOINT_RHW_SCALE_X2 from RD_FIXEDPOINT_RHW_SCALE_X5 to be drawn above geometry wireframe

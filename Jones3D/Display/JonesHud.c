@@ -1,3 +1,7 @@
+#ifndef _WIN32
+#include <SDL3/SDL_misc.h>
+#include <std/General/stdPlatform.h>
+#endif
 #include "JonesHud.h"
 #include "JonesHudConstants.h"
 
@@ -1525,7 +1529,7 @@ void J3DAPI JonesHud_DrawIndicatorBar(const rdVector4* pPos, float scale, const 
         pPoly->matCelNum    = 0;
         pPoly->numVertices  = 0;
 
-        D3DTLVERTEX vert;
+        StdTLVertex vert;
         vert.sx  = pPos->x;
         vert.sy  = pPos->y;
         vert.sz  = pPos->z;
@@ -1534,8 +1538,8 @@ void J3DAPI JonesHud_DrawIndicatorBar(const rdVector4* pPos, float scale, const 
         vert.tv  = 0.5f;
 
         size_t vertNum = 0;
-        LPD3DTLVERTEX pOutVert = pPoly->aVertices;
-        memcpy(pOutVert, &vert, sizeof(D3DTLVERTEX));
+        StdTLVertex* pOutVert = pPoly->aVertices;
+        memcpy(pOutVert, &vert, sizeof(StdTLVertex));
 
         ++pPoly->numVertices;
         ++vertNum;
@@ -1560,7 +1564,7 @@ void J3DAPI JonesHud_DrawIndicatorBar(const rdVector4* pPos, float scale, const 
         while ( curAngle >= maxAngle )
         {
             pOutVert = &pPoly->aVertices[vertNum];
-            memcpy(pOutVert, &vert, sizeof(D3DTLVERTEX));
+            memcpy(pOutVert, &vert, sizeof(StdTLVertex));
 
             if ( fmod(fmod(curAngle, 360.0), 30.0) == 0.0 )
             {
@@ -1609,7 +1613,7 @@ void J3DAPI JonesHud_DrawIndicatorBar(const rdVector4* pPos, float scale, const 
                 pNextPoly->numVertices  = 0;
 
                 pOutVert = pNextPoly->aVertices;
-                memcpy(pOutVert, &vert, sizeof(D3DTLVERTEX));
+                memcpy(pOutVert, &vert, sizeof(StdTLVertex));
                 memcpy(&pNextPoly->aVertices[1], &pPoly->aVertices[vertNum], sizeof(pNextPoly->aVertices[1]));
 
                 pPoly = pNextPoly;
@@ -1672,7 +1676,7 @@ void J3DAPI JonesHud_Draw(const rdMaterial* pMaterial, const JonesHudRect* rect,
         pPoly->aVertIntensities[0].blue  = pColor->z;
         pPoly->aVertIntensities[0].alpha = pColor->alpha;
 
-        LPD3DTLVERTEX pCurOutVert = pPoly->aVertices;
+        StdTLVertex* pCurOutVert = pPoly->aVertices;
         pCurOutVert->sx = rect->x;
         pCurOutVert->sy = rect->y;
         pCurOutVert->sz = z;
@@ -2896,10 +2900,12 @@ void JonesHud_MenuActivateItem(void)
             //       so this scope could be skipped
             if ( JonesHud_hProcessHelp )
             {
+            #ifdef _WIN32
                 DWORD exitCode;
                 GetExitCodeProcess(JonesHud_hProcessHelp, &exitCode);
                 if ( exitCode != STILL_ACTIVE )
                     //if ( exitCode != 259 )
+            #endif
                 {
                     JonesHud_hProcessHelp = NULL;
                 }
@@ -3830,7 +3836,9 @@ int JonesHud_ShowLevelCompleted(void)
 HANDLE J3DAPI JonesHud_OpenHelp(HANDLE process)
 {
     J3D_UNUSED(process);
+#ifdef _WIN32
     struct _SHELLEXECUTEINFOA execInfo;
+#endif
     const char* pFilename;
     char aPath[128];
     wchar_t* pwString;
@@ -3848,6 +3856,15 @@ HANDLE J3DAPI JonesHud_OpenHelp(HANDLE process)
     wuRegistry_GetStr("Install Path", aPath, sizeof(aPath), std_g_aEmptyString);
     if ( pFilename && strlen(aPath) )
     {
+    #ifndef _WIN32
+        // Open the help file with the default application
+        char aFilePath[512];
+        char aNativePath[512];
+        STD_FORMAT(aFilePath, "%s\\%s", aPath, pFilename);
+        stdPlatform_NativePath(aFilePath, aNativePath, sizeof(aNativePath));
+        STD_FORMAT(aFilePath, "file://%s", aNativePath);
+        SDL_OpenURL(aFilePath);
+    #else
         memset(&execInfo, 0, sizeof(execInfo));
         execInfo.cbSize = 60;
         execInfo.fMask  = 80;
@@ -3857,6 +3874,7 @@ HANDLE J3DAPI JonesHud_OpenHelp(HANDLE process)
         execInfo.nShow = 1;
         ShellExecuteExA(&execInfo);
         hProcess = execInfo.hProcess;
+    #endif
     }
 
 

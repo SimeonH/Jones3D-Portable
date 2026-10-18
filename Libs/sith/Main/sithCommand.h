@@ -14,7 +14,7 @@ J3D_EXTERN_C_START
 void sithCommand_RegisterCommands(void);
 
 
-inline bool sithCommand_ParseBool(const char* pStr, bool* pOut) // Added
+J3D_INLINE bool sithCommand_ParseBool(const char* pStr, bool* pOut) // Added
 {
     if ( !pStr || !pOut ) {
         return false;

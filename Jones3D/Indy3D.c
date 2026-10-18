@@ -11,7 +11,9 @@
 
 static const char* appName = "Open Jones 3D";
 
+#ifdef _WIN32
 static bool Indy3D_RemoveDirect3D3ResolutionCap(void);
+#endif
 
 void Indy3D_InstallHooks(void)
 {
@@ -19,6 +21,7 @@ void Indy3D_InstallHooks(void)
 
 void Indy3D_InitProcess(void)
 {
+#ifdef _WIN32
     // Enable HIDPI
     SetProcessDpiAwarenessContext(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2);
 
@@ -28,6 +31,7 @@ void Indy3D_InitProcess(void)
         printf("WARNING: Failed to remove Direct3D3 cap on width/height of DirectDrawSurface!\n");
         JonesWx_ShowMessageBox("Jones3D", "Failed to remove DirectX 6 draw surface resolution cap!", /*bError=*/0);
     }
+#endif
 }
 
 static int Indy3D_Startup(const char* aCmd)
@@ -43,8 +47,10 @@ static int Indy3D_Startup(const char* aCmd)
 // Indy3D.exe entry point
 int WINAPI Indy3D_WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nShowCmd)
 {
+#ifdef _WIN32
     JonesMain_g_mainMutex = CreateMutex(NULL, /*CreateMutex=*/TRUE, "INDY3D");
     if ( GetLastError() != ERROR_ALREADY_EXISTS )
+#endif
     {
         wkernel_SetProcessProc(JonesMain_Process);
         wkernel_SetStartupCallback(Indy3D_Startup);
@@ -54,9 +60,13 @@ int WINAPI Indy3D_WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lp
         return result;
     }
 
+#ifdef _WIN32
     CloseHandle(JonesMain_g_mainMutex);
     return -1;
+#endif
 }
+
+#ifdef _WIN32
 
 static void* Indy3D_memfind(const void* l, size_t l_len, const void* s, size_t s_len)
 {
@@ -125,3 +135,5 @@ static bool Indy3D_RemoveDirect3D3ResolutionCap(void)
 
     return true;
 }
+
+#endif // _WIN32

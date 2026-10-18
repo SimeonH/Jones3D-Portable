@@ -55,7 +55,7 @@ static SithGameStatistics sithGamesave_gameStatistics;
 
 static tVBuffer* sithGamesave_pThumbnailImage;
 static int sithGamesave_bThumbnail;
-static HBITMAP sithGamesave_hBmpThumbnail;
+static tVBuffer* sithGamesave_pThumbnail; // SITHSAVEGAME_THUMB_WIDTH x SITHSAVEGAME_THUMB_HEIGHT in SITHSAVEGAME_THUMBCOLORFORMAT
 
 static SithGameSaveCallback sithGamesave_pfSaveGameCallback;
 
@@ -457,7 +457,7 @@ int sithGamesave_Process(void)
         if ( !sithGamesave_bThumbnail )
         {
             sithGamesave_SetThumbnailImage(&stdDisplay_g_backBuffer);
-            sithGamesave_hBmpThumbnail = sithGamesave_CreateThumbnail();
+            sithGamesave_CreateThumbnail();
         }
 
         bError = sithGamesave_SaveFile(sithGamesave_aCurFilename);
@@ -811,10 +811,10 @@ void J3DAPI sithGamesave_SetThumbnailImage(tVBuffer* pVBuffer)
             sithGamesave_pThumbnailImage = NULL;
         }
 
-        if ( sithGamesave_hBmpThumbnail )
+        if ( sithGamesave_pThumbnail )
         {
-            DeleteObject(sithGamesave_hBmpThumbnail);
-            sithGamesave_hBmpThumbnail = NULL;
+            stdDisplay_VBufferFree(sithGamesave_pThumbnail);
+            sithGamesave_pThumbnail = NULL;
         }
 
         // Clone the thumbnail image to sithGamesave_pThumbnailImage
@@ -838,121 +838,101 @@ void J3DAPI sithGamesave_SetThumbnailImage(tVBuffer* pVBuffer)
     }
 }
 
-HBITMAP sithGamesave_CreateThumbnail(void)
+// Scales the 24-bit source image to the thumbnail with a box filter
+static void sithGamesave_ScaleThumbnail(const tVBuffer* pSrc, tVBuffer* pDst)
 {
-    HDC hdc       = NULL;
-    HDC hdcThumb  = NULL;
-    HBITMAP hBmp  = NULL;
-    void* pPixmap = NULL;
+    const uint32_t srcWidth  = pSrc->rasterInfo.width;
+    const uint32_t srcHeight = pSrc->rasterInfo.height;
+    const uint32_t dstWidth  = pDst->rasterInfo.width;
+    const uint32_t dstHeight = pDst->rasterInfo.height;
 
-    if ( sithGamesave_hBmpThumbnail )
+    for ( uint32_t y = 0; y < dstHeight; ++y )
     {
-        return sithGamesave_hBmpThumbnail;
+        uint32_t y0 = y * srcHeight / dstHeight;
+        uint32_t y1 = (y + 1) * srcHeight / dstHeight;
+        if ( y1 <= y0 ) {
+            y1 = y0 + 1;
+        }
+
+        uint8_t* pDstRow = &pDst->pPixels[pDst->rasterInfo.rowSize * y];
+        for ( uint32_t x = 0; x < dstWidth; ++x )
+        {
+            uint32_t x0 = x * srcWidth / dstWidth;
+            uint32_t x1 = (x + 1) * srcWidth / dstWidth;
+            if ( x1 <= x0 ) {
+                x1 = x0 + 1;
+            }
+
+            uint32_t aSum[3] = { 0 };
+            for ( uint32_t sy = y0; sy < y1; ++sy )
+            {
+                const uint8_t* pSrcPixel = &pSrc->pPixels[pSrc->rasterInfo.rowSize * sy + x0 * 3];
+                for ( uint32_t sx = x0; sx < x1; ++sx, pSrcPixel += 3 )
+                {
+                    aSum[0] += pSrcPixel[0];
+                    aSum[1] += pSrcPixel[1];
+                    aSum[2] += pSrcPixel[2];
+                }
+            }
+
+            const uint32_t count = (x1 - x0) * (y1 - y0);
+            pDstRow[x * 3 + 0] = (uint8_t)(aSum[0] / count);
+            pDstRow[x * 3 + 1] = (uint8_t)(aSum[1] / count);
+            pDstRow[x * 3 + 2] = (uint8_t)(aSum[2] / count);
+        }
+    }
+}
+
+static tVBuffer* sithGamesave_NewThumbnail(void)
+{
+    tRasterInfo rasterInfo = { 0 };
+    rasterInfo.width     = SITHSAVEGAME_THUMB_WIDTH;
+    rasterInfo.height    = SITHSAVEGAME_THUMB_HEIGHT;
+    rasterInfo.colorInfo = SITHSAVEGAME_THUMBCOLORFORMAT;
+
+    tVBuffer* pThumb = stdDisplay_VBufferNew(&rasterInfo, 0, 0);
+    STD_ASSERTREL(!pThumb || pThumb->rasterInfo.size == SITHSAVEGAME_THUMBSIZE);
+    return pThumb;
+}
+
+const tVBuffer* sithGamesave_CreateThumbnail(void)
+{
+    if ( sithGamesave_pThumbnail )
+    {
+        return sithGamesave_pThumbnail;
     }
 
     if ( sithGamesave_pThumbnailImage )
     {
         sithGamesave_pThumbnailImage = stdDisplay_VBufferConvertColorFormat(&SITHSAVEGAME_THUMBCOLORFORMAT, sithGamesave_pThumbnailImage, 0, NULL);
-        const LONG imageSize = (sithGamesave_pThumbnailImage->rasterInfo.width * sithGamesave_pThumbnailImage->rasterInfo.height * sithGamesave_pThumbnailImage->rasterInfo.colorInfo.bpp) / 8;
-
-        BITMAPINFO bmpInfo = { 0 };
-        bmpInfo.bmiHeader.biSize        = sizeof(bmpInfo.bmiHeader);
-        bmpInfo.bmiHeader.biWidth       = sithGamesave_pThumbnailImage->rasterInfo.width;
-        bmpInfo.bmiHeader.biHeight      = -(int32_t)sithGamesave_pThumbnailImage->rasterInfo.height;
-        bmpInfo.bmiHeader.biPlanes      = 1;
-        bmpInfo.bmiHeader.biBitCount    = sithGamesave_pThumbnailImage->rasterInfo.colorInfo.bpp;
-        bmpInfo.bmiHeader.biCompression = BI_RGB;
-        bmpInfo.bmiHeader.biSizeImage   = imageSize;
-
-        hdc = CreateCompatibleDC(NULL);
-        if ( !hdc )
+        if ( sithGamesave_pThumbnailImage )
         {
-            goto error;
-        }
+            sithGamesave_pThumbnail = sithGamesave_NewThumbnail();
+            if ( sithGamesave_pThumbnail )
+            {
+                stdDisplay_VBufferLock(sithGamesave_pThumbnailImage);
+                stdDisplay_VBufferLock(sithGamesave_pThumbnail);
+                sithGamesave_ScaleThumbnail(sithGamesave_pThumbnailImage, sithGamesave_pThumbnail);
+                stdDisplay_VBufferUnlock(sithGamesave_pThumbnail);
+                stdDisplay_VBufferUnlock(sithGamesave_pThumbnailImage);
 
-        // Create bmp
-        hBmp = CreateDIBSection(hdc, &bmpInfo, DIB_RGB_COLORS, &pPixmap, NULL, 0);
-        if ( !hBmp )
-        {
-            goto error;
-        }
+                stdDisplay_VBufferFree(sithGamesave_pThumbnailImage);
+                sithGamesave_pThumbnailImage = NULL;
 
-        // Copy pixels to bmp
-        memcpy(pPixmap, sithGamesave_pThumbnailImage->pPixels, bmpInfo.bmiHeader.biSizeImage);
-
-        // Now resize bmp to thumbnail size
-        bmpInfo.bmiHeader.biSize        = sizeof(bmpInfo.bmiHeader);
-        bmpInfo.bmiHeader.biWidth       = SITHSAVEGAME_THUMB_WIDTH;
-        bmpInfo.bmiHeader.biHeight      = -(int32_t)SITHSAVEGAME_THUMB_HEIGHT;
-        bmpInfo.bmiHeader.biPlanes      = 1;
-        bmpInfo.bmiHeader.biBitCount    = SITHSAVEGAME_THUMBCOLORFORMAT.bpp;
-        bmpInfo.bmiHeader.biCompression = BI_RGB;
-        bmpInfo.bmiHeader.biSizeImage   = SITHSAVEGAME_THUMBSIZE;
-        memset(&bmpInfo.bmiHeader.biXPelsPerMeter, 0, 16);
-
-        hdcThumb = CreateCompatibleDC(NULL);
-        if ( !hdcThumb )
-        {
-            goto error;
-        }
-        sithGamesave_hBmpThumbnail = CreateDIBSection(hdcThumb, &bmpInfo, 0, &pPixmap, NULL, 0);
-        if ( sithGamesave_hBmpThumbnail )
-        {
-            // Resize bmp
-            SelectObject(hdc, hBmp);
-            SelectObject(hdcThumb, sithGamesave_hBmpThumbnail);
-            SetStretchBltMode(hdcThumb, STRETCH_HALFTONE);
-
-            StretchBlt(
-                hdcThumb,
-                0,
-                0,
-                SITHSAVEGAME_THUMB_WIDTH,
-                SITHSAVEGAME_THUMB_HEIGHT,
-                hdc,
-                0,
-                0,
-                sithGamesave_pThumbnailImage->rasterInfo.width,
-                sithGamesave_pThumbnailImage->rasterInfo.height,
-                SRCCOPY
-            );
-
-            stdDisplay_VBufferFree(sithGamesave_pThumbnailImage);
-            sithGamesave_pThumbnailImage = NULL;
-
-            DeleteDC(hdc);
-            DeleteObject(hBmp);
-            DeleteDC(hdcThumb);
-
-            sithGamesave_bThumbnail = 1;
-            return sithGamesave_hBmpThumbnail;
+                sithGamesave_bThumbnail = 1;
+                return sithGamesave_pThumbnail;
+            }
         }
     }
 
-error:
     if ( sithGamesave_pThumbnailImage )
     {
         stdDisplay_VBufferFree(sithGamesave_pThumbnailImage);
         sithGamesave_pThumbnailImage = NULL;
     }
 
-    if ( hBmp )
-    {
-        DeleteObject(hBmp);
-    }
-
-    if ( hdc )
-    {
-        DeleteDC(hdc);
-    }
-
-    if ( hdcThumb )
-    {
-        DeleteDC(hdcThumb);
-    }
-
     sithGamesave_bThumbnail = 0;
-    return 0;
+    return NULL;
 }
 
 int J3DAPI sithGamesave_WriteThumbnail(tFileHandle fh)
@@ -962,14 +942,14 @@ int J3DAPI sithGamesave_WriteThumbnail(tFileHandle fh)
         return 0;
     }
 
-    BITMAP bmp = { 0 }; // Fixed: Initialized to 0
-    if ( !GetObject(sithGamesave_hBmpThumbnail, sizeof(BITMAP), &bmp) )
+    if ( !sithGamesave_pThumbnail )
     {
         return 1;
     }
 
-    const size_t imgSize = bmp.bmWidthBytes * bmp.bmHeight; // Altered: Changed to use bmp.bmWidthBytes instead of calculating (bmp.bmBitsPixel/8 * bmp.bmWidth)
-    if ( imgSize != sith_g_pHS->pFileWrite(fh, bmp.bmBits, imgSize) )
+    // Rows are written top-down, as in a 24-bit top-down DIB
+    const size_t imgSize = sithGamesave_pThumbnail->rasterInfo.size;
+    if ( imgSize != sith_g_pHS->pFileWrite(fh, sithGamesave_pThumbnail->pPixels, imgSize) )
     {
         return 1;
     }
@@ -985,62 +965,31 @@ int J3DAPI sithGamesave_SeekThumbnail(tFileHandle fh)
     return sithGamesave_bThumbnail && sith_g_pHS->pFileSeek(fh, SITHSAVEGAME_THUMBSIZE, 1);// 0x9000 - 128 * 96 * 3
 }
 
-HBITMAP J3DAPI sithGamesave_LoadThumbnail(const char* pFilename)
+tVBuffer* J3DAPI sithGamesave_LoadThumbnail(const char* pFilename)
 {
-    HDC hdc = NULL;
     if ( !stdConffile_OpenMode(pFilename, "rb") )
     {
-        return 0;
+        return NULL;
     }
 
     // Read nds file header
     NdsHeader header;
-    if ( !stdConffile_Read(&header, sizeof(NdsHeader)) )
+    tVBuffer* pThumb = NULL;
+    if ( !stdConffile_Read(&header, sizeof(NdsHeader)) || header.version != SITHSAVEGAME_FILEVERSION || !header.bThumbnail )
     {
         goto error;
     }
 
-    if ( header.version != SITHSAVEGAME_FILEVERSION )
+    pThumb = sithGamesave_NewThumbnail();
+    if ( pThumb && stdConffile_Read(pThumb->pPixels, SITHSAVEGAME_THUMBSIZE) )
     {
-        goto error;
-    }
-
-    if ( !header.bThumbnail )
-    {
-        goto error;
-    }
-
-    // Create bitmap info & DC
-    BITMAPINFO bmi              = { 0 }; // Fixed: Initialized to 0
-    bmi.bmiHeader.biSize        = sizeof(BITMAPINFOHEADER);
-    bmi.bmiHeader.biWidth       = SITHSAVEGAME_THUMB_WIDTH;
-    bmi.bmiHeader.biHeight      = -SITHSAVEGAME_THUMB_HEIGHT;
-    bmi.bmiHeader.biPlanes      = 1;
-    bmi.bmiHeader.biBitCount    = SITHSAVEGAME_THUMBCOLORFORMAT.bpp;
-    bmi.bmiHeader.biCompression = BI_RGB;
-    bmi.bmiHeader.biSizeImage   = SITHSAVEGAME_THUMBSIZE;
-    //memset(&bmi.bmiHeader.biXPelsPerMeter, 0, 16);
-
-    hdc = CreateCompatibleDC(NULL);
-    if ( !hdc )
-    {
-        goto error;
-    }
-
-    // Create bitmap and read thumb pixels
-    void* pPixels;
-    HBITMAP hBitmap = CreateDIBSection(hdc, &bmi, DIB_RGB_COLORS, &pPixels, NULL, 0);
-    if ( hBitmap && stdConffile_Read(pPixels, SITHSAVEGAME_THUMBSIZE) )
-    {
-        DeleteDC(hdc);
         stdConffile_Close();
-        return hBitmap;
+        return pThumb;
     }
 
 error:
-    if ( hdc )
-    {
-        DeleteDC(hdc);
+    if ( pThumb ) {
+        stdDisplay_VBufferFree(pThumb);
     }
 
     stdConffile_Close();
@@ -1049,7 +998,7 @@ error:
 
 void sithGamesave_Startup(void)
 {
-    sithGamesave_hBmpThumbnail = NULL;
+    sithGamesave_pThumbnail = NULL;
     sithGamesave_bThumbnail    = 0;
     memset(sithGamesave_aPrevLevelFilename, 0, sizeof(sithGamesave_aPrevLevelFilename));
 }
@@ -1062,7 +1011,7 @@ void sithGamesave_Shutdown(void)
 
 void sithGamesave_Open(void)
 {
-    sithGamesave_hBmpThumbnail = NULL;
+    sithGamesave_pThumbnail = NULL;
     sithGamesave_bThumbnail = 0;
 }
 
@@ -1076,10 +1025,10 @@ void sithGamesave_CloseRestore(void)
 
 void sithGamesave_Close(void)
 {
-    if ( sithGamesave_hBmpThumbnail )
+    if ( sithGamesave_pThumbnail )
     {
-        DeleteObject((HGDIOBJ)sithGamesave_hBmpThumbnail);
-        sithGamesave_hBmpThumbnail = NULL;
+        stdDisplay_VBufferFree(sithGamesave_pThumbnail);
+        sithGamesave_pThumbnail = NULL;
         sithGamesave_bThumbnail = 0;
     }
 

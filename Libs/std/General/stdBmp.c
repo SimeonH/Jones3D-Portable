@@ -116,6 +116,7 @@ int J3DAPI stdBmp_WriteVBuffer(const char* pFilename, tVBuffer* pVBuffer)
     return res;
 }
 
+#ifdef _WIN32
 HBITMAP J3DAPI stdBmp_Load(const char* pFilename)
 {
     HDC hdc;
@@ -203,3 +204,4 @@ HBITMAP J3DAPI stdBmp_Load(const char* pFilename)
     std_g_pHS->pFileClose(fh);
     return hbmp;
 }
+#endif // _WIN32

@@ -7,6 +7,7 @@
 #include <rdroid/Raster/rdCache.h>
 #include <rdroid/RTI/symbols.h>
 
+#include <std/General/stdFileUtil.h>
 #include <std/General/stdMemory.h>
 #include <std/General/stdUtil.h>
 #include <std/Win95/stdDisplay.h>
@@ -130,8 +131,8 @@ int J3DAPI rdFont_Write(const char* pFilename, const rdFont* pFont, tVBuffer*** 
         return 0;
     }
 
-    remove(aGcfFilename);
-    remove(aMatFilename);
+    stdFileUtil_DelFile(aGcfFilename);
+    stdFileUtil_DelFile(aMatFilename);
     RDLOG_ERROR("Error: Unable to write file '%s'.\n", pFilename);
     return -1;
 }
@@ -474,7 +475,7 @@ void J3DAPI rdFont_DrawChar(size_t chr, float x, float y, float z, const rdFont*
     pPoly->pMaterial    = pFont->pMaterial;
     pPoly->matCelNum    = 0;
 
-    LPD3DTLVERTEX pCurVert = pPoly->aVertices;
+    StdTLVertex* pCurVert = pPoly->aVertices;
     pCurVert->sx  = x;
     pCurVert->sy  = y;
     pCurVert->sz  = z;

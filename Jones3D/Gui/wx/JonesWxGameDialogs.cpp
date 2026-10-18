@@ -37,9 +37,13 @@ namespace
             pContent->Add(pButtons, wxSizerFlags(1).CenterVertical());
             FinishLayout(pContent);
 
-            if ( pData->hSndMusic ) {
-                pData->sndChnlMusic = sithSoundMixer_PlaySound(pData->hSndMusic, 1.0f, 0.0f, (SoundPlayFlag)0);
-            }
+            // Play the music once the dialog is shown: showing it pauses the game, which would pause the music too
+            Bind(wxEVT_INIT_DIALOG, [this](wxInitDialogEvent& event) {
+                if ( this->pData->hSndMusic ) {
+                    this->pData->sndChnlMusic = sithSoundMixer_PlaySound(this->pData->hSndMusic, 1.0f, 0.0f, (SoundPlayFlag)0);
+                }
+                event.Skip();
+            });
 
             stdUtil_StringCopy(pData->pRestoreFilename, JONESCONFIG_GAMESAVE_FILEPATHSIZE, aAutoSavePath);
         }

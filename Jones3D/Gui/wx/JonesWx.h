@@ -20,6 +20,7 @@ namespace JonesWx
 
     // Converts game text (system ANSI code page) to wxString and back
     wxString FromGame(const char* pText);
+    wxString NativePath(const char* pGamePath); // Game path (backslashes, case-insensitive) as host file system path
     std::string ToGame(const wxString& str);
 
     // Returns localized text for JONES_STR_* key, or the key itself when not found
@@ -36,10 +37,11 @@ namespace JonesWx
     wxImage LoadImage(const char* pFilePath, const char* pMaskFilePath = nullptr);
 
     // Converts 24/32 bpp DIB section bitmap (e.g. save game thumbnail) to image. Doesn't take ownership of hBitmap.
-    wxImage ImageFromDIB(HBITMAP hBitmap);
+    wxImage ImageFromThumbnail(const tVBuffer* pThumbnail); // 24-bit, B, G, R byte order
 
     // Loads icon resource from the Indy3D.exe resource module
     wxBitmap LoadResourceIcon(int iconID, int size);
+    wxImage LoadExeIconImage(int iconID, int size); // Reads icon resource from Indy3D.exe as data (JonesWxResources.cpp), used without the Win32 resource API
 
     // Returns dialog font scale for the current display mode
     double GetDialogScale();

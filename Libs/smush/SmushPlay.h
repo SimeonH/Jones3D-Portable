@@ -3,9 +3,7 @@
 
 #include <j3dcore/j3d.h>
 #include <std/types.h>
-
-#include <mmreg.h>
-#include <dsound.h>
+#include <sound/types.h>
 
 J3D_EXTERN_C_START
 
@@ -45,7 +43,7 @@ typedef struct sSmushBitmap
 // SMUSH (SANM) movie player.
 // Video is decoded with Blocky16 codec ported from ScummVM, audio (VIMA) with AudioLib.
 
-int J3DAPI SmushPlay_SysStartup(HWND hwnd, LPDIRECTSOUND pDSound);
+int J3DAPI SmushPlay_SysStartup(HWND hwnd, tSoundDevice pDSound);
 void SmushPlay_SysShutdown(void);
 void J3DAPI SmushPlay_SetGlobalVolume(size_t volume); // 0 - 127
 

@@ -17,7 +17,7 @@ static size_t rdCache_numProcFaces              = 0;
 static rdCacheProcEntry rdCache_aProcFaces[128] = { 0 };
 
 static size_t rdCache_numUsedVertices = 0;
-static D3DTLVERTEX rdCache_aVertices[RDCACHE_VERTBUFFERSIZE]      = { 0 };
+static StdTLVertex rdCache_aVertices[RDCACHE_VERTBUFFERSIZE]      = { 0 };
 static rdVector4 rdCache_aVertIntensities[RDCACHE_VERTBUFFERSIZE] = { 0 }; // Fixed: Changed to match size of rdCache_aVertices, was 8192
 
 
@@ -25,14 +25,14 @@ static size_t rdCache_numAlphaProcFaces               = 0;
 static rdCacheProcEntry rdCache_aAlphaProcFaces[2048] = { 0 };
 
 static size_t rdCache_numUsedAlphaVertices = 0;
-static D3DTLVERTEX rdCache_aAlphaVertices[RDCACHE_VERTBUFFERSIZE]      = { 0 };
+static StdTLVertex rdCache_aAlphaVertices[RDCACHE_VERTBUFFERSIZE]      = { 0 };
 static rdVector4 rdCache_aAlphaVertIntensities[RDCACHE_VERTBUFFERSIZE] = { 0 };
 
 static size_t rdCache_totalVerts             = 0;
-static LPD3DTLVERTEX rdCache_pCurInVert      = NULL;
-static LPD3DTLVERTEX rdCache_pCurCacheVertex = NULL;
+static StdTLVertex* rdCache_pCurInVert      = NULL;
+static StdTLVertex* rdCache_pCurCacheVertex = NULL;
 
-static D3DTLVERTEX rdCache_aHWVertices[RDCACHE_VERTBUFFERSIZE]     = { 0 };
+static StdTLVertex rdCache_aHWVertices[RDCACHE_VERTBUFFERSIZE]     = { 0 };
 static uint16_t rdCache_aVertIndices[RDCACHE_VERTBUFFERSIZE * 3]   = { 0 };
 
 static size_t rdCache_drawnFaces = 0;
@@ -258,7 +258,7 @@ LABEL_4:
             pCurMat = pCurPoly->pMaterial;
         }
 
-        LPDIRECT3DTEXTURE2 pD3DCachedTex = NULL;
+        tStd3DTexture pCachedTex = NULL;
         if ( pCurMat )
         {
             // format = pCurMat->formatType;
@@ -308,7 +308,7 @@ LABEL_4:
                 rdCache_AddToTextureCache(pTex, pCurMat->formatType);
             }
 
-            pD3DCachedTex = pTex->pD3DCachedTex;
+            pCachedTex = pTex->pCachedTex;
         }
 
         size_t totalIndices = 0;
@@ -326,7 +326,7 @@ LABEL_4:
             rdCache_pCurCacheVertex = &rdCache_aHWVertices[rdCache_totalVerts];
             for ( size_t i = 0; i < pCurPoly->numVertices; ++i )
             {
-                memcpy(rdCache_pCurCacheVertex, rdCache_pCurInVert++, sizeof(D3DTLVERTEX));
+                memcpy(rdCache_pCurCacheVertex, rdCache_pCurInVert++, sizeof(StdTLVertex));
 
                 float blue  = 1.0f;
                 float green = 1.0f;
@@ -420,7 +420,7 @@ LABEL_4:
                 || fflags != pCurPoly->flags )
             {
                 RD_ASSERTREL(rdCache_totalVerts < RDCACHE_VERTBUFFERSIZE);
-                std3D_DrawRenderList(pD3DCachedTex, rdflags, rdCache_aHWVertices, rdCache_totalVerts, rdCache_aVertIndices, totalIndices);
+                std3D_DrawRenderList(pCachedTex, rdflags, rdCache_aHWVertices, rdCache_totalVerts, rdCache_aVertIndices, totalIndices);
                 goto LABEL_4;
             }
         }
@@ -446,9 +446,9 @@ void J3DAPI rdCache_SendWireframeFaceListToHardware(size_t numPolys, rdCacheProc
         {
             std3D_DrawLineStrip(pCurPoly->aVertices, pCurPoly->numVertices);
 
-            D3DTLVERTEX aVerts[2]; // Draw end vert twice to complete the line
-            memcpy(aVerts, &pCurPoly->aVertices[pCurPoly->numVertices - 1], sizeof(D3DTLVERTEX));
-            memcpy(&aVerts[1], pCurPoly->aVertices, sizeof(D3DTLVERTEX));
+            StdTLVertex aVerts[2]; // Draw end vert twice to complete the line
+            memcpy(aVerts, &pCurPoly->aVertices[pCurPoly->numVertices - 1], sizeof(StdTLVertex));
+            memcpy(&aVerts[1], pCurPoly->aVertices, sizeof(StdTLVertex));
             std3D_DrawLineStrip(aVerts, 2u);
         }
 
@@ -458,7 +458,7 @@ void J3DAPI rdCache_SendWireframeFaceListToHardware(size_t numPolys, rdCacheProc
 
 void J3DAPI rdCache_AddToTextureCache(tSystemTexture* pTexture, StdColorFormatType format)
 {
-    if ( pTexture->pD3DCachedTex ) {
+    if ( pTexture->pCachedTex ) {
         std3D_UpdateFrameCount(pTexture);
     }
     else {

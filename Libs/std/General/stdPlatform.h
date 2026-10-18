@@ -22,6 +22,11 @@ void J3DAPI stdPlatform_UnlockHandle();
 
 bool J3DAPI stdPlatform_DirExists(const char* pPath);
 
+// Converts a game path (backslashes, case-insensitive) to a path of the host file system.
+// On non-Windows systems the separators are converted and each existing path component is matched
+// case-insensitively. Returns pOut.
+const char* J3DAPI stdPlatform_NativePath(const char* pPath, char* pOut, size_t outSize);
+
 // Helper hooking functions
 void stdPlatform_InstallHooks(void);
 

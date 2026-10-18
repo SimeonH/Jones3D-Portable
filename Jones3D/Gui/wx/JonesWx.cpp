@@ -6,6 +6,7 @@
 #include <Jones3D/Main/jonesString.h>
 
 #include <std/General/std.h>
+#include <std/General/stdPlatform.h>
 #include <std/Win95/stdDisplay.h>
 #include <wkernel/wkernel.h>
 
@@ -128,6 +129,17 @@ wxWindow* JonesWx::GetParent(HWND hwnd)
     return nullptr;
 }
 
+wxString JonesWx::NativePath(const char* pGamePath)
+{
+#ifdef _WIN32
+    return FromGame(pGamePath);
+#else
+    // Game paths use backslashes and are case-insensitive
+    char aPath[1024];
+    return FromGame(stdPlatform_NativePath(pGamePath, aPath, sizeof(aPath)));
+#endif
+}
+
 wxString JonesWx::FromGame(const char* pText)
 {
     if ( !pText ) {
@@ -215,33 +227,23 @@ wxImage JonesWx::LoadImage(const char* pFilePath, const char* pMaskFilePath)
     return image;
 }
 
-wxImage JonesWx::ImageFromDIB(HBITMAP hBitmap)
+wxImage JonesWx::ImageFromThumbnail(const tVBuffer* pThumbnail)
 {
-    // TODO: Make save game thumbnails platform independent, i.e. return raw pixels instead of HBITMAP
-    DIBSECTION dib;
-    if ( !hBitmap || GetObject(hBitmap, sizeof(dib), &dib) != sizeof(dib) || !dib.dsBm.bmBits ) {
+    if ( !pThumbnail || !pThumbnail->pPixels || pThumbnail->rasterInfo.colorInfo.bpp != 24 ) {
         return wxImage();
     }
 
-    const int width  = dib.dsBm.bmWidth;
-    const int height = dib.dsBm.bmHeight;
-    const int bpp    = dib.dsBm.bmBitsPixel;
-    if ( (bpp != 24 && bpp != 32) || width <= 0 || height <= 0 ) {
-        return wxImage();
-    }
-
-    // Note, negative DIB height means top-down bitmap
-    const bool bTopDown = dib.dsBmih.biHeight < 0;
-    const int stride    = dib.dsBm.bmWidthBytes;
+    const int width  = (int)pThumbnail->rasterInfo.width;
+    const int height = (int)pThumbnail->rasterInfo.height;
 
     wxImage image(width, height, /*clear=*/false);
     unsigned char* pDst = image.GetData();
     for ( int y = 0; y < height; ++y )
     {
-        const unsigned char* pRow = (const unsigned char*)dib.dsBm.bmBits + (size_t)(bTopDown ? y : height - 1 - y) * stride;
+        const unsigned char* pRow = pThumbnail->pPixels + (size_t)y * pThumbnail->rasterInfo.rowSize;
         for ( int x = 0; x < width; ++x )
         {
-            const unsigned char* pPixel = pRow + x * (bpp / 8);
+            const unsigned char* pPixel = pRow + x * 3;
             *pDst++ = pPixel[2];
             *pDst++ = pPixel[1];
             *pDst++ = pPixel[0];
@@ -263,15 +265,30 @@ wxBitmap JonesWx::LoadResourceIcon(int iconID, int size)
     icon.CreateFromHICON(hIcon); // Takes ownership of hIcon
     return wxBitmap(icon);
 #else
-    // TODO: Load icons extracted from Indy3D.exe resources
-    J3D_UNUSED(iconID);
-    J3D_UNUSED(size);
-    return wxBitmap();
+    // Read from the original Indy3D.exe
+    wxImage image = LoadExeIconImage(iconID, size);
+    return image.IsOk() ? wxBitmap(image) : wxBitmap();
 #endif
 }
 
 double JonesWx::GetDialogScale()
 {
+#ifdef J3D_RENDERER_VULKAN
+    // The game image is scaled to the window (the display mode never changes), scale the dialogs
+    // the same so they keep the size relative to the game they had in the original game.
+    if ( !JonesMain_HasStarted() ) {
+        return 1.0;
+    }
+
+    const double presentScale = stdDisplay_GetPresentScale();
+    if ( presentScale <= 0.0 ) {
+        return 1.0;
+    }
+
+    // Present scale is in physical pixels, dialogs are already scaled by the display scale factor
+    const double displayScale = wxDisplay((unsigned int)0).GetScaleFactor();
+    return presentScale / (displayScale > 0.0 ? displayScale : 1.0);
+#else
     // Shrink dialogs when the game runs fullscreen in a display mode smaller than the desktop
     JonesDisplaySettings* pSettings = JonesMain_GetDisplaySettings();
     if ( !JonesMain_HasStarted() || !pSettings || pSettings->bWindowMode ) {
@@ -287,6 +304,7 @@ double JonesWx::GetDialogScale()
     }
 
     return (double)height / rectDisplay.height;
+#endif
 }
 
 JonesWxDialog::JonesWxDialog(HWND hwndParent, const char* pTitleKey, long style) :

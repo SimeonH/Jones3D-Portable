@@ -2,6 +2,7 @@
 
 #include "std.h"
 #include "stdMemory.h"
+#include "stdPlatform.h"
 #include "stdUtil.h"
 
 #include <j3dcore/j3dhook.h>
@@ -36,11 +37,13 @@ void std_InstallHooks(void)
     J3D_HOOKFUNC(stdFilePrintf);
     J3D_HOOKFUNC(stdFileSeek);
 
+#ifdef _WIN32
     // Hook on stdio_open, stdio_close & stdio_flush due to stdio_services using stdFile* functions which might have conflicting FILE* object
     // Note on debug version this should be skipped
     J3DHookFunction(stdio_open_ADDR, (void*)stdFileOpen);
     J3DHookFunction(stdio_close_ADDR, (void*)stdFileClose);
     J3DHookFunction(stdio_flush_ADDR, (void*)stdFileFlush);
+#endif
 }
 
 const char std_g_aEmptyString[8];
@@ -62,7 +65,11 @@ void J3DAPI stdStartup(tHostServices* pHS)
         // TODO: Remove when all round and rand float functions are replaced && updated
         // TODO: consider setting FE_DOWNWARD for round functions (lrintf); i.e.: fesetround(FE_DOWNWARD) to mimic same behavior as OG
         short  tmp = 0;
+#ifdef _MSC_VER
         __asm  fnstcw word ptr[tmp];
+#else
+        __asm__ volatile("fnstcw %0" : "=m"(tmp));
+#endif
         word_183962C = tmp;
 
         // The following flags control in binary (Indy3D.exe) FPU rounding control flags for frndint (floorf, ceilf) and fistp (lrintf)
@@ -158,6 +165,11 @@ int J3DAPI stdCalcBitPos(int bit)
 
 tFileHandle J3DAPI stdFileOpen(const char* pFilename, const char* mode)
 {
+#ifndef _WIN32
+    char aPath[1024];
+    pFilename = stdPlatform_NativePath(pFilename, aPath, sizeof(aPath));
+#endif
+
     FILE* fh;
     if ( fopen_s(&fh, pFilename, mode) != 0 ) {
         fh = NULL; // Make sure it's null
@@ -191,9 +203,45 @@ char* J3DAPI stdFileGets(tFileHandle fh, char* pStr, size_t size)
     return fgets(pStr, size, (FILE*)fh);
 }
 
+#ifndef _WIN32
+// Windows-1252 code points of bytes 0x80 - 0x9F, the rest maps to the same Unicode code point
+static const uint16_t std_aCp1252High[32] = {
+    0x20AC, 0x0081, 0x201A, 0x0192, 0x201E, 0x2026, 0x2020, 0x2021, 0x02C6, 0x2030, 0x0160, 0x2039, 0x0152, 0x008D, 0x017D, 0x008F,
+    0x0090, 0x2018, 0x2019, 0x201C, 0x201D, 0x2022, 0x2013, 0x2014, 0x02DC, 0x2122, 0x0161, 0x203A, 0x0153, 0x009D, 0x017E, 0x0178
+};
+#endif
+
 wchar_t* J3DAPI stdFileGetws(tFileHandle fh, wchar_t* pOutStr, size_t size)
 {
+#ifdef _WIN32
     return fgetws(pOutStr, size, (FILE*)fh);
+#else
+    // Like MSVC's text mode fgetws on an ANSI file: bytes are widened with the Windows-1252 code page
+    if ( size == 0 ) {
+        return NULL;
+    }
+
+    size_t len = 0;
+    int c = 0;
+    while ( len < size - 1 && (c = fgetc((FILE*)fh)) != EOF )
+    {
+        if ( c == '\r' ) {
+            continue; // text mode
+        }
+
+        pOutStr[len++] = (c >= 0x80 && c < 0xA0) ? (wchar_t)std_aCp1252High[c - 0x80] : (wchar_t)c;
+        if ( c == '\n' ) {
+            break;
+        }
+    }
+
+    if ( len == 0 && c == EOF ) {
+        return NULL;
+    }
+
+    pOutStr[len] = 0;
+    return pOutStr;
+#endif
 }
 
 int J3DAPI stdFileEof(tFileHandle fh)

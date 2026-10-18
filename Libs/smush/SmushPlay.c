@@ -2,12 +2,14 @@
 #include "codecs/Blocky16Api.h"
 
 #include <sound/AudioLib.h>
+#include <sound/Driver.h>
 
 #include <math.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 
 // SMUSH (SANM) movie file layout:
 //   'SANM' size
@@ -19,7 +21,7 @@
 #define SMUSHPLAY_TAG(a, b, c, d) ((uint32_t)(a) << 24 | (uint32_t)(b) << 16 | (uint32_t)(c) << 8 | (uint32_t)(d))
 #define SMUSHPLAY_DEFAULT_USEC_PER_FRAME 66667 // 15 fps
 
-static LPDIRECTSOUND SmushPlay_pDSound;
+static tSoundDevice SmushPlay_pDSound;
 static size_t SmushPlay_volume = 127;
 
 static uint32_t SmushPlay_ReadBE32(const uint8_t* p)
@@ -37,7 +39,7 @@ static uint16_t SmushPlay_ReadLE16(const uint8_t* p)
     return (uint16_t)(p[0] | p[1] << 8);
 }
 
-int J3DAPI SmushPlay_SysStartup(HWND hwnd, LPDIRECTSOUND pDSound)
+int J3DAPI SmushPlay_SysStartup(HWND hwnd, tSoundDevice pDSound)
 {
     (void)hwnd;
     SmushPlay_pDSound = pDSound;
@@ -193,7 +195,13 @@ static int16_t* SmushPlay_DecodeAudio(const uint8_t* pFrames, const uint8_t* pEn
     return aSamples;
 }
 
-static LPDIRECTSOUNDBUFFER SmushPlay_CreateAudioBuffer(const int16_t* aSamples, size_t numSamples, unsigned int freq, unsigned int numChannels)
+// Movie audio: a DirectSound buffer on Windows, a sound driver (OpenAL) buffer elsewhere
+
+#ifdef _WIN32
+
+typedef LPDIRECTSOUNDBUFFER SmushAudioBuffer;
+
+static SmushAudioBuffer SmushPlay_CreateAudioBuffer(const int16_t* aSamples, size_t numSamples, unsigned int freq, unsigned int numChannels)
 {
     if ( !SmushPlay_pDSound || !aSamples || !numSamples )
     {
@@ -244,6 +252,120 @@ static LPDIRECTSOUNDBUFFER SmushPlay_CreateAudioBuffer(const int16_t* aSamples, 
     return pBuffer;
 }
 
+static void SmushPlay_PlayAudio(SmushAudioBuffer pBuffer)
+{
+    IDirectSoundBuffer_Play(pBuffer, 0, 0, 0);
+}
+
+// Returns the play position in bytes or -1 when not playing
+static int64_t SmushPlay_GetAudioPosition(SmushAudioBuffer pBuffer)
+{
+    DWORD playPos = 0, writePos = 0, status = 0;
+    if ( IDirectSoundBuffer_GetStatus(pBuffer, &status) == DS_OK && (status & DSBSTATUS_PLAYING) != 0
+        && IDirectSoundBuffer_GetCurrentPosition(pBuffer, &playPos, &writePos) == DS_OK )
+    {
+        return playPos;
+    }
+
+    return -1;
+}
+
+static void SmushPlay_ReleaseAudioBuffer(SmushAudioBuffer pBuffer)
+{
+    IDirectSoundBuffer_Stop(pBuffer);
+    IDirectSoundBuffer_Release(pBuffer);
+}
+
+static double SmushPlay_GetTime(void)
+{
+    LARGE_INTEGER freq, now;
+    QueryPerformanceFrequency(&freq);
+    QueryPerformanceCounter(&now);
+    return (double)now.QuadPart / (double)freq.QuadPart;
+}
+
+static void SmushPlay_Sleep(void)
+{
+    Sleep(1);
+}
+
+#else // !_WIN32
+
+typedef struct
+{
+    tSoundBuffer pBuffer;
+    int16_t* aSamples;
+    size_t dataSize;
+} SmushAudio;
+typedef SmushAudio* SmushAudioBuffer;
+
+static SmushAudioBuffer SmushPlay_CreateAudioBuffer(const int16_t* aSamples, size_t numSamples, unsigned int freq, unsigned int numChannels)
+{
+    if ( !aSamples || !numSamples )
+    {
+        return NULL;
+    }
+
+    SmushAudio* pAudio = (SmushAudio*)calloc(1, sizeof(SmushAudio));
+    if ( !pAudio )
+    {
+        return NULL;
+    }
+
+    pAudio->dataSize = numSamples * numChannels * sizeof(int16_t);
+
+    // Created when played, the driver starts the buffer on creation
+    tSoundChannelFlag flags = SOUND_CHANNEL_GLOBALFOCUS | SOUND_CHANNEL_USE3DCAPS;
+    pAudio->pBuffer = SoundDriver_CreateAndPlay(freq, 16, numChannels, (const uint8_t*)aSamples, pAudio->dataSize, &flags, NULL);
+    if ( !pAudio->pBuffer )
+    {
+        free(pAudio);
+        return NULL;
+    }
+
+    SoundDriver_Stop(pAudio->pBuffer);
+    SoundDriver_SetVolume(pAudio->pBuffer, (float)SmushPlay_volume / 127.0f);
+    return pAudio;
+}
+
+static void SmushPlay_PlayAudio(SmushAudioBuffer pAudio)
+{
+    SoundDriver_Play(pAudio->pBuffer, /*bLoop=*/0);
+}
+
+// Returns the play position in bytes or -1 when not playing
+static int64_t SmushPlay_GetAudioPosition(SmushAudioBuffer pAudio)
+{
+    if ( (SoundDriver_GetStatusAndCaps(pAudio->pBuffer) & SOUND_CHANNEL_PLAYING) == 0 )
+    {
+        return -1;
+    }
+
+    return (int64_t)SoundDriver_GetCurrentPosition(pAudio->pBuffer);
+}
+
+static void SmushPlay_ReleaseAudioBuffer(SmushAudioBuffer pAudio)
+{
+    SoundDriver_Stop(pAudio->pBuffer);
+    SoundDriver_Release(pAudio->pBuffer);
+    free(pAudio);
+}
+
+static double SmushPlay_GetTime(void)
+{
+    struct timespec ts;
+    clock_gettime(CLOCK_MONOTONIC, &ts);
+    return (double)ts.tv_sec + (double)ts.tv_nsec / 1e9;
+}
+
+static void SmushPlay_Sleep(void)
+{
+    struct timespec ts = { 0, 1000000 };
+    nanosleep(&ts, NULL);
+}
+
+#endif // _WIN32
+
 int J3DAPI SmushPlay_PlayMovie(const char* pFilename, int a1, int a3, int a4, int a5, int width, int height, int a8, int a9, int(__cdecl* pBlit)(const SmushBitmap* pBitmap, int a2), int a11, int a12, int a13)
 {
     (void)a1;
@@ -275,7 +397,7 @@ int J3DAPI SmushPlay_PlayMovie(const char* pFilename, int a1, int a3, int a4, in
     void* pDecoder = NULL;
     uint8_t* pFrameBuf = NULL;
     int16_t* aSamples = NULL;
-    LPDIRECTSOUNDBUFFER pAudioBuffer = NULL;
+    SmushAudioBuffer pAudioBuffer = NULL;
 
     // Parse header
     if ( fileSize < 16 || SmushPlay_ReadBE32(pFileData) != SMUSHPLAY_TAG('S', 'A', 'N', 'M') )
@@ -359,12 +481,10 @@ int J3DAPI SmushPlay_PlayMovie(const char* pFilename, int a1, int a3, int a4, in
     bitmap.format.greenPosShiftRight = 2;
     bitmap.format.bluePosShiftRight  = 3;
 
-    LARGE_INTEGER freq, startTime;
-    QueryPerformanceFrequency(&freq);
-    QueryPerformanceCounter(&startTime);
+    double startTime = SmushPlay_GetTime();
     if ( pAudioBuffer )
     {
-        IDirectSoundBuffer_Play(pAudioBuffer, 0, 0, 0);
+        SmushPlay_PlayAudio(pAudioBuffer);
     }
 
     result = 0;
@@ -393,19 +513,14 @@ int J3DAPI SmushPlay_PlayMovie(const char* pFilename, int a1, int a3, int a4, in
         for ( ;; )
         {
             double curTime;
-            DWORD playPos = 0, writePos = 0;
-            DWORD status  = 0;
-            if ( pAudioBuffer
-                && IDirectSoundBuffer_GetStatus(pAudioBuffer, &status) == DS_OK && (status & DSBSTATUS_PLAYING) != 0
-                && IDirectSoundBuffer_GetCurrentPosition(pAudioBuffer, &playPos, &writePos) == DS_OK )
+            int64_t playPos = pAudioBuffer ? SmushPlay_GetAudioPosition(pAudioBuffer) : -1;
+            if ( playPos >= 0 )
             {
                 curTime = (double)playPos / (double)(audioFreq * audioChannels * sizeof(int16_t));
             }
             else
             {
-                LARGE_INTEGER now;
-                QueryPerformanceCounter(&now);
-                curTime = (double)(now.QuadPart - startTime.QuadPart) / (double)freq.QuadPart;
+                curTime = SmushPlay_GetTime() - startTime;
             }
 
             if ( curTime >= frameTime )
@@ -413,7 +528,7 @@ int J3DAPI SmushPlay_PlayMovie(const char* pFilename, int a1, int a3, int a4, in
                 break;
             }
 
-            Sleep(1);
+            SmushPlay_Sleep();
         }
 
         // Display frame, blit returns non-zero to stop playback
@@ -428,8 +543,7 @@ int J3DAPI SmushPlay_PlayMovie(const char* pFilename, int a1, int a3, int a4, in
 cleanup:
     if ( pAudioBuffer )
     {
-        IDirectSoundBuffer_Stop(pAudioBuffer);
-        IDirectSoundBuffer_Release(pAudioBuffer);
+        SmushPlay_ReleaseAudioBuffer(pAudioBuffer);
     }
 
     if ( pDecoder )

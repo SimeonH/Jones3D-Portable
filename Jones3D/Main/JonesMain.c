@@ -60,7 +60,9 @@
 #include <w32util/wuRegistry.h>
 
 #include <stdint.h>
+#ifdef _WIN32
 #include <windowsx.h> // helper macros for win32 controls (combo-box, list-view ...)
+#endif
 
 #define JONES_QUICKSAVE_TEXTSHOWTIME    1000u // 1 sec
 #define JONES_QUICKSAVE_TEXTSHOWTIMERID 1u 
@@ -778,6 +780,7 @@ int J3DAPI JonesMain_GameWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPa
 
 void J3DAPI JonesMain_HandleWMGetMinMaxInfo(HWND hwnd, LPMINMAXINFO pMinMaxInfo)
 {
+#ifdef _WIN32
     RECT rectWnd;
     GetWindowRect(hwnd, &rectWnd);
 
@@ -804,12 +807,22 @@ void J3DAPI JonesMain_HandleWMGetMinMaxInfo(HWND hwnd, LPMINMAXINFO pMinMaxInfo)
     pMinMaxInfo->ptMaxTrackSize.y = rectWnd.bottom - rectWnd.top;
 
     JonesMain_bWndMsgProcessed = true;
+#else
+    // Not sent by the SDL window
+    J3D_UNUSED(hwnd);
+    J3D_UNUSED(pMinMaxInfo);
+#endif
 }
 
 void J3DAPI JonesMain_HandleWMPaint(HWND hWnd)
 {
     if ( JonesMain_pfProcess == JonesMain_ProcessWindowEvents )
     {
+    #ifndef _WIN32
+        // Show the last frame again, e.g. while a dialog is open
+        J3D_UNUSED(hWnd);
+        stdDisplay_Update();
+    #else
         PAINTSTRUCT ps;
         HDC hdc = BeginPaint(hWnd, (LPPAINTSTRUCT)&ps);
         if ( hdc )
@@ -819,6 +832,7 @@ void J3DAPI JonesMain_HandleWMPaint(HWND hWnd)
             JonesDialog_RestoreBackground(hdc, hWnd, &pt, &ps.rcPaint);
             EndPaint(hWnd, &ps);
         }
+    #endif
     }
 }
 
@@ -892,10 +906,8 @@ void J3DAPI JonesMain_HandleWMKeydown(HWND hWnd, WPARAM vk, int a3, uint16_t rep
                 const char* pSaveGamesDir = sithGetSaveGamesDir();
                 STD_MAKEPATH(aPath, pSaveGamesDir, aFilename);
 
-                FILE* pFile = fopen(aPath, "r");
-                if ( pFile )
+                if ( stdFileUtil_FileExists(aPath) ) // Changed: Was fopen, which doesn't resolve game paths on non-Windows systems
                 {
-                    fclose(pFile); // Looks like the file exists, so we can close it here
 
                     if ( sithGamesave_LoadLevelFilename(aPath, NULL) != 0 )
                     {
@@ -1174,10 +1186,12 @@ void JonesMain_Shutdown(void)
 
     JonesMain_bStartup = false;
 
+#ifdef _WIN32
     if ( JonesMain_g_mainMutex )
     {
         CloseHandle(JonesMain_g_mainMutex);
     }
+#endif
 }
 
 void JonesMain_PauseGame(void)
@@ -2019,7 +2033,7 @@ int JonesMain_PlayIntroMovie(void)
         return result;
     }
 
-    LPDIRECTSOUND pDSound = SoundDriver_GetDSound();
+    tSoundDevice pDSound = SoundDriver_GetDSound();
     HWND hwnd = stdWin95_GetWindow();
     SmushPlay_SysStartup(hwnd, pDSound);
     SmushPlay_SetGlobalVolume((size_t)(JonesMain_state.soundSettings.maxSoundVolume * 127.0f));
@@ -2611,7 +2625,12 @@ void J3DAPI JonesMain_LogErrorToFile(const char* pErrorText)
 
     if ( pErrorText && strlen(pErrorText) )
     {
+    #ifndef _WIN32
+        char aNativePath[512];
+        FILE* fp = fopen(stdPlatform_NativePath(aFilePath, aNativePath, sizeof(aNativePath)), "wt+");
+    #else
         FILE* fp = fopen(aFilePath, "wt+");
+    #endif
         if ( fp )
         {
             fprintf(fp, pErrorText);

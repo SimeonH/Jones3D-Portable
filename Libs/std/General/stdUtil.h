@@ -187,7 +187,7 @@ uint32_t J3DAPI stdUtil_CalcChecksum(const uint8_t* pData, size_t dataSize, uint
  *
  * @return `true` on success, otherwise `false`.
  */
-inline bool J3DAPI stdUtil_StringCopy(char* pDest, size_t destSize, const char* pSrc)
+J3D_INLINE bool J3DAPI stdUtil_StringCopy(char* pDest, size_t destSize, const char* pSrc)
 {
     return strncpy_s(pDest, destSize, pSrc, destSize - 1) == 0;
 }
@@ -205,7 +205,7 @@ inline bool J3DAPI stdUtil_StringCopy(char* pDest, size_t destSize, const char* 
  *
  * @return `true` on success, otherwise `false`.
  */
-inline bool J3DAPI stdUtil_WStringCopy(wchar_t* pDest, size_t destSize, const wchar_t* pSrc)
+J3D_INLINE bool J3DAPI stdUtil_WStringCopy(wchar_t* pDest, size_t destSize, const wchar_t* pSrc)
 {
     return wcsncpy_s(pDest, destSize, pSrc, destSize - 1) == 0;
 }
@@ -224,7 +224,7 @@ inline bool J3DAPI stdUtil_WStringCopy(wchar_t* pDest, size_t destSize, const wc
  *
  * @return `true` on success, otherwise `false`.
  */
-inline bool J3DAPI stdUtil_StringNumCopy(char* pDest, size_t destSize, const char* pSrc, size_t num)
+J3D_INLINE bool J3DAPI stdUtil_StringNumCopy(char* pDest, size_t destSize, const char* pSrc, size_t num)
 {
     num = J3DMIN(num, destSize - 1);
     return strncpy_s(pDest, destSize, pSrc, num) == 0;
@@ -244,7 +244,7 @@ inline bool J3DAPI stdUtil_StringNumCopy(char* pDest, size_t destSize, const cha
  *
  * @return `true` on success, otherwise `false`.
  */
-inline bool J3DAPI stdUtil_WStringNumCopy(wchar_t* pDest, size_t destSize, const wchar_t* pSrc, size_t num)
+J3D_INLINE bool J3DAPI stdUtil_WStringNumCopy(wchar_t* pDest, size_t destSize, const wchar_t* pSrc, size_t num)
 {
     num = J3DMIN(num, destSize - 1);
     return wcsncpy_s(pDest, destSize, pSrc, num) == 0;
@@ -262,7 +262,7 @@ inline bool J3DAPI stdUtil_WStringNumCopy(wchar_t* pDest, size_t destSize, const
  *
  * @return `true` on success, otherwise `false`.
  */
-inline bool J3DAPI stdUtil_StringCat(char* pDst, size_t destSize, const char* pSrc)
+J3D_INLINE bool J3DAPI stdUtil_StringCat(char* pDst, size_t destSize, const char* pSrc)
 {
     size_t dstLen = strnlen_s(pDst, destSize);
     if ( dstLen >= destSize ) {
@@ -285,7 +285,7 @@ inline bool J3DAPI stdUtil_StringCat(char* pDst, size_t destSize, const char* pS
  *
  * @return `true` on success, otherwise `false`.
  */
-inline bool J3DAPI stdUtil_StringNumCat(char* pDst, size_t destSize, const char* pSrc, size_t num)
+J3D_INLINE bool J3DAPI stdUtil_StringNumCat(char* pDst, size_t destSize, const char* pSrc, size_t num)
 {
     size_t dstLen = strnlen_s(pDst, destSize);
     if ( dstLen >= destSize ) {

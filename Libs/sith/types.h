@@ -1957,7 +1957,9 @@ typedef struct sSithPlayer
     int respawnMask;
     unsigned int msecLastCommTime;
 } SithPlayer;
+#ifdef _WIN32 // wchar_t is 4 bytes elsewhere
 static_assert(sizeof(SithPlayer) == 1820, "sizeof(SithPlayer) == 1820");
+#endif
 
 typedef struct sSithActorInfo
 {

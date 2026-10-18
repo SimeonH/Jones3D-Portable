@@ -10,8 +10,16 @@
 #include <std/RTI/symbols.h>
 
 #include <math.h>
+#include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
+
+// StdTLVertex is passed to D3D as D3DTLVERTEX
+static_assert(sizeof(StdTLVertex) == sizeof(D3DTLVERTEX), "sizeof(StdTLVertex) == sizeof(D3DTLVERTEX)");
+static_assert(offsetof(StdTLVertex, rhw) == offsetof(D3DTLVERTEX, rhw), "StdTLVertex.rhw");
+static_assert(offsetof(StdTLVertex, color) == offsetof(D3DTLVERTEX, color), "StdTLVertex.color");
+static_assert(offsetof(StdTLVertex, specular) == offsetof(D3DTLVERTEX, specular), "StdTLVertex.specular");
+static_assert(offsetof(StdTLVertex, tu) == offsetof(D3DTLVERTEX, tu), "StdTLVertex.tu");
 
 #define STD3D_DEFAULT_MAX_VERTICES 512
 
@@ -615,7 +623,7 @@ void std3D_EndScene(void)
     std3D_pD3DTex = NULL;
 }
 
-void J3DAPI std3D_DrawRenderList(LPDIRECT3DTEXTURE2 pTex, Std3DRenderState rdflags, LPD3DTLVERTEX aVerts, size_t numVerts, LPWORD aIndices, size_t numIndices)
+void J3DAPI std3D_DrawRenderList(tStd3DTexture pTex, Std3DRenderState rdflags, StdTLVertex* aVerts, size_t numVerts, uint16_t* aIndices, size_t numIndices)
 {
     HRESULT d3dres;
 
@@ -640,7 +648,7 @@ void J3DAPI std3D_DrawRenderList(LPDIRECT3DTEXTURE2 pTex, Std3DRenderState rdfla
 
     if ( std3D_bFogTable )
     {
-        D3DTLVERTEX* pCurVert = aVerts;
+        StdTLVertex* pCurVert = aVerts;
         for ( size_t i = 0; i < numVerts; ++i )
         {
             if ( pCurVert->rhw > 0.0 )
@@ -673,9 +681,9 @@ void J3DAPI std3D_DrawRenderList(LPDIRECT3DTEXTURE2 pTex, Std3DRenderState rdfla
         std3D_pD3Device,
         D3DPT_TRIANGLELIST,
         D3DFVF_TLVERTEX,
-        aVerts,
+        (LPD3DTLVERTEX)aVerts,
         numVerts,
-        aIndices,
+        (LPWORD)aIndices,
         numIndices,
         D3DDP_DONOTLIGHT | D3DDP_DONOTUPDATEEXTENTS
     );
@@ -701,7 +709,7 @@ void std3D_SetWireframeRenderState(void)
     std3D_pD3DTex = NULL;
 }
 
-void J3DAPI std3D_DrawLineStrip(LPD3DTLVERTEX aVerts, size_t numVerts)
+void J3DAPI std3D_DrawLineStrip(StdTLVertex* aVerts, size_t numVerts)
 {
     if ( numVerts > std3D_g_maxVertices )
     {
@@ -713,7 +721,7 @@ void J3DAPI std3D_DrawLineStrip(LPD3DTLVERTEX aVerts, size_t numVerts)
         std3D_pD3Device,
         D3DPT_LINESTRIP,
         D3DFVF_TLVERTEX,
-        aVerts,
+        (LPD3DTLVERTEX)aVerts,
         numVerts,
         D3DDP_DONOTLIGHT | D3DDP_DONOTUPDATEEXTENTS
     );
@@ -723,7 +731,7 @@ void J3DAPI std3D_DrawLineStrip(LPD3DTLVERTEX aVerts, size_t numVerts)
     }
 }
 
-void J3DAPI std3D_DrawPointList(LPD3DTLVERTEX aVerts, size_t numVerts)
+void J3DAPI std3D_DrawPointList(StdTLVertex* aVerts, size_t numVerts)
 {
     if ( numVerts > std3D_g_maxVertices )
     {
@@ -735,7 +743,7 @@ void J3DAPI std3D_DrawPointList(LPD3DTLVERTEX aVerts, size_t numVerts)
         std3D_pD3Device,
         D3DPT_POINTLIST,
         D3DFVF_TLVERTEX,
-        aVerts,
+        (LPD3DTLVERTEX)aVerts,
         numVerts,
         D3DDP_DONOTLIGHT | D3DDP_DONOTUPDATEEXTENTS
     );
@@ -1021,7 +1029,7 @@ void J3DAPI std3D_AllocSystemTexture(tSystemTexture* pTexture, tVBuffer** apVBuf
     }
 
     pTexture->ddsd           = ddsdSrc;
-    pTexture->pD3DSrcTexture = pTex;
+    pTexture->pSrcTexture = pTex;
     pTexture->textureSize    = texSize;
     return;
 
@@ -1058,14 +1066,14 @@ void J3DAPI std3D_GetValidDimensions(uint32_t width, uint32_t height, uint32_t* 
 
 void J3DAPI std3D_ClearSystemTexture(tSystemTexture* pTex)
 {
-    if ( pTex->pD3DSrcTexture ) {
-        IDirect3DTexture2_Release(pTex->pD3DSrcTexture);
+    if ( pTex->pSrcTexture ) {
+        IDirect3DTexture2_Release(pTex->pSrcTexture);
     }
 
-    if ( pTex->pD3DCachedTex )
+    if ( pTex->pCachedTex )
     {
         std3D_RemoveTextureFromCacheList(pTex);
-        IDirect3DTexture2_Release(pTex->pD3DCachedTex);
+        IDirect3DTexture2_Release(pTex->pCachedTex);
     }
 
     memset(pTex, 0, sizeof(tSystemTexture));
@@ -1078,7 +1086,7 @@ void J3DAPI std3D_AddToTextureCache(tSystemTexture* pCacheTexture, StdColorForma
     LPDIRECTDRAWSURFACE4 pDestSurf = NULL;
     LPDIRECT3DTEXTURE2 pD3DTex     = NULL;
 
-    if ( !pCacheTexture->pD3DSrcTexture )
+    if ( !pCacheTexture->pSrcTexture )
     {
         STDLOG_ERROR("No Source texture.\n");
         goto error;
@@ -1128,7 +1136,7 @@ void J3DAPI std3D_AddToTextureCache(tSystemTexture* pCacheTexture, StdColorForma
         goto error;
     }
 
-    ddres = IDirect3DTexture2_Load(pD3DTex, pCacheTexture->pD3DSrcTexture);
+    ddres = IDirect3DTexture2_Load(pD3DTex, pCacheTexture->pSrcTexture);
     while ( ddres == DDERR_OUTOFVIDEOMEMORY || ddres == D3DERR_TEXTURE_LOAD_FAILED ) // Added check for D3DERR_TEXTURE_LOAD_FAILED error (might be wrong). Note, Check for DDERR_OUTOFVIDEOMEMORY error is most likely wrong here because it's part of DDraw and DDrawSurface system. 
     {
         if ( !std3D_PurgeTextureCache(pCacheTexture->textureSize) )
@@ -1136,14 +1144,14 @@ void J3DAPI std3D_AddToTextureCache(tSystemTexture* pCacheTexture, StdColorForma
             STDLOG_ERROR("Error: Unable to purge texture cache for %x bytes!!!.\n", pCacheTexture->textureSize);
             goto error;
         }
-        ddres = IDirect3DTexture2_Load(pD3DTex, pCacheTexture->pD3DSrcTexture);
+        ddres = IDirect3DTexture2_Load(pD3DTex, pCacheTexture->pSrcTexture);
     }
 
     if ( ddres == D3D_OK )
     {
         // Success
         IDirectDrawSurface4_Release(pDestSurf);
-        pCacheTexture->pD3DCachedTex = pD3DTex;
+        pCacheTexture->pCachedTex = pD3DTex;
         pCacheTexture->frameNum      = std3D_frameCount;
         std3D_AddTextureToCacheList(pCacheTexture);
         return;
@@ -1160,7 +1168,7 @@ error:
         IDirect3DTexture2_Release(pD3DTex);
     }
 
-    pCacheTexture->pD3DCachedTex = NULL;
+    pCacheTexture->pCachedTex = NULL;
     pCacheTexture->frameNum = 0;
     STDLOG_ERROR("Done error exit from std3D_AddToTextureCache.\n");
 }
@@ -1172,7 +1180,7 @@ size_t J3DAPI std3D_GetMipMapCount(const tSystemTexture* pTexture)
     }
 
     LPDIRECTDRAWSURFACE4 pDDSurf = NULL;
-    if ( !pTexture->pD3DSrcTexture || IDirect3DTexture2_QueryInterface(pTexture->pD3DSrcTexture, &IID_IDirectDrawSurface4, &pDDSurf) != S_OK ) {
+    if ( !pTexture->pSrcTexture || IDirect3DTexture2_QueryInterface(pTexture->pSrcTexture, &IID_IDirectDrawSurface4, &pDDSurf) != S_OK ) {
         return 0;
     }
 
@@ -1190,10 +1198,10 @@ void J3DAPI std3D_ResetTextureCache()
     tSystemTexture* pCurTex = std3D_pFirstTexCache;
     while ( pCurTex )
     {
-        if ( pCurTex->pD3DCachedTex )
+        if ( pCurTex->pCachedTex )
         {
-            IDirect3DTexture2_Release(pCurTex->pD3DCachedTex);
-            pCurTex->pD3DCachedTex = NULL;
+            IDirect3DTexture2_Release(pCurTex->pCachedTex);
+            pCurTex->pCachedTex = NULL;
         }
 
         tSystemTexture* pNextTex = pCurTex->pNextCachedTexture;
@@ -2021,8 +2029,8 @@ int J3DAPI std3D_PurgeTextureCache(size_t size)
     {
         if ( pCacheTexture->textureSize == size )
         {
-            IDirect3DTexture2_Release(pCacheTexture->pD3DCachedTex);
-            pCacheTexture->pD3DCachedTex = NULL;
+            IDirect3DTexture2_Release(pCacheTexture->pCachedTex);
+            pCacheTexture->pCachedTex = NULL;
             std3D_RemoveTextureFromCacheList(pCacheTexture);
             return 1;
         }
@@ -2034,10 +2042,10 @@ int J3DAPI std3D_PurgeTextureCache(size_t size)
         pNextCachedTexture = pCacheTexture->pNextCachedTexture;
         if ( pCacheTexture->frameNum != std3D_frameCount )
         {
-            if ( pCacheTexture->pD3DCachedTex ) { // Added: Added check for null pointer
-                IDirect3DTexture2_Release(pCacheTexture->pD3DCachedTex);
+            if ( pCacheTexture->pCachedTex ) { // Added: Added check for null pointer
+                IDirect3DTexture2_Release(pCacheTexture->pCachedTex);
             }
-            pCacheTexture->pD3DCachedTex = NULL;
+            pCacheTexture->pCachedTex = NULL;
             purgedBytes += pCacheTexture->textureSize;
             std3D_RemoveTextureFromCacheList(pCacheTexture);
         }

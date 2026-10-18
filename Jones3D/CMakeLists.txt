@@ -16,6 +16,22 @@ file(GLOB_RECURSE JONES3D_DLL_SOURCES CONFIGURE_DEPENDS *.c Gui/wx/*.cpp)
 file(GLOB_RECURSE JONES3D_DLL_HEADERS *.h)
 list(REMOVE_ITEM JONES3D_DLL_SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/sha256.h")
 list(REMOVE_ITEM JONES3D_DLL_SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/standalone.c")
+list(REMOVE_ITEM JONES3D_DLL_SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/linuxmain.c")
+
+set(JONES3D_WX_LIBS wx::core wx::base)
+file(GLOB JONES3D_WX_SOURCES CONFIGURE_DEPENDS Gui/wx/*.cpp)
+
+if(NOT WIN32)
+    # Native build: a single OpenJones3D executable, there's no Indy3D.exe to inject into
+    set(JONES3D_NATIVE_SOURCES ${JONES3D_DLL_SOURCES})
+    list(REMOVE_ITEM JONES3D_NATIVE_SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/dllmain.c")
+    list(APPEND JONES3D_NATIVE_SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/linuxmain.c")
+
+    add_executable(OpenJones3D ${JONES3D_NATIVE_SOURCES} ${JONES3D_DLL_HEADERS})
+    target_include_directories(OpenJones3D PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/..)
+    target_link_libraries(OpenJones3D PRIVATE Libs ${JONES3D_WX_LIBS})
+    return()
+endif()
 
 # Standalone OpenJones3D.exe sources: everything from the DLL except its injection entry point
 set(JONES3D_STANDALONE_SOURCES ${JONES3D_DLL_SOURCES})
@@ -63,8 +79,6 @@ target_link_libraries(Jones3D_DLL PRIVATE Gdi32.lib User32.lib Shell32.lib Comdl
 
 # Game dialogs are implemented with wxWidgets (Gui/wx).
 # wx requires the wide Win32 API, the rest of the game uses the ANSI API.
-set(JONES3D_WX_LIBS wx::core wx::base)
-file(GLOB JONES3D_WX_SOURCES CONFIGURE_DEPENDS Gui/wx/*.cpp)
 set_source_files_properties(${JONES3D_WX_SOURCES} PROPERTIES COMPILE_DEFINITIONS "UNICODE;_UNICODE")
 target_link_libraries(Jones3D_DLL PRIVATE ${JONES3D_WX_LIBS})
 

@@ -74,6 +74,7 @@ int J3DAPI stdGob_LoadEntry(Gob* pGob, const char* pFilename, int numFileHandles
     pGob->numHandles = numFileHandles;
     pGob->pCurHandle = NULL;
 
+#ifdef _WIN32
     if ( bMMapFile )
     {
         pGob->hFile = CreateFileA(pGob->aFilePath, GENERIC_READ, FILE_SHARE_READ, NULL, CREATE_ALWAYS | CREATE_NEW, FILE_FLAG_RANDOM_ACCESS, NULL);
@@ -102,6 +103,9 @@ int J3DAPI stdGob_LoadEntry(Gob* pGob, const char* pFilename, int numFileHandles
             CloseHandle(pGob->hFile);
         }
     }
+#else
+    J3D_UNUSED(bMMapFile); // TODO: map with mmap
+#endif
 
     pGob->bFileMap = 0;
     pGob->hGobFile = stdGob_pHS->pFileOpen(pGob->aFilePath, "rb");
@@ -176,6 +180,7 @@ void J3DAPI stdGob_Free(Gob* pGob)
 void J3DAPI stdGob_FreeEntry(Gob* pGob)
 {
     STD_ASSERTREL(pGob != NULL);
+#ifdef _WIN32
     if ( pGob->bFileMap )
     {
         UnmapViewOfFile(pGob->pBase);
@@ -183,6 +188,7 @@ void J3DAPI stdGob_FreeEntry(Gob* pGob)
         CloseHandle(pGob->hFile);
         return;
     }
+#endif
 
     if ( pGob->directory.aEntries )
     {

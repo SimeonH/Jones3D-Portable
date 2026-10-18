@@ -7,7 +7,11 @@
 J3D_EXTERN_C_START
 
 int J3DAPI stdBmp_WriteVBuffer(const char* pFilename, tVBuffer* pVBuffer);
+#ifdef _WIN32
+#ifdef _WIN32
 HBITMAP J3DAPI stdBmp_Load(const char* pFilename);
+#endif
+#endif
 
 // Helper hooking functions
 void stdBmp_InstallHooks(void);

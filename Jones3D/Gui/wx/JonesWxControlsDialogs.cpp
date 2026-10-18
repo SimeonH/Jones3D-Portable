@@ -8,6 +8,7 @@
 #include <Jones3D/Play/JonesControl.h>
 
 #include <sith/Devices/sithControl.h>
+#include <std/General/stdFileUtil.h>
 #include <std/General/std.h>
 #include <std/General/stdMemory.h>
 #include <std/General/stdUtil.h>
@@ -1231,7 +1232,7 @@ namespace
 
             // Delete removed scheme files
             for ( size_t i = 0; i < pConfig->numDeleteSchemes; ++i ) {
-                remove(pConfig->paDeleteSchemes[i]);
+                stdFileUtil_DelFile(pConfig->paDeleteSchemes[i]);
             }
 
             pConfig->numDeleteSchemes = 0;

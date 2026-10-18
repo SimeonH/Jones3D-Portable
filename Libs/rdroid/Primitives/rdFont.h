@@ -36,18 +36,18 @@ void J3DAPI rdFont_SetFontColor(const rdFontColor apColor);
 rdFontColor* rdFont_DuplicateFontColor(void); // Added
 
 // Returns normalized X in screen pixels that can be used in draw line funcs
-inline float rdFont_GetNormX(float x)
+J3D_INLINE float rdFont_GetNormX(float x)
 {
     return (x / RD_REF_WIDTH);
 }
 
 // Returns normalized Y in screen pixels that can be used in draw line funcs
-inline float rdFont_GetNormY(float y)
+J3D_INLINE float rdFont_GetNormY(float y)
 {
     return (y / RD_REF_HEIGHT);
 }
 
-inline float rdFont_GetNormLineSpacing(const rdFont* pFont)
+J3D_INLINE float rdFont_GetNormLineSpacing(const rdFont* pFont)
 {
     return rdFont_GetNormY((float)pFont->lineSpacing);
 }

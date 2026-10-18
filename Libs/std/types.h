@@ -1,11 +1,13 @@
 #ifndef STD_TYPES_H
 #define STD_TYPES_H
 #include <stdint.h>
+#include <j3dcore/j3d.h>
+#ifdef _WIN32
 #include <d3d.h>
 #include <ddraw.h>
 #include <dinput.h>
 #include <dplay.h>
-#include <j3dcore/j3d.h>
+#endif
 
 J3D_EXTERN_C_START
 
@@ -89,6 +91,29 @@ typedef void (J3DAPI* tFreeHandleFunc)(void*);
 typedef void* (J3DAPI* tReallocHandleFunc)(void* ptr, size_t newSize);
 typedef int (J3DAPI* tLockHandleFunc)(int);
 typedef void (J3DAPI* tUnlockHandleFunc)();
+
+// Screen-space (transformed & lit) vertex passed to std3D draw functions.
+// Has the same layout as D3DTLVERTEX: sx, sy are pixels, sz is the depth in [0, 1],
+// rhw is 1/w, color is the diffuse color (ARGB) and the alpha of specular is the fog factor.
+typedef struct sStdTLVertex
+{
+    float sx;
+    float sy;
+    float sz;
+    float rhw;
+    uint32_t color;
+    uint32_t specular;
+    float tu;
+    float tv;
+} StdTLVertex;
+static_assert(sizeof(StdTLVertex) == 32, "sizeof(StdTLVertex) == 32");
+
+// Renderer texture handle
+#ifdef J3D_RENDERER_VULKAN
+typedef struct sStdVkTexture* tStd3DTexture;
+#else
+typedef LPDIRECT3DTEXTURE2 tStd3DTexture;
+#endif
 
 typedef struct sStdRect
 {
@@ -228,15 +253,19 @@ static_assert(sizeof(tMemoryHeader) == 32, "sizeof(tMemoryHeader) == 32");
 
 struct sSystemTexture
 {
+#ifndef J3D_RENDERER_VULKAN
     DDSURFACEDESC2 ddsd;
-    LPDIRECT3DTEXTURE2 pD3DSrcTexture;
-    LPDIRECT3DTEXTURE2 pD3DCachedTex;
+#endif
+    tStd3DTexture pSrcTexture;
+    tStd3DTexture pCachedTex;
     size_t textureSize;
     size_t frameNum;
     tSystemTexture* pPrevCachedTexture;
     tSystemTexture* pNextCachedTexture;
 };
+#ifndef J3D_RENDERER_VULKAN
 static_assert(sizeof(tSystemTexture) == 148, "sizeof(tSystemTexture) == 148");
+#endif
 
 typedef struct sColorInfo
 {
@@ -293,12 +322,19 @@ typedef struct sRasterInfo
 } tRasterInfo;
 static_assert(sizeof(tRasterInfo) == 76, "sizeof(tRasterInfo) == 76");
 
+#ifdef _WIN32
 typedef struct sVSurface
 {
     LPDIRECTDRAWSURFACE4 pDDSurf;
     DDSURFACEDESC2 ddSurfDesc;
 } tVSurface;
 static_assert(sizeof(tVSurface) == 128, "sizeof(tVSurface) == 128");
+#else
+typedef struct sVSurface
+{
+    void* pSurface; // unused by the Vulkan renderer
+} tVSurface;
+#endif
 
 typedef struct sVBuffer
 {
@@ -310,7 +346,9 @@ typedef struct sVBuffer
     int unknown1;
     tVSurface surface;
 } tVBuffer;
+#ifdef _WIN32
 static_assert(sizeof(tVBuffer) == 224, "sizeof(tVBuffer) == 224");
+#endif
 
 typedef struct sCircularBuffer
 {
@@ -334,7 +372,9 @@ typedef struct sStdDisplayDevice
     DDCAPS_DX6 ddcaps;
     GUID guid;
 } StdDisplayDevice;
+#ifdef _WIN32
 static_assert(sizeof(StdDisplayDevice) == 672, "sizeof(StdDisplayDevice) == 672");
+#endif
 
 typedef struct sStdVideoMode
 {
@@ -437,7 +477,9 @@ typedef struct sDevice3D
     int unknown216;
     int unknown217;
 } Device3D;
+#ifdef _WIN32
 static_assert(sizeof(Device3D) == 872, "sizeof(Device3D) == 872");
+#endif
 
 typedef struct sDXStatus
 {
@@ -454,7 +496,9 @@ typedef struct sStdDisplayInfo
     size_t numDevices;
     Device3D* aDevices;
 } StdDisplayInfo;
+#ifdef _WIN32
 static_assert(sizeof(StdDisplayInfo) == 688, "sizeof(StdDisplayInfo) == 688");
+#endif
 
 typedef struct sStdTextureFormat
 {
@@ -463,7 +507,9 @@ typedef struct sStdTextureFormat
     LPDDCOLORKEY pColorKey;
     DDPIXELFORMAT ddPixelFmt;
 } StdTextureFormat;
+#ifdef _WIN32
 static_assert(sizeof(StdTextureFormat) == 96, "sizeof(StdTextureFormat) == 96");
+#endif
 
 typedef struct sStdDisplayEnvironment
 {
@@ -472,12 +518,14 @@ typedef struct sStdDisplayEnvironment
 } StdDisplayEnvironment;
 static_assert(sizeof(StdDisplayEnvironment) == 8, "sizeof(StdDisplayEnvironment) == 8");
 
+#ifdef _WIN32
 typedef struct sStdInputDevice
 {
     LPDIRECTINPUTDEVICEA pDIDevice;
     DIDEVCAPS diDevCaps;
 } StdInputDevice;
 static_assert(sizeof(StdInputDevice) == 48, "sizeof(StdInputDevice) == 48");
+#endif
 
 typedef struct sStdControlAxis
 {
@@ -490,6 +538,7 @@ typedef struct sStdControlAxis
 } StdControlAxis;
 static_assert(sizeof(StdControlAxis) == 24, "sizeof(StdControlAxis) == 24");
 
+#ifdef _WIN32
 typedef struct sStdControlJoystickDevice
 {
     DIDEVICEINSTANCEA dinstance;
@@ -497,6 +546,13 @@ typedef struct sStdControlJoystickDevice
     DIDEVCAPS caps;
 } StdControlJoystickDevice;
 static_assert(sizeof(StdControlJoystickDevice) == 628, "sizeof(StdControlJoystickDevice) == 628");
+#else
+typedef struct sStdControlJoystickDevice
+{
+    void* pGamepad; // SDL_Gamepad*
+    uint32_t numButtons;
+} StdControlJoystickDevice;
+#endif
 
 typedef struct sStdFadeFactor
 {
@@ -541,7 +597,9 @@ typedef struct sStdCommPlayerInfo
     wchar_t aName[20];
     DPID id;
 } StdCommPlayerInfo;
+#ifdef _WIN32 // wchar_t is 4 bytes elsewhere
 static_assert(sizeof(StdCommPlayerInfo) == 44, "sizeof(StdCommPlayerInfo) == 44");
+#endif
 
 typedef struct sStdCommSessionSettings
 {
@@ -555,7 +613,9 @@ typedef struct sStdCommSessionSettings
     int opt2;
     int opt3;
 } StdCommGame;
+#ifdef _WIN32 // wchar_t is 4 bytes elsewhere
 static_assert(sizeof(StdCommGame) == 356, "sizeof(StdCommGame) == 356");
+#endif
 
 J3D_EXTERN_C_END
 #endif //STD_TYPES_H

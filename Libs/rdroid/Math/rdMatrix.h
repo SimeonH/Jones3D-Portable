@@ -13,8 +13,8 @@ J3D_EXTERN_C_START
 
 extern const rdMatrix34 rdroid_g_identMatrix34;
 
-inline void J3DAPI rdMatrix_Identity34(rdMatrix34* mat); // Added
-void J3DAPI rdMatrix_Copy34(rdMatrix34* dest, const rdMatrix34* src);
+J3D_INLINE void J3DAPI rdMatrix_Identity34(rdMatrix34* mat); // Added
+J3D_INLINE void J3DAPI rdMatrix_Copy34(rdMatrix34* dest, const rdMatrix34* src);
 
 void J3DAPI rdMatrix_Build34(rdMatrix34* mat, const rdVector3* pyr, const rdVector3* pos);
 void J3DAPI rdMatrix_BuildFromLook34(rdMatrix34* mat, const rdVector3* look);
@@ -51,12 +51,12 @@ void J3DAPI rdMatrix_TransformPoint34Acc(rdVector3* dest, const rdMatrix34* mat)
 void J3DAPI rdMatrix_TransformPointList34(const rdMatrix34* mat, const rdVector3* aSrc, rdVector3* aDest, size_t size);
 
 
-inline void J3DAPI rdMatrix_Identity34(rdMatrix34* mat)
+J3D_INLINE void J3DAPI rdMatrix_Identity34(rdMatrix34* mat)
 {
     memcpy(mat, &rdroid_g_identMatrix34, sizeof(rdMatrix34));
 }
 
-inline void J3DAPI rdMatrix_Copy34(rdMatrix34* dest, const rdMatrix34* src)
+J3D_INLINE void J3DAPI rdMatrix_Copy34(rdMatrix34* dest, const rdMatrix34* src)
 {
     RD_ASSERT(dest != src); // Added
     memcpy(dest, src, sizeof(rdMatrix34));

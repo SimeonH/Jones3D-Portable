@@ -8,6 +8,7 @@
 #include <Jones3D/Main/jonesString.h>
 
 #include <sith/Dss/sithGamesave.h>
+#include <std/Win95/stdDisplay.h>
 #include <sith/Gameplay/sithPlayer.h>
 #include <sith/Main/sithMain.h>
 #include <std/General/std.h>
@@ -33,7 +34,7 @@ namespace
 
     wxString GetSaveGamesDir()
     {
-        return JonesWx::FromGame(sithGetSaveGamesDir());
+        return JonesWx::NativePath(sithGetSaveGamesDir());
     }
 
     wxString MakeSaveGamePath(const wxString& name)
@@ -174,7 +175,7 @@ namespace
             wxString lastName;
             const char* pLastFile = sithGamesave_GetLastFilename();
             if ( !bSave && pLastFile && pLastFile[0] ) {
-                lastName = wxFileName(JonesWx::FromGame(pLastFile)).GetName();
+                lastName = wxFileName(JonesWx::NativePath(pLastFile)).GetName();
             }
 
             long selIdx = -1;
@@ -215,11 +216,11 @@ namespace
             }
         }
 
-        void SetThumbnail(HBITMAP hThumbnail, bool bOwned)
+        void SetThumbnail(const tVBuffer* pImage, bool bOwned)
         {
-            wxImage image = JonesWx::ImageFromDIB(hThumbnail);
-            if ( hThumbnail && bOwned ) {
-                DeleteObject(hThumbnail);
+            wxImage image = JonesWx::ImageFromThumbnail(pImage);
+            if ( pImage && bOwned ) {
+                stdDisplay_VBufferFree(const_cast<tVBuffer*>(pImage));
             }
 
             const wxSize size = pThumbnail->GetSize();

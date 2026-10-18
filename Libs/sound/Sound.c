@@ -93,7 +93,7 @@ static int Sound_bNoLipSync;
 
 // Misc vars
 static HWND Sound_hwnd;
-static LPDIRECTSOUND Sound_pDirectSound;
+static tSoundDevice Sound_pDirectSound;
 
 // 3D sound vars
 static rdVector3 Sound_curUpdatePos;
@@ -148,7 +148,7 @@ void J3DAPI Sound_IncreaseFreeCache(size_t bankNum, size_t nSize);
 size_t J3DAPI Sound_WriteSoundFilepathToBank(size_t bankNum, const char* pName, size_t len);
 size_t Sound_GetDeltaTime(void);
 
-uint8_t* J3DAPI Sound_GetSoundBufferData(LPDIRECTSOUNDBUFFER pDSBuf, size_t* pDataSize, uint32_t* pbCompressed);
+uint8_t* J3DAPI Sound_GetSoundBufferData(tSoundBuffer pDSBuf, size_t* pDataSize, uint32_t* pbCompressed);
 int J3DAPI Sound_MemFileSeek(tFileHandle fh, int offset, int origin);
 size_t J3DAPI Sound_MemFileRead(tFileHandle fh, void* pOutData, size_t nRead);
 size_t J3DAPI Sound_MemFileWrite(tFileHandle fh, const void* pData, size_t size);
@@ -323,7 +323,7 @@ int J3DAPI Sound_Open(SoundOpenFlags flags, size_t maxSoundChannels, SoundGetThi
     Sound_bNoSound3D             = (flags & SOUNDOPEN_NO3DSOUND) != 0;
     Sound_bGlobalFocusBuf        = (flags & SOUNDOPEN_GLOBALFOCUS) != 0;
     Sound_hwnd                   = hwnd;
-    Sound_pDirectSound           = (flags & SOUNDOPEN_HWNDISDIRECTSOUND) != 0 ? (LPDIRECTSOUND)hwnd : 0;
+    Sound_pDirectSound           = (flags & SOUNDOPEN_HWNDISDIRECTSOUND) != 0 ? (tSoundDevice)hwnd : 0;
     Sound_pfCalcListenerSoundMix = pfCalcListenerSoundMix;
 
     // Open sound driver
@@ -2943,7 +2943,7 @@ tSoundChannel* J3DAPI Sound_GetChannelBySoundHandle(tSoundHandle hSnd)
     return NULL;
 }
 
-uint8_t* J3DAPI Sound_GetSoundBufferData(LPDIRECTSOUNDBUFFER pDSBuf, size_t* pDataSize, uint32_t* pbCompressed)
+uint8_t* J3DAPI Sound_GetSoundBufferData(tSoundBuffer pDSBuf, size_t* pDataSize, uint32_t* pbCompressed)
 {
     SoundInfo* pSoundInfo = NULL;
     for ( size_t i = Sound_numChannels; i > 0; --i )
