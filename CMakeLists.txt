@@ -21,8 +21,8 @@ endif()
 
 # Configure the version header file
 configure_file(
-    "${CMAKE_CURRENT_SOURCE_DIR}/LIBS/j3dcore/j3d.h.in"
-    "${CMAKE_CURRENT_SOURCE_DIR}/LIBS/j3dcore/j3d.h"
+    "${CMAKE_CURRENT_SOURCE_DIR}/Libs/j3dcore/j3d.h.in"
+    "${CMAKE_CURRENT_SOURCE_DIR}/Libs/j3dcore/j3d.h"
 )
 
 # Set global property for MSVC runtime library (CMake 3.15+)

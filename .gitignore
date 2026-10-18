@@ -64,3 +64,5 @@ Libs/external/DirectX61c/libs/*
 # vs & vscode
 .vscode/
 .vs/
+# Local build directories (contain game files)
+build*/
