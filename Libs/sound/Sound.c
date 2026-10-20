@@ -118,6 +118,7 @@ static uint8_t Sound_loadBuffer[10000];
 
 // Soundbank vars
 static size_t Sound_handleEntropy;
+static SoundFileReadCallback Sound_pfFileReadCallback = NULL; // Added
 
 // Loaded sound data buffer vars
 static size_t Sound_cacheBlockSize          = 0x200000;
@@ -3147,13 +3148,17 @@ int J3DAPI Sound_ImportBank(tFileHandle fh, size_t bankNum)
     Sound_Reset(bankNum == SOUNDBANK_STATIC_NUM);
 
     // Read num sound infos
-    Sound_ReadFile(fh, &soundbank_aNumSounds[bankNum], sizeof(uint32_t));
+    // Altered: The number of sounds is set to the bank after the import is completed, so the bank appears empty
+    //          to e.g. Sound_GetSoundHandle while sound data is being read and the file read callback is called.
+    uint32_t numSounds = 0;
+    Sound_ReadFile(fh, &numSounds, sizeof(uint32_t));
+    soundbank_aNumSounds[bankNum] = 0;
 
     // Allocate sound info cache
-    if ( soundbank_aSizeSounds[bankNum] < soundbank_aNumSounds[bankNum] )
+    if ( soundbank_aSizeSounds[bankNum] < numSounds )
     {
         // Realloc sound info cache to import size
-        soundbank_aSizeSounds[bankNum] = soundbank_aNumSounds[bankNum];
+        soundbank_aSizeSounds[bankNum] = numSounds;
         if ( soundbank_apSoundInfos[bankNum] )
         {
             Sound_pHS->pFree(soundbank_apSoundInfos[bankNum]);
@@ -3190,7 +3195,7 @@ int J3DAPI Sound_ImportBank(tFileHandle fh, size_t bankNum)
     // Read sound infos, sound data and next handle
     // Altered: Sound infos are read as SoundInfoFile array and converted to SoundInfo,
     //          and the lip sync data pointer stored in file is not used.
-    size_t sizeInfos = sizeof(SoundInfoFile) * soundbank_aNumSounds[bankNum];
+    size_t sizeInfos = sizeof(SoundInfoFile) * numSounds;
     if ( sizeInfos )
     {
         SoundInfoFile* aFileInfos = (SoundInfoFile*)Sound_pHS->pMalloc(sizeInfos);
@@ -3201,7 +3206,7 @@ int J3DAPI Sound_ImportBank(tFileHandle fh, size_t bankNum)
         }
 
         Sound_ReadFile(fh, aFileInfos, sizeInfos);
-        for ( size_t i = 0; i < soundbank_aNumSounds[bankNum]; ++i )
+        for ( size_t i = 0; i < numSounds; ++i )
         {
             SoundInfo* pInfo = &soundbank_apSoundInfos[bankNum][i];
             const SoundInfoFile* pFileInfo = &aFileInfos[i];
@@ -3225,8 +3230,14 @@ int J3DAPI Sound_ImportBank(tFileHandle fh, size_t bankNum)
     Sound_ReadFile(fh, soundbank_apSoundCache[bankNum], soundbank_aUsedCacheSizes[bankNum]);
     Sound_ReadFile(fh, &Sound_handleEntropy, sizeof(uint32_t));
 
+    soundbank_aNumSounds[bankNum] = numSounds;
     soundbank_lastImportedBankNum = bankNum;
     return 1;
+}
+
+void J3DAPI Sound_SetFileReadCallback(SoundFileReadCallback pfCallback)
+{
+    Sound_pfFileReadCallback = pfCallback;
 }
 
 int J3DAPI Sound_ReadFile(tFileHandle fh, void* pData, size_t size)
@@ -3242,6 +3253,12 @@ int J3DAPI Sound_ReadFile(tFileHandle fh, void* pData, size_t size)
         if ( Sound_pHS->pFileRead(fh, pData, nRemaining) != nRemaining )
         {
             return 0;
+        }
+
+        // Added: Notify about read progress, e.g. to update the level load screen
+        if ( Sound_pfFileReadCallback )
+        {
+            Sound_pfFileReadCallback(fh);
         }
 
         SoundDriver_Sleep(20u);

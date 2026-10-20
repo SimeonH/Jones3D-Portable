@@ -320,13 +320,13 @@ void J3DAPI sithWhip_ProcessWhipClimbMove(SithThing* pThing)
         else if ( sithControl_GetKey(SITHCONTROL_TURNLEFT, 0) )
         {
             sithThing_SyncThing(pThing, SITHTHING_SYNC_MOVEPOS);
-            pThing->moveInfo.pathMovement.vecDeltaPos.y = sithTime_g_fps + pThing->thingInfo.actorInfo.maxRotVelocity;
+            pThing->moveInfo.physics.angularVelocity.y = sithTime_g_fps + pThing->thingInfo.actorInfo.maxRotVelocity; // Fixed: Was decompiled as pathMovement.vecDeltaPos.y, which aliases angularVelocity.y only in 32-bit layout
         }
 
         else if ( sithControl_GetKey(SITHCONTROL_TURNRIGHT, 0) )
         {
             sithThing_SyncThing(pThing, SITHTHING_SYNC_MOVEPOS);
-            pThing->moveInfo.pathMovement.vecDeltaPos.y = -1.0f * sithTime_g_fps + pThing->thingInfo.actorInfo.maxRotVelocity * -1.0f;
+            pThing->moveInfo.physics.angularVelocity.y = -1.0f * sithTime_g_fps + pThing->thingInfo.actorInfo.maxRotVelocity * -1.0f; // Fixed: See above
         }
         else
         {

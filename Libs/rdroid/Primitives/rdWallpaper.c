@@ -390,7 +390,7 @@ void J3DAPI rdWallpaper_DrawWallLine(const rdWallLine* pLine, float progress)
     float thickness = RDWALLPAPER_LINE_THICKNESS * swidth;
 
     // Calculate end point based on progress
-    float endY = 0.0f, endX = ceilf(pLine->deltaX * progress / 100.0f);
+    float endY = 0.0f, endX = pLine->deltaX * progress / 100.0f; // Changed: Removed ceilf rounding to whole reference pixels, so line grows smoothly at higher resolutions
 
     // Changed: Added handing of case for when pLine->deltaY == 0, i.e.: horizontal line
     float deltaRatio = 0.0; // Horizontal line case

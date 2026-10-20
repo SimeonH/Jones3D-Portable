@@ -182,19 +182,13 @@ int J3DAPI sithSound_ReadSoundsListBinary(tFileHandle fh, SithWorld* pWorld)
         return Sound_SkipSoundFileSection(fh) == 0;
     }
 
-    if ( (pWorld->state & SITH_WORLD_STATE_STATIC) != 0 )
-    {
-        if ( !Sound_ImportStaticBank(fh) )
-        {
-            return 1;
-        }
-    }
-    else if ( !Sound_ImportNormalBank(fh) )
-    {
-        return 1;
-    }
+    // Added: Update load progress while sound bank is read, as it's the longest section to load
+    Sound_SetFileReadCallback(sithWorld_UpdateLoadProgressFromFile);
 
-    return 0;
+    int bImported = (pWorld->state & SITH_WORLD_STATE_STATIC) != 0 ? Sound_ImportStaticBank(fh) : Sound_ImportNormalBank(fh);
+
+    Sound_SetFileReadCallback(NULL);
+    return bImported ? 0 : 1;
 }
 
 void J3DAPI sithSound_FreeWorldSounds(SithWorld* pWorld)

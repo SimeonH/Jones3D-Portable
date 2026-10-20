@@ -348,19 +348,15 @@ void J3DAPI sithPhysics_UpdateThing(SithThing* pThing, float secDeltaTime)
     if ( pThing->moveInfo.physics.flags & SITH_PF_NOUPDATE )
         return;
 
-    pThing->moveInfo.pathMovement.goalPYR.x = 0.0f;
-    pThing->moveInfo.pathMovement.goalPYR.y = 0.0f;
-    pThing->moveInfo.pathMovement.goalPYR.z = 0.0f;
-    pThing->moveInfo.pathMovement.rotOffset.x = 0.0f;
-    pThing->moveInfo.pathMovement.rotOffset.y = 0.0f;
-    pThing->moveInfo.pathMovement.rotOffset.z = 0.0f;
+    // Fixed: Were decompiled as pathMovement.goalPYR and pathMovement.rotOffset, which alias these fields only in 32-bit layout
+    memset(&pThing->moveInfo.physics.deltaVelocity, 0, sizeof(pThing->moveInfo.physics.deltaVelocity));
+    memset(&pThing->moveInfo.physics.gravityForce, 0, sizeof(pThing->moveInfo.physics.gravityForce));
 
     if ( (pThing->type == SITH_THING_ACTOR || pThing->type == SITH_THING_PLAYER) &&
          (pThing->thingInfo.weaponInfo.flags & SITH_WF_DECAYEMITSOUNDAWARENESSEVENT) )
     {
-        pThing->moveInfo.pathMovement.moveTimeRemaining = 0.0f;
-        pThing->moveInfo.pathMovement.moveVel = 0.0f;
-        pThing->moveInfo.pathMovement.curOrient.rvec.x = 0.0f;
+        // Fixed: Was decompiled as pathMovement.moveTimeRemaining, moveVel and curOrient.rvec.x, which alias thrust only in 32-bit layout
+        memset(&pThing->moveInfo.physics.thrust, 0, sizeof(pThing->moveInfo.physics.thrust));
     }
 
     SithAttachFlag attachFlags = pThing->attach.flags;
@@ -670,10 +666,7 @@ void J3DAPI sithPhysics_UpdateThingPhysics(SithThing* pThing, float secDeltaTime
 {
     SithPhysicsFlags physFlags = pThing->moveInfo.physics.flags;
     memset(&pThing->moveInfo.physics.gravityForce, 0, sizeof(pThing->moveInfo.physics.gravityForce));
-
-    pThing->moveInfo.pathMovement.rotOffset.x = 0.0f;
-    pThing->moveInfo.pathMovement.rotOffset.y = 0.0f;
-    pThing->moveInfo.pathMovement.rotOffset.z = 0.0f;
+    // Note, original also cleared gravityForce a second time here via mislabelled pathMovement.rotOffset
 
     if ( physFlags & SITH_PF_RAFT )
     {
@@ -803,9 +796,7 @@ void J3DAPI sithPhysics_UpdatePlayerPhysics(SithThing* pThing, float msDeltaTime
 {
     SithPhysicsFlags physFlags = pThing->moveInfo.physics.flags;
 
-    pThing->moveInfo.pathMovement.rotOffset.x = 0.0f;
-    pThing->moveInfo.pathMovement.rotOffset.y = 0.0f;
-    pThing->moveInfo.pathMovement.rotOffset.z = 0.0f;
+    memset(&pThing->moveInfo.physics.gravityForce, 0, sizeof(pThing->moveInfo.physics.gravityForce)); // Fixed: Was decompiled as pathMovement.rotOffset
 
     if ( physFlags & SITH_PF_USEANGULARTHRUST )
     {
@@ -918,9 +909,7 @@ void J3DAPI sithPhysics_UpdateUnderwaterThingPhysics(SithThing* pThing, float se
 {
     SithPhysicsFlags physFlags = pThing->moveInfo.physics.flags;
 
-    pThing->moveInfo.pathMovement.rotOffset.x = 0.0f;
-    pThing->moveInfo.pathMovement.rotOffset.y = 0.0f;
-    pThing->moveInfo.pathMovement.rotOffset.z = 0.0f;
+    memset(&pThing->moveInfo.physics.gravityForce, 0, sizeof(pThing->moveInfo.physics.gravityForce)); // Fixed: Was decompiled as pathMovement.rotOffset
 
     if ( physFlags & SITH_PF_USEANGULARTHRUST )
     {

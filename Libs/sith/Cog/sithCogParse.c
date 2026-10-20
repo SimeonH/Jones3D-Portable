@@ -578,7 +578,9 @@ void J3DAPI sithCogParse_LexerSetVector(const char* pString)
 {
     SITH_ASSERTREL(pString);
 
-    rdVector3 vec;
+    // Fixed: Init to 0. Malformed vector literals leave the unparsed components uninitialized,
+    //        e.g. TEM_FogT2Shaft.cog has SetFog(1, '0.5, 0.05 0.05', 50, 190) which set garbage green and blue fog color.
+    rdVector3 vec = { 0 };
     sscanf_s(pString, "'%f %f %f'", &vec.x, &vec.y, &vec.z);
     yylval.vecValue = vec;
 }

@@ -154,6 +154,8 @@ static const char aCopyrightSymbol[1217] =
 };
 
 static SithWorldLoadProgressCallback pfLoadProgressCallback;
+static float sithWorld_loadProgressEndPos       = 0.0f; // Added: 1% of the size of CND file being loaded
+static uint32_t sithWorld_msecLastFileProgress  = 0;    // Added
 
 static char aCurSection[1024];
 static size_t numTextSectionParseHandlers;
@@ -343,6 +345,25 @@ void J3DAPI sithWorld_UpdateLoadProgress(float progress)
     {
         pfLoadProgressCallback(progress);
     }
+}
+
+void J3DAPI sithWorld_UpdateLoadProgressFromFile(tFileHandle fh)
+{
+    // Added: Updates load progress from the position in CND file while reading a long section (e.g. sound bank),
+    //        so the load screen progress line moves smoothly. Limited to ~60 updates per second.
+    if ( sithWorld_loadProgressEndPos <= 0.0f )
+    {
+        return;
+    }
+
+    uint32_t msecNow = stdPlatform_GetTimeMsec();
+    if ( msecNow - sithWorld_msecLastFileProgress < 16 )
+    {
+        return;
+    }
+
+    sithWorld_msecLastFileProgress = msecNow;
+    sithWorld_UpdateLoadProgress((float)sith_g_pHS->pFileTell(fh) / sithWorld_loadProgressEndPos);
 }
 
 int J3DAPI sithWorld_Load(SithWorld* pWorld, const char* pFilename)
@@ -1538,6 +1559,7 @@ int J3DAPI sithWorld_LoadEntryBinary(SithWorld* pWorld, const char* pFilePath)
     }
 
     float endPos = (float)fileSize / 100.0f;
+    sithWorld_loadProgressEndPos = endPos; // Added
     size_t curPos = sith_g_pHS->pFileTell(fh);
 
     float progress = (float)curPos / endPos;
