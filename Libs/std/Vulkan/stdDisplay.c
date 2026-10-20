@@ -376,6 +376,10 @@ int J3DAPI stdDisplay_SetMode(size_t modeNum, int bFullscreen, size_t numBackBuf
     stdDisplay_InitDisplayBuffer(&stdDisplay_g_frontBuffer, &stdDisplay_pCurVideoMode->rasterInfo);
 
 #ifdef _WIN32
+    // The game window is created topmost. Same as DirectDraw stdDisplay_SetWindowMode, a window
+    // in window mode is a normal window, so it doesn't cover other windows and the game dialogs.
+    SetWindowPos(stdWin95_GetWindow(), bFullscreen ? HWND_TOPMOST : HWND_NOTOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE);
+
     int fheight = width < 640 ? 12 : 24;
     stdDisplay_hFont = CreateFontA(fheight, 0, 0, 0, FW_NORMAL, 0, 0, 0, ANSI_CHARSET, OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY, VARIABLE_PITCH, "Arial");
 #else

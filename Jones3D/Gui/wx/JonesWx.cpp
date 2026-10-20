@@ -316,6 +316,12 @@ JonesWxDialog::JonesWxDialog(HWND hwndParent, const char* pTitleKey, long style)
         // Native owner window, e.g. the game window. Same as owner of the original Win32 dialog.
         hwndOwner = hwndParent;
         ::SetWindowLongPtr(GetHWND(), GWLP_HWNDPARENT, (LONG_PTR)hwndOwner);
+
+        // A Win32 dialog created with a topmost owner (the fullscreen game window) is topmost too.
+        // Setting the owner afterwards doesn't do that, so the dialog would open behind the game window.
+        if ( ::GetWindowLongPtr(hwndOwner, GWL_EXSTYLE) & WS_EX_TOPMOST ) {
+            ::SetWindowPos(GetHWND(), HWND_TOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE);
+        }
     }
 #endif
 
@@ -350,18 +356,10 @@ int JonesWxDialog::ShowGameModal()
     bOwnerDisabled = hwndOwner && ::IsWindowEnabled(hwndOwner) && !::EnableWindow(hwndOwner, FALSE);
 #endif
 
-    Raise();
-
     int result = ShowModal();
 
 #ifdef __WXMSW__
     EnableOwner(); // In case dialog was closed without EndModal
-    if ( hwndOwner )
-    {
-        // Give focus back to the owner (game) window
-        ::SetForegroundWindow(hwndOwner);
-        ::SetActiveWindow(hwndOwner);
-    }
 #endif
 
     if ( bGameState ) {
@@ -426,9 +424,17 @@ void JonesWxDialog::FinishLayout(wxSizer* pContent)
 
 void JonesWxDialog::EndModal(int retCode)
 {
-    // Owner has to be enabled before the dialog is hidden, otherwise
-    // Windows activates some other window instead of the owner. Same as Win32 EndDialog.
+    // Same as Win32 EndDialog: enable the owner and, if the dialog is active, activate the owner
+    // before the dialog is hidden. Otherwise Windows activates some other window instead of the game.
     EnableOwner();
+#ifdef __WXMSW__
+    if ( hwndOwner && ::GetForegroundWindow() == GetHWND() )
+    {
+        // Still the foreground window, so the game window is allowed to become the foreground window
+        ::SetForegroundWindow(hwndOwner);
+        ::SetActiveWindow(hwndOwner);
+    }
+#endif
     wxDialog::EndModal(retCode);
 }
 

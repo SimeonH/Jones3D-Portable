@@ -87,7 +87,7 @@ static VkResult stdVk_CreateWindowSurface(void)
 static void stdVk_FlushGdi(void)
 {
 #ifdef _WIN32
-    stdVk_FlushGdi();
+    GdiFlush();
 #endif
 }
 

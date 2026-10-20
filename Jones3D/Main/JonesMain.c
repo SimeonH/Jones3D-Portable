@@ -1006,20 +1006,6 @@ void J3DAPI JonesMain_OnAppActivate(HWND hWnd, int bActivated)
         JonesMain_pfCurProcess = JonesMain_pfProcess;
     }
 
-    // Added: In window mode keep the game running and rendering while the window is inactive and only release the input.
-    //        The original suspends the game until the window is activated again, which is meant for exclusive fullscreen.
-    //        Under Wine the activation is sometimes never reported back when switching back to the window,
-    //        which left the game suspended with a frozen window (see JonesMain_ProcessGame for the recovery).
-    if ( JonesMain_state.displaySettings.bWindowMode )
-    {
-        JonesMain_bAppActivated = bActivated != 0;
-        if ( !stdControl_SetActivation(bActivated) )
-        {
-            stdControl_ShowMouseCursor(bActivated ? 0 : 1);
-        }
-        return;
-    }
-
     if ( bActivated )
     {
         if ( !JonesMain_bAppActivated )
@@ -1234,13 +1220,6 @@ int JonesMain_ProcessGame(void)
     if ( JonesMain_bSystemSuspended )
     {
         return 0;
-    }
-
-    // Added: In window mode re-activate the input when the window is in the foreground but the activation
-    //        message was missed (happens under Wine), see JonesMain_OnAppActivate.
-    if ( JonesMain_state.displaySettings.bWindowMode && !JonesMain_bAppActivated && GetForegroundWindow() == stdWin95_GetWindow() )
-    {
-        JonesMain_OnAppActivate(stdWin95_GetWindow(), 1);
     }
 
     if ( sithMain_g_sith_mode.masterMode == SITH_MODE_OPENED )

@@ -2910,10 +2910,13 @@ void JonesHud_MenuActivateItem(void)
                 GetExitCodeProcess(JonesHud_hProcessHelp, &exitCode);
                 if ( exitCode != STILL_ACTIVE )
                     //if ( exitCode != 259 )
-            #endif
                 {
+                    CloseHandle(JonesHud_hProcessHelp); // Added
                     JonesHud_hProcessHelp = NULL;
                 }
+            #else
+                JonesHud_hProcessHelp = NULL;
+            #endif
             }
 
             JonesHud_hProcessHelp = JonesHud_OpenHelp(JonesHud_hProcessHelp);
@@ -3857,10 +3860,16 @@ static bool JonesHud_FindHelpFile(const char* pFilename, char* pOutPath, size_t 
 HANDLE J3DAPI JonesHud_OpenHelp(HANDLE process)
 {
     // Changed: The help file is opened with the program set by the 'Help Viewer' setting.
-    //          When it isn't set, Rust HLP Viewer (hlp-viewer, built with the game and placed next to its executable)
-    //          is tried before the system's default application for .hlp files, since current Windows versions
-    //          and Linux don't come with a WinHelp viewer.
+    //          When it isn't set, Rust HLP Viewer (hlp-viewer next to the game executable, else from PATH) is started,
+    //          since current Windows versions and Linux don't come with a WinHelp viewer. On Windows the viewer is
+    //          started directly, the .hlp file association isn't used.
+#ifdef _WIN32
+    if ( process ) {
+        return process; // Viewer still open, only one is opened at a time
+    }
+#else
     J3D_UNUSED(process);
+#endif
 
     const wchar_t* pwString = sithString_GetString("SITHSTRING_HELPFILE");
     if ( !pwString )
@@ -3896,46 +3905,44 @@ HANDLE J3DAPI JonesHud_OpenHelp(HANDLE process)
 
     if ( !strlen(aViewer) )
     {
-        // hlp-viewer.exe next to the game executable
+        // hlp-viewer.exe next to the game executable, else from PATH
+        STD_STRCPY(aViewer, "hlp-viewer.exe");
+
         char aExePath[MAX_PATH];
         DWORD len = GetModuleFileNameA(NULL, aExePath, sizeof(aExePath));
         char* pSep = len && len < sizeof(aExePath) ? strrchr(aExePath, '\\') : NULL;
         if ( pSep )
         {
             *pSep = '\0';
-            STD_FORMAT(aViewer, "%s\\hlp-viewer.exe", aExePath);
-            if ( GetFileAttributesA(aViewer) == INVALID_FILE_ATTRIBUTES ) {
-                aViewer[0] = '\0';
+            char aLocalViewer[MAX_PATH];
+            STD_FORMAT(aLocalViewer, "%s\\hlp-viewer.exe", aExePath);
+            if ( GetFileAttributesA(aLocalViewer) != INVALID_FILE_ATTRIBUTES ) {
+                STD_STRCPY(aViewer, aLocalViewer);
             }
         }
     }
 
-    char aParams[MAX_PATH + 2];
-    STD_FORMAT(aParams, "\"%s\"", aFullPath);
+    // Start the viewer directly instead of using the .hlp file association,
+    // which on current Windows versions points to a stub or to nothing.
+    char aCmdLine[sizeof(aViewer) + MAX_PATH + 8];
+    STD_FORMAT(aCmdLine, "\"%s\" \"%s\"", aViewer, aFullPath);
 
-    struct _SHELLEXECUTEINFOA execInfo;
-    memset(&execInfo, 0, sizeof(execInfo));
-    execInfo.cbSize = sizeof(execInfo);
-    execInfo.fMask  = SEE_MASK_NOCLOSEPROCESS | SEE_MASK_FLAG_NO_UI;
-    execInfo.lpVerb = "open";
-    execInfo.nShow  = SW_SHOWNORMAL;
-    if ( strlen(aViewer) )
-    {
-        execInfo.lpFile       = aViewer;
-        execInfo.lpParameters = aParams;
-    }
-    else
-    {
-        execInfo.lpFile = aFullPath;
-    }
+    STARTUPINFOA startupInfo;
+    memset(&startupInfo, 0, sizeof(startupInfo));
+    startupInfo.cb = sizeof(startupInfo);
 
-    if ( !ShellExecuteExA(&execInfo) )
+    PROCESS_INFORMATION procInfo;
+    memset(&procInfo, 0, sizeof(procInfo));
+
+    // No application name, so a viewer without path is searched for in PATH
+    if ( !CreateProcessA(NULL, aCmdLine, NULL, NULL, FALSE, 0, NULL, NULL, &startupInfo, &procInfo) )
     {
-        STDLOG_ERROR("JonesHud: Couldn't open the help file '%s', set 'Help Viewer' to the path of a WinHelp viewer.\n", aFullPath);
+        STDLOG_ERROR("JonesHud: Couldn't start help viewer '%s' (error %lu), place hlp-viewer.exe next to the game executable or set 'Help Viewer' to the path of a WinHelp viewer.\n", aViewer, GetLastError());
         return NULL;
     }
 
-    hProcess = execInfo.hProcess;
+    CloseHandle(procInfo.hThread);
+    hProcess = procInfo.hProcess;
 
 #else
     // Reap the previous viewer, only one is opened at a time
