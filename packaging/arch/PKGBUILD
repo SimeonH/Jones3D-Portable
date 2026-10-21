@@ -53,7 +53,7 @@ replaces=('openjones3d-git') # Former package name
 # The engine is decompiled code that relies on exact float and memory semantics, keep it out of LTO
 options=('!lto')
 
-_branch=complete-decompilation
+_branch=main
 _hlpviewer=a685ecc2fe8d040750ada76d42a8bc6f5a508f7d
 source=(
   "Jones3D-Portable::git+https://github.com/SimeonH/Jones3D-Portable.git#branch=${_branch}"
