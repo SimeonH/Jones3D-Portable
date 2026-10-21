@@ -4,10 +4,21 @@
 #include <Jones3D/Gui/wx/JonesWxDialogs.h>
 #include <Jones3D/Main/JonesMain.h>
 
+#include <std/General/stdFileUtil.h>
+#include <std/General/stdFnames.h>
+#include <std/General/stdPlatform.h>
+#include <std/General/stdUtil.h>
+#include <w32util/wuRegistry.h>
 #include <wkernel/wkernel.h>
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
+
+#ifndef _WIN32
+#include <sys/stat.h>
+#include <unistd.h>
+#endif
 
 static const char* appName = "Open Jones 3D";
 
@@ -33,6 +44,109 @@ void Indy3D_InitProcess(void)
     }
 #endif
 }
+
+#ifndef _WIN32
+
+// Returns true when the data files the game can't start without are found in aDirs, see JonesFile_Open for the searched resource paths
+static bool Indy3D_HasGameData(const char* const* aDirs, size_t numDirs)
+{
+    static const char* aFiles[] = { "Jones3D.GOB", "CD1.GOB", "CD2.GOB" };
+    for ( size_t i = 0; i < STD_ARRAYLEN(aFiles); ++i )
+    {
+        bool bFound = false;
+        for ( size_t j = 0; j < numDirs && !bFound; ++j )
+        {
+            char aPath[256];
+            STD_MAKEPATH(aPath, aDirs[j], aFiles[i]);
+            bFound = stdFileUtil_FileExists(aPath) != 0;
+        }
+
+        if ( !bFound ) {
+            return false;
+        }
+    }
+
+    return true;
+}
+
+// Creates dir pPath including its parent dirs
+static void Indy3D_MakeDirs(const char* pPath)
+{
+    char aPath[256];
+    stdPlatform_NativePath(pPath, aPath, sizeof(aPath));
+    for ( char* p = aPath + 1; ; ++p )
+    {
+        if ( *p == '/' || *p == 0 )
+        {
+            const char c = *p;
+            *p = 0;
+            mkdir(aPath, 0755); // Fails when it exists
+            *p = c;
+            if ( !c ) {
+                break;
+            }
+        }
+    }
+}
+
+bool Indy3D_EnsureGameData(bool bForceInstaller)
+{
+    if ( wuRegistry_Startup(HKEY_LOCAL_MACHINE, "Software\\LucasArts Entertainment Company LLC\\Indiana Jones and the Infernal Machine\\v1.0") ) {
+        return true; // JonesMain_Startup reports the error
+    }
+
+    // The game data lives in ~/.Jones3D unless the 'Install Path' setting says otherwise
+    static const char aNotSet[] = "\x01"; // Can't be a path
+    char aInstallPath[128] = { 0 };
+    wuRegistry_GetStr("Install Path", aInstallPath, STD_ARRAYLEN(aInstallPath), aNotSet);
+    const bool bNewConfig = strcmp(aInstallPath, aNotSet) == 0;
+    if ( bNewConfig || !aInstallPath[0] )
+    {
+        const char* pHome = getenv("HOME");
+        STD_FORMAT(aInstallPath, "%s/.Jones3D", pHome && pHome[0] ? pHome : ".");
+        wuRegistry_SaveStr("Install Path", aInstallPath);
+    }
+
+    // The game creates SaveGames and ScreenShots in the install dir with a single-level mkdir, make sure the install dir exists,
+    // also when the data is used from the working dir and the data installer never ran
+    Indy3D_MakeDirs(aInstallPath);
+
+    char aResourceDir[128];
+    STD_MAKEPATH(aResourceDir, aInstallPath, "Resource");
+    const char* aDirs[] = { aResourceDir, aInstallPath, "." };
+
+    bool bOk        = true;
+    bool bInstalled = false;
+    if ( bForceInstaller || !Indy3D_HasGameData(aDirs, STD_ARRAYLEN(aDirs)) )
+    {
+        char aNativePath[256];
+        bOk        = JonesWx_ShowDataInstaller(stdPlatform_NativePath(aInstallPath, aNativePath, sizeof(aNativePath))) != 0;
+        bInstalled = bOk;
+    }
+
+    // The original installer set up the game to start normally, without it the developer dialog is shown first
+    if ( (bNewConfig || bInstalled) && wuRegistry_GetInt("Start Mode", -1) == -1 ) {
+        wuRegistry_SaveInt("Start Mode", JONES_STARTMODE_STARTGAME);
+    }
+
+    // When the data isn't in the working dir (e.g. the game was started from the desktop menu), run in the install dir,
+    // so the log files (JonesLog.txt) are written there. Not the Resource dir, as the working dir is also searched
+    // for GOB files, which would open them twice. A relative install path is relative to the working dir, so it's kept then.
+    const char* aWorkDir[] = { "." };
+    if ( bOk && aInstallPath[0] == '/' && !Indy3D_HasGameData(aWorkDir, 1) )
+    {
+        char aNativePath[256];
+        stdPlatform_NativePath(aInstallPath, aNativePath, sizeof(aNativePath));
+        if ( chdir(aNativePath) != 0 ) {
+            fprintf(stderr, "WARNING: Couldn't change working directory to %s\n", aNativePath);
+        }
+    }
+
+    wuRegistry_Shutdown();
+    return bOk;
+}
+
+#endif // !_WIN32
 
 static int Indy3D_Startup(const char* aCmd)
 {

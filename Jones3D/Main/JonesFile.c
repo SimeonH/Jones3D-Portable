@@ -313,6 +313,7 @@ void JonesFile_ResetServices(void)
 void J3DAPI JonesFile_OpenResource(JonesResource* pRsource, const char* pPath)
 {
     STD_STRCPY(pRsource->aPath, pPath);
+    pPath = pRsource->aPath; // Fixed: pPath can be JonesFile_aPathBuf (see JonesFile_SetInstallPath) which is overwritten below
     JonesFile_ResetServices();
 
     // Now find all *.gob files in dir

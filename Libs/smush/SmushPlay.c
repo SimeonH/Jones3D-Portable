@@ -3,6 +3,7 @@
 
 #include <sound/AudioLib.h>
 #include <sound/Driver.h>
+#include <std/General/stdPlatform.h>
 
 #include <math.h>
 #include <stdbool.h>
@@ -58,8 +59,12 @@ void J3DAPI SmushPlay_SetGlobalVolume(size_t volume)
 
 static uint8_t* SmushPlay_LoadFile(const char* pFilename, size_t* pSize)
 {
+    // Game paths use backslashes and are case-insensitive
+    char aPath[1024];
+    stdPlatform_NativePath(pFilename, aPath, sizeof(aPath));
+
     FILE* pFile = NULL;
-    if ( fopen_s(&pFile, pFilename, "rb") != 0 || !pFile )
+    if ( fopen_s(&pFile, aPath, "rb") != 0 || !pFile )
     {
         return NULL;
     }

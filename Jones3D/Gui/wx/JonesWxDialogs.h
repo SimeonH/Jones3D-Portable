@@ -77,5 +77,9 @@ void JonesWx_ShowFatalError(const char* pTitle, const char* pText);
 // Shuts down wxWidgets
 void JonesWx_Shutdown(void);
 
+// Shows the game data installer which copies the data files from a Steam installation, the GOG offline installer
+// or the original CDs to pInstallPath (native path). Returns 1 when the data was installed, 0 when the user quit.
+int JonesWx_ShowDataInstaller(const char* pInstallPath);
+
 J3D_EXTERN_C_END
 #endif // JONES3D_JONESWXDIALOGS_H

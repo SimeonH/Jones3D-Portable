@@ -70,6 +70,13 @@ namespace
     // Logs wx assertions instead of showing a modal alert over the game
     void LogAssert(const wxString& file, int line, const wxString& func, const wxString& cond, const wxString& msg)
     {
+        if ( !std_g_pHS )
+        {
+            // Before the game started, e.g. in the data installer
+            fprintf(stderr, "wxWidgets assert: %s(%d) %s: %s %s\n", (const char*)file.mb_str(), line, (const char*)func.mb_str(), (const char*)cond.mb_str(), (const char*)msg.mb_str());
+            return;
+        }
+
         STDLOG_ERROR("wxWidgets assert: %s(%d) %s: %s %s\n", (const char*)file.mb_str(), line, (const char*)func.mb_str(), (const char*)cond.mb_str(), (const char*)msg.mb_str());
     }
 }
