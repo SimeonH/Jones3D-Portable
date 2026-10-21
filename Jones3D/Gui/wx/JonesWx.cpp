@@ -131,7 +131,13 @@ wxWindow* JonesWx::GetParent(HWND hwnd)
         return wxFindWinFromHandle((WXHWND)hwnd);
     }
 #else
-    J3D_UNUSED(hwnd);
+    // HWND is the SDL window of the game, or a wx dialog passed as HWND (e.g. the launcher, JonesWxLauncher.cpp)
+    for ( wxWindow* pWindow : wxTopLevelWindows )
+    {
+        if ( hwnd && reinterpret_cast<HWND>(pWindow) == hwnd ) {
+            return pWindow;
+        }
+    }
 #endif
     return nullptr;
 }

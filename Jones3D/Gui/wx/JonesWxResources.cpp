@@ -1,10 +1,11 @@
-// Reads icon resources from the original Indy3D.exe on systems without the Win32 resource API.
-// The executable is read as data: the PE resource directory is walked to the RT_GROUP_ICON entry,
-// the best RT_ICON image for the requested size is wrapped in an .ico file and decoded by wx.
+// Reads resources from executables as data, on systems without the Win32 resource API:
+// icon resources of the original Indy3D.exe and the launcher resources of the Steam version's Jones3D.exe.
+// The PE resource directory is walked to the entry, icons are wrapped in an .ico file and decoded by wx.
 #include "JonesWx.h"
 
 #include <std/General/std.h>
 
+#include <wx/file.h>
 #include <wx/mstream.h>
 
 #include <stdint.h>
@@ -44,7 +45,27 @@ namespace
                 data.insert(data.end(), aBuf, aBuf + nRead);
             }
             std_g_pHS->pFileClose(fh);
+            return Parse();
+        }
 
+        // Loads executable at host file system path
+        bool LoadNative(const wxString& path)
+        {
+            wxFile file;
+            if ( !wxFile::Exists(path) || !file.Open(path) ) {
+                return false;
+            }
+
+            data.resize((size_t)file.Length());
+            if ( file.Read(data.data(), data.size()) != (ssize_t)data.size() ) {
+                return false;
+            }
+
+            return Parse();
+        }
+
+        bool Parse()
+        {
             // DOS header -> PE header
             if ( ReadU16(data, 0) != 0x5A4D ) { // MZ
                 return false;
@@ -80,10 +101,11 @@ namespace
             return rsrcOffset != 0;
         }
 
-        // Returns the data of resource type/id (first language), or false if there's none
-        bool Find(uint32_t type, uint32_t id, size_t* pOffset, size_t* pSize) const
+        // Returns the data of resource type/id (first language), or false if there's none.
+        // pTypeName is the name of a named resource type (e.g. "WAVE"), type is used when it's null.
+        bool Find(uint32_t type, uint32_t id, size_t* pOffset, size_t* pSize, const char* pTypeName = nullptr) const
         {
-            size_t typeDir = FindEntry(rsrcOffset, type);
+            size_t typeDir = pTypeName ? FindNamedEntry(rsrcOffset, pTypeName) : FindEntry(rsrcOffset, type);
             if ( !typeDir || !(typeDir & 0x80000000) ) {
                 return false;
             }
@@ -141,6 +163,37 @@ namespace
                 const size_t entry = dirOffset + 16 + i * 8;
                 const uint32_t name = ReadU32(data, entry);
                 if ( !(name & 0x80000000) && name == id ) {
+                    return ReadU32(data, entry + 4);
+                }
+            }
+            return 0;
+        }
+
+        // Finds the entry with name pName (ASCII, case-insensitive like the resource API) in the resource directory at dirOffset
+        size_t FindNamedEntry(size_t dirOffset, const char* pName) const
+        {
+            const size_t numNamed = ReadU16(data, dirOffset + 12);
+            const size_t nameLen  = strlen(pName);
+            for ( size_t i = 0; i < numNamed; ++i )
+            {
+                const size_t entry  = dirOffset + 16 + i * 8;
+                const uint32_t name = ReadU32(data, entry);
+                if ( !(name & 0x80000000) ) {
+                    continue;
+                }
+
+                // Counted UTF-16 string relative to the resource section
+                const size_t str = rsrcOffset + (name & 0x7FFFFFFF);
+                if ( ReadU16(data, str) != nameLen ) {
+                    continue;
+                }
+
+                bool bMatch = true;
+                for ( size_t c = 0; c < nameLen && bMatch; ++c ) {
+                    bMatch = wxTolower(ReadU16(data, str + 2 + c * 2)) == wxTolower((unsigned char)pName[c]);
+                }
+
+                if ( bMatch ) {
                     return ReadU32(data, entry + 4);
                 }
             }
@@ -229,4 +282,16 @@ wxImage JonesWx::LoadExeIconImage(int iconID, int size)
     }
 
     return image;
+}
+
+std::vector<uint8_t> JonesWx::ReadExeResource(const wxString& exePath, uint32_t type, uint32_t id, const char* pTypeName)
+{
+    PeResources resources;
+    size_t offset, size;
+    if ( !resources.LoadNative(exePath) || !resources.Find(type, id, &offset, &size, pTypeName) ) {
+        return {};
+    }
+
+    const std::vector<uint8_t>& data = resources.GetData();
+    return std::vector<uint8_t>(data.begin() + offset, data.begin() + offset + size);
 }

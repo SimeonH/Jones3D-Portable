@@ -363,6 +363,21 @@ int J3DAPI JonesMain_Startup(const char* lpCmdLine)
         }
     }
 
+#ifndef _WIN32
+    // Added: The launcher of the original game (Jones3D.exe) is shown first, unless the game is started with arguments
+    //        or in developer mode. It sets the start mode like the original launcher did before it started the game.
+    if ( !(lpCmdLine && lpCmdLine[0]) && JonesMain_state.startMode != JONES_STARTMODE_DEVELOPERDIALOG )
+    {
+        int startMode = JonesMain_state.startMode;
+        if ( JonesWx_ShowLauncher(JonesMain_state.aInstallPath, &startMode) != JONESLAUNCHER_START ) {
+            return 1; // exit
+        }
+
+        JonesMain_state.startMode = startMode;
+        wuRegistry_SaveInt("Start Mode", startMode);
+    }
+#endif
+
     // Handle start mode
     int bSuccess    = 0;
     bool bPlayIntro = true;
@@ -1887,6 +1902,33 @@ StdDisplayEnvironment* JonesMain_GetDisplayEnvironment(void)
 JonesDisplaySettings* JonesMain_GetDisplaySettings(void)
 {
     return &JonesMain_state.displaySettings;
+}
+
+int J3DAPI JonesMain_ShowLauncherSoundSettings(HWND hwnd)
+{
+    // Applied the same as in the options menu of the game
+    JonesSoundSettings settings = JonesMain_state.soundSettings;
+    settings.maxSoundVolume = Sound_GetMaxVolume();
+    settings.b3DHWSupport   = Sound_Get3DHWState();
+    settings.bReverseSound  = wuRegistry_GetIntEx("ReverseSound", 0);
+
+    const int result = jonesConfig_ShowSoundSettingsDialog(hwnd, &settings);
+    if ( result == 1 )
+    {
+        Sound_SetMaxVolume(settings.maxSoundVolume);
+        Sound_Set3DHWState(settings.b3DHWSupport);
+        Sound_SetReverseSound(settings.bReverseSound);
+        SmushPlay_SetGlobalVolume((size_t)(settings.maxSoundVolume * 127.0f));
+        JonesMain_state.soundSettings = settings;
+    }
+
+    return result;
+}
+
+int J3DAPI JonesMain_ShowLauncherDisplaySettings(HWND hwnd)
+{
+    // The display is opened with the settings when the game starts
+    return jonesConfig_ShowDisplaySettingsDialog(hwnd, JonesMain_pDisplayEnv, &JonesMain_state.displaySettings);
 }
 
 int JonesMain_CloseWindow(void)

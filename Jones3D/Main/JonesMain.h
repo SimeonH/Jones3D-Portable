@@ -42,6 +42,10 @@ void JonesMain_ShowEndCredits(void);
 StdDisplayEnvironment* JonesMain_GetDisplayEnvironment(void);
 JonesDisplaySettings* JonesMain_GetDisplaySettings(void);
 
+// Added: Sound and display settings dialogs of the launcher (Gui/wx/JonesWxLauncher.cpp), shown before the game starts
+int J3DAPI JonesMain_ShowLauncherSoundSettings(HWND hwnd);
+int J3DAPI JonesMain_ShowLauncherDisplaySettings(HWND hwnd);
+
 int JonesMain_CloseWindow(void);
 
 void JonesMain_RefreshDisplayDevice(void);

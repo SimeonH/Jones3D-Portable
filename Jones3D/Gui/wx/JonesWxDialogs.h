@@ -81,5 +81,14 @@ void JonesWx_Shutdown(void);
 // or the original CDs to pInstallPath (native path). Returns 1 when the data was installed, 0 when the user quit.
 int JonesWx_ShowDataInstaller(const char* pInstallPath);
 
+// Results of JonesWx_ShowLauncher
+#define JONESLAUNCHER_EXIT  0 // Exit
+#define JONESLAUNCHER_START 1 // Start the game with the start mode
+
+// Shows the launcher of the original game (Jones3D.exe) in its installed mode for the game in pInstallPath (game path).
+// pStartMode receives the JONES_STARTMODE_* to start the game with when it returns JONESLAUNCHER_START.
+// The game is started up to the start mode handling, its sound and display settings dialogs are opened over the launcher.
+int JonesWx_ShowLauncher(const char* pInstallPath, int* pStartMode);
+
 J3D_EXTERN_C_END
 #endif // JONES3D_JONESWXDIALOGS_H

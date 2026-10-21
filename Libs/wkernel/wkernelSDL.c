@@ -253,7 +253,9 @@ static SDL_Window* wkernel_NewWindow(const char* pTitle, int width, int height, 
 static int wkernel_CreateWindow(LPCSTR lpWindowName)
 {
     wkernel_windowApi = stdWin95_GetPreferredWindowApi();
-    wkernel_pWindow   = wkernel_NewWindow(lpWindowName, 640, 480, 0, wkernel_windowApi);
+    // Shown when the display is opened (wkernel_SetWindowStyle with WS_VISIBLE), so there's no empty window
+    // behind the launcher and the dialogs shown at startup
+    wkernel_pWindow   = wkernel_NewWindow(lpWindowName, 640, 480, SDL_WINDOW_HIDDEN, wkernel_windowApi);
     return wkernel_pWindow ? 0 : 1;
 }
 

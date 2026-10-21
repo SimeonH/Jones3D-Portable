@@ -43,6 +43,13 @@ namespace
     };
 
     const char* aRootFiles[]   = { "Jones3D.hlp", "Jones3D.cnt" };
+
+    // Pictures, sounds and texts of the launcher (JonesWxLauncher.cpp) in the Install folder of the CD
+    const char* aLauncherFiles[] = {
+        "launch.bmp", "options.bmp", "system.bmp",
+        "open.wav", "click.wav", "back.wav", "start.wav",
+        "setup.tab",
+    };
     const char* aGogSetupGlob  = "setup_indiana_jones_and_the_infernal_machine*.exe";
     const char* aGogExtractDir = ".gog-extract";
 
@@ -177,6 +184,14 @@ namespace
             }
         }
 
+        for ( const char* pName : aLauncherFiles )
+        {
+            const wxString path = FindPath(root, wxString("Install/") + pName);
+            if ( !path.empty() ) {
+                AddItem(items, path, wxString("Install/") + pName);
+            }
+        }
+
         AddDirFiles(items, FindPath(root, "Resource/Cog", /*bDir=*/true), "Resource/Cog"); // Steam version COG fixes
         AddDirFiles(items, FindPath(root, "KeySets", /*bDir=*/true), "KeySets", "kfg");
 
@@ -244,66 +259,6 @@ namespace
 
         text.Replace("\r\n", "\n");
         return text;
-    }
-
-    // Returns the paths of all Steam libraries containing the game
-    wxArrayString FindSteamInstalls()
-    {
-        wxArrayString result;
-#ifndef __WXMSW__
-        const wxString home = wxGetHomeDir();
-        const wxString aSteamRoots[] = {
-            home + "/.local/share/Steam",
-            home + "/.steam/steam",
-            home + "/.steam/root",
-            home + "/.var/app/com.valvesoftware.Steam/.local/share/Steam", // Flatpak
-            home + "/.var/app/com.valvesoftware.Steam/data/Steam",
-            home + "/snap/steam/common/.local/share/Steam",                 // Snap
-        };
-
-        std::vector<wxString> libraries;
-        for ( const wxString& root : aSteamRoots )
-        {
-            if ( !wxDir::Exists(root) ) {
-                continue;
-            }
-
-            libraries.push_back(root);
-
-            // Additional libraries are listed as: "path"   "/mnt/games/SteamLibrary"
-            const wxString vdf = ReadTextFile(FindPath(root, "steamapps/libraryfolders.vdf"));
-            for ( const wxString& line : wxSplit(vdf, '\n', 0) )
-            {
-                const wxString trimmed = wxString(line).Trim(false);
-                if ( !trimmed.StartsWith("\"path\"") ) {
-                    continue;
-                }
-
-                wxString value = trimmed.Mid(6).Trim(false);
-                if ( value.StartsWith("\"") && value.Len() > 1 )
-                {
-                    value = value.Mid(1).BeforeLast('"');
-                    value.Replace("\\\\", "\\");
-                    libraries.push_back(value);
-                }
-            }
-        }
-
-        std::set<wxString> seen;
-        for ( const wxString& library : libraries )
-        {
-            const wxString gameDir = FindPath(library, "steamapps/common/Indiana Jones and the Infernal Machine", /*bDir=*/true);
-            if ( gameDir.empty() || !HasResourceFile(gameDir, "CD1.GOB") ) {
-                continue;
-            }
-
-            const wxString canonical = CanonicalDir(gameDir);
-            if ( seen.insert(canonical).second ) {
-                result.push_back(canonical);
-            }
-        }
-#endif
-        return result;
     }
 
     // Returns the GOG offline installer found in the downloads folder, if any
@@ -704,7 +659,7 @@ namespace
         pSteamRadio = new wxRadioButton(this, wxID_ANY, "&Steam (or another installed copy of the game)", wxDefaultPosition, wxDefaultSize, wxRB_GROUP);
         pSizer->Add(pSteamRadio, wxSizerFlags().Border(wxTOP));
 
-        const wxArrayString steamInstalls = FindSteamInstalls();
+        const wxArrayString steamInstalls = JonesWx::FindSteamInstalls();
         pSteamPath = new wxComboBox(this, wxID_ANY, steamInstalls.empty() ? wxString() : steamInstalls[0], wxDefaultPosition, FromDIP(wxSize(420, -1)), steamInstalls);
         pSteamPath->SetHint("Game folder containing the Resource folder");
         pSizer->Add(CreateSourceRow(pSteamPath, [this]() {
@@ -1067,6 +1022,65 @@ namespace
 
         return Finish(items, "the CDs");
     }
+}
+
+wxArrayString JonesWx::FindSteamInstalls()
+{
+    wxArrayString result;
+#ifndef __WXMSW__
+    const wxString home = wxGetHomeDir();
+    const wxString aSteamRoots[] = {
+        home + "/.local/share/Steam",
+        home + "/.steam/steam",
+        home + "/.steam/root",
+        home + "/.var/app/com.valvesoftware.Steam/.local/share/Steam", // Flatpak
+        home + "/.var/app/com.valvesoftware.Steam/data/Steam",
+        home + "/snap/steam/common/.local/share/Steam",                 // Snap
+    };
+
+    std::vector<wxString> libraries;
+    for ( const wxString& root : aSteamRoots )
+    {
+        if ( !wxDir::Exists(root) ) {
+            continue;
+        }
+
+        libraries.push_back(root);
+
+        // Additional libraries are listed as: "path"   "/mnt/games/SteamLibrary"
+        const wxString vdf = ReadTextFile(FindPath(root, "steamapps/libraryfolders.vdf"));
+        for ( const wxString& line : wxSplit(vdf, '\n', 0) )
+        {
+            const wxString trimmed = wxString(line).Trim(false);
+            if ( !trimmed.StartsWith("\"path\"") ) {
+                continue;
+            }
+
+            wxString value = trimmed.Mid(6).Trim(false);
+            if ( value.StartsWith("\"") && value.Len() > 1 )
+            {
+                value = value.Mid(1).BeforeLast('"');
+                value.Replace("\\\\", "\\");
+                libraries.push_back(value);
+            }
+        }
+    }
+
+    std::set<wxString> seen;
+    for ( const wxString& library : libraries )
+    {
+        const wxString gameDir = FindPath(library, "steamapps/common/Indiana Jones and the Infernal Machine", /*bDir=*/true);
+        if ( gameDir.empty() || !HasResourceFile(gameDir, "CD1.GOB") ) {
+            continue;
+        }
+
+        const wxString canonical = CanonicalDir(gameDir);
+        if ( seen.insert(canonical).second ) {
+            result.push_back(canonical);
+        }
+    }
+#endif
+    return result;
 }
 
 extern "C" int JonesWx_ShowDataInstaller(const char* pInstallPath)

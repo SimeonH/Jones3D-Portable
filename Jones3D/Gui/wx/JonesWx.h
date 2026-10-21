@@ -6,7 +6,9 @@
 
 #include <wx/wx.h>
 
+#include <stdint.h>
 #include <string>
+#include <vector>
 
 namespace JonesWx
 {
@@ -42,6 +44,13 @@ namespace JonesWx
     // Loads icon resource from the Indy3D.exe resource module
     wxBitmap LoadResourceIcon(int iconID, int size);
     wxImage LoadExeIconImage(int iconID, int size); // Reads icon resource from Indy3D.exe as data (JonesWxResources.cpp), used without the Win32 resource API
+
+    // Reads resource type/id from the executable at exePath (host path) as data, empty if not found.
+    // pTypeName is the name of a named resource type (e.g. "WAVE"), type is used when it's null.
+    std::vector<uint8_t> ReadExeResource(const wxString& exePath, uint32_t type, uint32_t id, const char* pTypeName = nullptr);
+
+    // Returns the game folders of all Steam libraries containing the game (JonesWxDataInstaller.cpp)
+    wxArrayString FindSteamInstalls();
 
     // Returns dialog font scale for the current display mode
     double GetDialogScale();

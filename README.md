@@ -15,6 +15,7 @@ This project does ***not*** include any game assets. You need a copy of the game
 - **Vulkan and OpenGL ES 2.0 renderers** — modern rendering backends that replace DirectDraw / Direct3D 6, while drawing the same image as the original renderer. On Linux both are built in and selectable in the display settings.
 - **In-game help** — the game's original WinHelp file opens in [Rust HLP Viewer](https://github.com/NullMagic2/Rust-HLP-Viewer), as current systems no longer ship a WinHelp viewer.
 - **Game data installer** (Linux) — on first start, the game data is installed from a Steam installation, the GOG offline installer or the original CDs.
+- **Original launcher** (Linux) — the game starts with a recreation of the CD's launcher (Start New Game, Resume Play, Help, Sound and Display Options), with its pictures and sounds taken from the CD or the Steam version. It's skipped when the game is started with arguments or in developer mode (`Start Mode=2`).
 
 | Platform | Renderer | Platform layer | Sound |
 |---|---|---|---|
