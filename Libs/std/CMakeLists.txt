@@ -3,19 +3,28 @@ project(std C)
 file(GLOB_RECURSE SOURCES *.c)
 file(GLOB_RECURSE HEADERS *.h)
 
-# Renderer backend: Win95/std3D.c + Win95/stdDisplay.c (DirectDraw) or Vulkan/*.c
+# Renderer backend: Win95/std3D.c + Win95/stdDisplay.c (DirectDraw),
+# or the GPU std3D + stdDisplay in Gpu/ over a backend in Vulkan/ or GLES2/
 set(STD_DDRAW_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/Win95/std3D.c
     ${CMAKE_CURRENT_SOURCE_DIR}/Win95/stdDisplay.c
 )
+file(GLOB STD_GPU_SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/Gpu/*.c)
 file(GLOB STD_VULKAN_SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/Vulkan/*.c)
 file(GLOB STD_VULKAN_SHADERS ${CMAKE_CURRENT_SOURCE_DIR}/Vulkan/shaders/*.vert ${CMAKE_CURRENT_SOURCE_DIR}/Vulkan/shaders/*.frag)
 file(GLOB STD_VULKAN_SHADER_INCLUDES ${CMAKE_CURRENT_SOURCE_DIR}/Vulkan/shaders/*.glsl)
+file(GLOB STD_GLES2_SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/GLES2/*.c)
 
-if(JONES3D_RENDERER STREQUAL "Vulkan")
+if(NOT JONES3D_RENDERER STREQUAL "DirectDraw")
     list(REMOVE_ITEM SOURCES ${STD_DDRAW_SOURCES})
 else()
+    list(REMOVE_ITEM SOURCES ${STD_GPU_SOURCES})
+endif()
+if(NOT JONES3D_RENDERER STREQUAL "Vulkan")
     list(REMOVE_ITEM SOURCES ${STD_VULKAN_SOURCES})
+endif()
+if(NOT JONES3D_RENDERER_GLES2)
+    list(REMOVE_ITEM SOURCES ${STD_GLES2_SOURCES})
 endif()
 
 # Platform: Win95/ (DirectInput, Win32 console, DirectPlay) or SDL/ (SDL3, POSIX)

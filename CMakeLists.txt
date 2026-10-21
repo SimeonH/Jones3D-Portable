@@ -30,7 +30,8 @@ if(JONES3D_QOL_IMPROVEMENTS)
     add_compile_definitions(J3D_QOL_IMPROVEMENTS=1)
 endif()
 
-# Renderer backend of std3D/stdDisplay: DirectDraw (original, Windows only) or Vulkan
+# Renderer backend of std3D/stdDisplay: DirectDraw (original, Windows only) or the GPU renderers.
+# The GPU renderers are Vulkan and, on SDL platforms, OpenGL ES 2.0 (JONES3D_RENDERER_GLES2), selectable at runtime as display devices.
 if(WIN32)
     set(JONES3D_RENDERER "DirectDraw" CACHE STRING "Renderer backend (DirectDraw or Vulkan)")
 else()
@@ -42,10 +43,23 @@ endif()
 set_property(CACHE JONES3D_RENDERER PROPERTY STRINGS DirectDraw Vulkan)
 if(JONES3D_RENDERER STREQUAL "Vulkan")
     add_compile_definitions(J3D_RENDERER_VULKAN=1)
-elseif(NOT JONES3D_RENDERER STREQUAL "DirectDraw")
+elseif(JONES3D_RENDERER STREQUAL "DirectDraw")
+    add_compile_definitions(J3D_RENDERER_DIRECTDRAW=1)
+else()
     message(FATAL_ERROR "Unknown JONES3D_RENDERER '${JONES3D_RENDERER}', expected DirectDraw or Vulkan")
 endif()
-message(STATUS "Jones3D renderer: ${JONES3D_RENDERER}")
+
+if(JONES3D_RENDERER STREQUAL "Vulkan" AND NOT WIN32)
+    option(JONES3D_RENDERER_GLES2 "Also build the OpenGL ES 2.0 renderer" ON)
+    if(JONES3D_RENDERER_GLES2)
+        add_compile_definitions(J3D_RENDERER_GLES2=1)
+    endif()
+endif()
+if(JONES3D_RENDERER_GLES2)
+    message(STATUS "Jones3D renderer: ${JONES3D_RENDERER}, GLES2")
+else()
+    message(STATUS "Jones3D renderer: ${JONES3D_RENDERER}")
+endif()
 
 # Configure the version header file
 configure_file(

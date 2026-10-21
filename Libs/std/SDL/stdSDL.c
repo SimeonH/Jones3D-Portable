@@ -2,6 +2,8 @@
 
 #include <std/General/stdUtil.h>
 
+#include <SDL3/SDL_video.h>
+
 typedef struct sScancodeDIK
 {
     SDL_Scancode scancode;
@@ -129,4 +131,15 @@ uint32_t stdSDL_KeycodeToVK(SDL_Keycode key)
         case SDLK_DELETE:    return VK_DELETE;
         default:             return 0;
     }
+}
+
+void stdSDL_SetGLAttributes(void)
+{
+    // The depth buffer is in the renderer's offscreen back buffer
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_ES);
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 2);
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 0);
+    SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
+    SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 0);
+    SDL_GL_SetAttribute(SDL_GL_STENCIL_SIZE, 0);
 }

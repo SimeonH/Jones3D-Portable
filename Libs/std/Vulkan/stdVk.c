@@ -1,4 +1,5 @@
 #include "stdVk.h"
+#include <std/Gpu/stdGpu.h>
 
 #include <std/General/std.h>
 #include <std/General/stdMath.h>
@@ -1780,3 +1781,115 @@ static void stdVk_ProcessDeletedTextures(StdVkTexture** ppList)
 
     *ppList = NULL;
 }
+
+// stdGpu backend
+
+static bool stdVk_IsStarted(void)
+{
+    return stdVk_g.device != VK_NULL_HANDLE;
+}
+
+static const char* stdVk_GetDeviceName(void)
+{
+    return stdVk_g.deviceProps.deviceName;
+}
+
+static size_t stdVk_GetVideoMemory(void)
+{
+    VkDeviceSize total = 0;
+    for ( uint32_t i = 0; i < stdVk_g.memProps.memoryHeapCount; ++i )
+    {
+        if ( stdVk_g.memProps.memoryHeaps[i].flags & VK_MEMORY_HEAP_DEVICE_LOCAL_BIT ) {
+            total += stdVk_g.memProps.memoryHeaps[i].size;
+        }
+    }
+
+    return total > 0x7FF00000u ? 0x7FF00000u : (size_t)total;
+}
+
+static uint32_t stdVk_GetMaxTextureSize(void)
+{
+    return stdVk_g.deviceProps.limits.maxImageDimension2D;
+}
+
+static bool stdVk_HasAnisotropy(void)
+{
+    return stdVk_g.maxAnisotropy > 1.0f;
+}
+
+static int stdVk_GpuCreateBackBuffer(HWND hwnd, uint32_t width, uint32_t height)
+{
+    return stdVk_CreateBackBuffer(hwnd, width, height);
+}
+
+static bool stdVk_HasBackBuffer(void)
+{
+    return stdVk_g.colorImage != VK_NULL_HANDLE;
+}
+
+static void stdVk_GpuSetNoVSync(bool bNoVSync)
+{
+    stdVk_SetNoVSync(bNoVSync);
+}
+
+static float stdVk_GetPresentScale(void)
+{
+    return stdVk_g.presentScale;
+}
+
+static uint8_t* stdVk_GetShadowPixels(void)
+{
+    return stdVk_g.pShadowPixels;
+}
+
+#ifdef _WIN32
+static HDC stdVk_GetShadowDC(void)
+{
+    return stdVk_g.hShadowDC;
+}
+#endif
+
+static void stdVk_GpuClearColor(uint32_t xrgb, const StdRect* pRect)
+{
+    stdVk_ClearColor(xrgb, pRect);
+}
+
+static void stdVk_GpuClearDepth(void)
+{
+    stdVk_ClearDepth();
+}
+
+const StdGpuBackend stdVk_g_backend = {
+    .pApiName              = "Vulkan",
+#ifndef _WIN32
+    .windowApi             = STDWINDOW_API_VULKAN,
+#endif
+    .pfStartup             = stdVk_Startup,
+    .pfShutdown            = stdVk_Shutdown,
+    .pfIsStarted           = stdVk_IsStarted,
+    .pfGetDeviceName       = stdVk_GetDeviceName,
+    .pfGetVideoMemory      = stdVk_GetVideoMemory,
+    .pfGetMaxTextureSize   = stdVk_GetMaxTextureSize,
+    .pfHasAnisotropy       = stdVk_HasAnisotropy,
+    .pfCreateBackBuffer    = stdVk_GpuCreateBackBuffer,
+    .pfDestroyBackBuffer   = stdVk_DestroyBackBuffer,
+    .pfHasBackBuffer       = stdVk_HasBackBuffer,
+    .pfSetNoVSync          = stdVk_GpuSetNoVSync,
+    .pfPresent             = stdVk_Present,
+    .pfGetPresentScale     = stdVk_GetPresentScale,
+    .pfGetShadowPixels     = stdVk_GetShadowPixels,
+#ifdef _WIN32
+    .pfGetShadowDC         = stdVk_GetShadowDC,
+#endif
+    .pfSyncShadowForRead   = stdVk_SyncShadowForRead,
+    .pfMarkShadowDirty     = stdVk_MarkShadowDirty,
+    .pfClearColor          = stdVk_GpuClearColor,
+    .pfClearDepth          = stdVk_GpuClearDepth,
+    .pfOpen3D              = stdVk_Open3D,
+    .pfClose3D             = stdVk_Close3D,
+    .pfDraw                = stdVk_Draw,
+    .pfCreateTexture       = stdVk_CreateGpuTexture,
+    .pfUploadTextureLevel  = stdVk_UploadGpuTextureLevel,
+    .pfFinishTextureUpload = stdVk_FinishGpuTextureUpload,
+    .pfDestroyTexture      = stdVk_DestroyGpuTexture,
+};

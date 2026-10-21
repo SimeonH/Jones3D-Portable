@@ -2,6 +2,7 @@
 #define STD_VULKAN_STDVK_H
 #include <j3dcore/j3d.h>
 #include <std/types.h>
+#include <std/Gpu/stdGpu.h>
 
 #include <volk.h>
 
@@ -168,6 +169,15 @@ void J3DAPI stdVk_UploadTextureLevel(StdVkTexture* pTex, uint32_t level, const u
 void J3DAPI stdVk_FinishTextureUpload(StdVkTexture* pTex);
 void J3DAPI stdVk_DestroyTexture(StdVkTexture* pTex); // deferred until the GPU is done with it
 void stdVk_SubmitUploads(void);
+
+// std3D rendering of the stdGpu backend (stdVk3D.c)
+int stdVk_Open3D(void);
+void stdVk_Close3D(void);
+void stdVk_Draw(StdGpuPrimitive primitive, const StdGpuDrawState* pState, void* pNativeTex, const StdTLVertex* aVerts, size_t numVerts, const uint16_t* aIndices, size_t numIndices);
+void* stdVk_CreateGpuTexture(uint32_t width, uint32_t height, uint32_t numMipLevels, StdGpuTexLayout layout);
+void stdVk_UploadGpuTextureLevel(void* pNativeTex, uint32_t level, const uint8_t* pPixels, size_t rowSize);
+void stdVk_FinishGpuTextureUpload(void* pNativeTex);
+void stdVk_DestroyGpuTexture(void* pNativeTex);
 
 J3D_EXTERN_C_END
 #endif // STD_VULKAN_STDVK_H

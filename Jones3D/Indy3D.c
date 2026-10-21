@@ -16,6 +16,7 @@
 #include <string.h>
 
 #ifndef _WIN32
+#include <std/Gpu/stdGpu.h>
 #include <sys/stat.h>
 #include <unistd.h>
 #endif
@@ -141,6 +142,12 @@ bool Indy3D_EnsureGameData(bool bForceInstaller)
             fprintf(stderr, "WARNING: Couldn't change working directory to %s\n", aNativePath);
         }
     }
+
+    // The game window is created for the renderer of the display device in the settings,
+    // switching the renderer later replaces the window
+    char aDisplay[128] = { 0 };
+    wuRegistry_GetStr("Display", aDisplay, STD_ARRAYLEN(aDisplay), "");
+    stdGpu_SetPreferredDriver(aDisplay);
 
     wuRegistry_Shutdown();
     return bOk;

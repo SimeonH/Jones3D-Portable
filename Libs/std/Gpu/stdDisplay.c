@@ -1,9 +1,9 @@
-// Vulkan implementation of stdDisplay.
-// The front and back buffer are both views of the Vulkan back buffer (see stdVk.h):
-// their pixels are the CPU mirror of the color image and their DCs the DC of the mirror's DIB section.
+// stdDisplay implementation of the GPU renderer backends (Vulkan, OpenGL ES 2.0).
+// The front and back buffer are both views of the GPU back buffer (see stdGpu.h):
+// their pixels are the CPU mirror of the color target and their DCs the DC of the mirror's DIB section.
 #include <std/Win95/stdDisplay.h>
 #include <std/Win95/stdWin95.h>
-#include "stdVk.h"
+#include "stdGpu.h"
 
 #include <j3dcore/j3dhook.h>
 #include <std/General/std.h>
@@ -33,13 +33,14 @@ static StdVideoMode stdDisplay_aVideoModes[64] = { 0 };
 
 static size_t stdDisplay_curDevice;
 static size_t stdDisplay_numDevices = 0;
-static StdDisplayDevice stdDisplay_aDisplayDevices[1] = { 0 };
+static StdDisplayDevice stdDisplay_aDisplayDevices[4] = { 0 };
+static const StdGpuBackend* stdDisplay_apDeviceBackends[4] = { 0 }; // A display device per GPU renderer backend
 
 #ifdef _WIN32
 static HFONT stdDisplay_hFont;
 #endif
 
-// Back buffer pixel format, XRGB8888 (BGRX in memory) as DIB sections and VK_FORMAT_B8G8R8A8_UNORM
+// Back buffer pixel format, XRGB8888 (BGRX in memory) as DIB sections
 static const ColorInfo stdDisplay_cfBackBuffer = {
     .colorMode          = STDCOLOR_RGB,
     .bpp                = 32,
@@ -218,20 +219,6 @@ static void stdDisplay_EnumVideoModes(void)
     );
 }
 
-static size_t stdDisplay_GetDeviceLocalMemory(void)
-{
-    VkDeviceSize total = 0;
-    for ( uint32_t i = 0; i < stdVk_g.memProps.memoryHeapCount; ++i )
-    {
-        if ( stdVk_g.memProps.memoryHeaps[i].flags & VK_MEMORY_HEAP_DEVICE_LOCAL_BIT ) {
-            total += stdVk_g.memProps.memoryHeaps[i].size;
-        }
-    }
-
-    // Keep it in a signed 32-bit range, the game does arithmetic on these values
-    return total > 0x7FF00000u ? 0x7FF00000u : (size_t)total;
-}
-
 int stdDisplay_Startup(void)
 {
     if ( stdDisplay_bStartup ) {
@@ -243,21 +230,29 @@ int stdDisplay_Startup(void)
     memset(stdDisplay_aDisplayDevices, 0, sizeof(stdDisplay_aDisplayDevices));
 
     stdDisplay_numDevices = 0;
-    if ( !stdVk_Startup() )
+    for ( size_t i = 0; i < stdGpu_GetNumBackends() && stdDisplay_numDevices < STD_ARRAYLEN(stdDisplay_aDisplayDevices); ++i )
     {
-        STDLOG_ERROR("Error initializing Vulkan.\n");
-        return 0;
+        const StdGpuBackend* pBackend = stdGpu_GetBackend(i);
+        if ( !pBackend->pfStartup() )
+        {
+            STDLOG_ERROR("Error initializing %s.\n", pBackend->pApiName);
+            continue;
+        }
+
+        StdDisplayDevice* pDevice = &stdDisplay_aDisplayDevices[stdDisplay_numDevices];
+        STD_STRCPY(pDevice->aDeviceName, pBackend->pfGetDeviceName());
+        STD_STRCPY(pDevice->aDriverName, pBackend->pApiName);
+        pDevice->bHAL                      = 1;
+        pDevice->bGuidNotSet               = 1;
+        pDevice->bWindowRenderNotSupported = 0;
+        pDevice->totalVideoMemory          = pBackend->pfGetVideoMemory();
+        pDevice->freeVideoMemory           = pDevice->totalVideoMemory;
+        stdDisplay_apDeviceBackends[stdDisplay_numDevices++] = pBackend;
     }
 
-    StdDisplayDevice* pDevice = &stdDisplay_aDisplayDevices[0];
-    STD_STRCPY(pDevice->aDeviceName, stdVk_g.deviceProps.deviceName);
-    STD_STRCPY(pDevice->aDriverName, "Vulkan");
-    pDevice->bHAL                      = 1;
-    pDevice->bGuidNotSet               = 1;
-    pDevice->bWindowRenderNotSupported = 0;
-    pDevice->totalVideoMemory          = stdDisplay_GetDeviceLocalMemory();
-    pDevice->freeVideoMemory           = pDevice->totalVideoMemory;
-    stdDisplay_numDevices = 1;
+    if ( !stdDisplay_numDevices ) {
+        return 0;
+    }
 
     // TODO: Change default res
     stdDisplay_primaryVideoMode.rasterInfo.width  = 640;
@@ -274,9 +269,12 @@ void stdDisplay_Shutdown(void)
         stdDisplay_Close();
     }
 
-    stdVk_Shutdown();
+    for ( size_t i = 0; i < stdGpu_GetNumBackends(); ++i ) {
+        stdGpu_GetBackend(i)->pfShutdown();
+    }
 
     memset(stdDisplay_aDisplayDevices, 0, sizeof(stdDisplay_aDisplayDevices));
+    memset(stdDisplay_apDeviceBackends, 0, sizeof(stdDisplay_apDeviceBackends));
     memset(&stdDisplay_g_frontBuffer, 0, sizeof(stdDisplay_g_frontBuffer));
     memset(&stdDisplay_g_backBuffer, 0, sizeof(stdDisplay_g_backBuffer));
 
@@ -300,6 +298,7 @@ int J3DAPI stdDisplay_Open(size_t deviceNum)
     }
 
     stdDisplay_curDevice = deviceNum;
+    stdGpu_SelectBackend(stdDisplay_apDeviceBackends[deviceNum]);
     stdDisplay_EnumVideoModes();
 
     stdDisplay_bOpen = true;
@@ -342,7 +341,7 @@ static void J3DAPI stdDisplay_InitDisplayBuffer(tVBuffer* pBuffer, const tRaster
     pBuffer->lockRefCount = 1; // display surface
     pBuffer->bVideoMemory = 1;
     pBuffer->rasterInfo   = *pRasterInfo;
-    pBuffer->pPixels      = stdVk_g.pShadowPixels;
+    pBuffer->pPixels      = stdGpu_GetShadowPixels();
 }
 
 int J3DAPI stdDisplay_SetMode(size_t modeNum, int bFullscreen, size_t numBackBuffers)
@@ -365,10 +364,10 @@ int J3DAPI stdDisplay_SetMode(size_t modeNum, int bFullscreen, size_t numBackBuf
     stdDisplay_SetAspectRatio(stdDisplay_pCurVideoMode);
 
     STDLOG_STATUS("Set video mode %d %d %d (%s).\n", width, height, 32, bFullscreen ? "fullscreen" : "windowed");
-    if ( !stdVk_CreateBackBuffer(stdWin95_GetWindow(), width, height) )
+    if ( !stdGpu_CreateBackBuffer(stdWin95_GetWindow(), width, height) )
     {
-        STDLOG_ERROR("Error creating Vulkan back buffer.\n");
-        stdVk_DestroyBackBuffer();
+        STDLOG_ERROR("Error creating %s back buffer.\n", stdGpu_GetApiName());
+        stdGpu_DestroyBackBuffer();
         return 1;
     }
 
@@ -398,7 +397,7 @@ void stdDisplay_ClearMode(void)
 {
     if ( stdDisplay_bModeSet )
     {
-        stdVk_DestroyBackBuffer();
+        stdGpu_DestroyBackBuffer();
         memset(&stdDisplay_g_backBuffer, 0, sizeof(stdDisplay_g_backBuffer));
         memset(&stdDisplay_g_frontBuffer, 0, sizeof(stdDisplay_g_frontBuffer));
     }
@@ -441,7 +440,7 @@ int J3DAPI stdDisplay_GetCurrentDevice(StdDisplayDevice* pDevice)
 
 void J3DAPI stdDisplay_Refresh(int bReload)
 {
-    // Vulkan surfaces aren't lost, the swapchain is recreated on present when needed
+    // GPU back buffers aren't lost, the swapchain or window surface is updated on present when needed
     J3D_UNUSED(bReload);
 }
 
@@ -497,12 +496,12 @@ int J3DAPI stdDisplay_VBufferLock(tVBuffer* pVBuffer)
     if ( pVBuffer->lockRefCount == 1 )
     {
         // Display buffer
-        if ( !stdDisplay_bModeSet || !stdVk_g.pShadowPixels ) {
+        if ( !stdDisplay_bModeSet || !stdGpu_GetShadowPixels() ) {
             return 0;
         }
 
-        stdVk_SyncShadowForRead();
-        pVBuffer->pPixels = stdVk_g.pShadowPixels;
+        stdGpu_SyncShadowForRead();
+        pVBuffer->pPixels = stdGpu_GetShadowPixels();
     }
 
     ++pVBuffer->lockSurfRefCount;
@@ -530,7 +529,7 @@ int J3DAPI stdDisplay_VBufferUnlock(tVBuffer* pVBuffer)
     }
 
     // The CPU may have written to the display buffer
-    stdVk_MarkShadowDirty();
+    stdGpu_MarkShadowDirty();
     --pVBuffer->lockSurfRefCount;
     return 0;
 }
@@ -551,7 +550,7 @@ int J3DAPI stdDisplay_VBufferFill(tVBuffer* pVBuffer, uint32_t color, const StdR
             return 0;
         }
 
-        stdVk_ClearColor(color, pRect);
+        stdGpu_ClearColor(color, pRect);
         return 1;
     }
 
@@ -677,11 +676,11 @@ tVBuffer* J3DAPI stdDisplay_VBufferConvertColorFormat(const ColorInfo* pDesiredC
 
 int J3DAPI stdDisplay_GetTextureMemory(size_t* pTotal, size_t* pFree)
 {
-    if ( !stdVk_g.device ) {
+    if ( !stdGpu_IsStarted() ) {
         return 1;
     }
 
-    *pTotal = stdDisplay_GetDeviceLocalMemory();
+    *pTotal = stdGpu_GetVideoMemory();
     *pFree  = *pTotal;
     return 0;
 }
@@ -693,12 +692,12 @@ int J3DAPI stdDisplay_GetTotalMemory(size_t* pTotal, size_t* pFree)
 
 float stdDisplay_GetPresentScale(void)
 {
-    return stdDisplay_bModeSet ? stdVk_g.presentScale : 0.0f;
+    return stdDisplay_bModeSet ? stdGpu_GetPresentScale() : 0.0f;
 }
 
 void stdDisplay_DisableVSync(bool bDisable)
 {
-    stdVk_SetNoVSync(bDisable);
+    stdGpu_SetNoVSync(bDisable);
 }
 
 // Keeps the borderless fullscreen window over its whole monitor, the game sizes it to the mode resolution
@@ -740,7 +739,7 @@ int stdDisplay_Update(void)
     SDL_PumpEvents();
 #endif
 
-    return stdVk_Present();
+    return stdGpu_Present();
 }
 
 int J3DAPI stdDisplay_BackBufferFill(uint32_t color, const StdRect* pRect)
@@ -753,7 +752,7 @@ int J3DAPI stdDisplay_BackBufferFill(uint32_t color, const StdRect* pRect)
         return 1;
     }
 
-    stdVk_ClearColor(color, pRect);
+    stdGpu_ClearColor(color, pRect);
     return 0;
 }
 
@@ -816,12 +815,12 @@ void J3DAPI stdDisplay_ReleaseFrontBufferDC(HDC hdc)
 HDC stdDisplay_GetBackBufferDC(void)
 {
 #ifdef _WIN32
-    if ( !stdDisplay_bOpen || !stdDisplay_bModeSet || !stdVk_g.hShadowDC ) {
+    if ( !stdDisplay_bOpen || !stdDisplay_bModeSet || !stdGpu_GetShadowDC() ) {
         return NULL;
     }
 
-    stdVk_SyncShadowForRead();
-    return stdVk_g.hShadowDC;
+    stdGpu_SyncShadowForRead();
+    return stdGpu_GetShadowDC();
 #else
     return NULL; // No GDI
 #endif
@@ -830,8 +829,8 @@ HDC stdDisplay_GetBackBufferDC(void)
 void J3DAPI stdDisplay_ReleaseBackBufferDC(HDC hdc)
 {
 #ifdef _WIN32
-    if ( stdDisplay_bOpen && stdDisplay_bModeSet && hdc == stdVk_g.hShadowDC ) {
-        stdVk_MarkShadowDirty();
+    if ( stdDisplay_bOpen && stdDisplay_bModeSet && hdc == stdGpu_GetShadowDC() ) {
+        stdGpu_MarkShadowDirty();
     }
 #else
     J3D_UNUSED(hdc);
@@ -867,12 +866,12 @@ int J3DAPI stdDisplay_IsFullscreen()
 
 int J3DAPI stdDisplay_LockBackBuffer(void** pSurface, uint32_t* pWidth, uint32_t* pHeight, int32_t* pPitch)
 {
-    if ( !stdDisplay_bOpen || !stdDisplay_bModeSet || !stdVk_g.pShadowPixels ) {
+    if ( !stdDisplay_bOpen || !stdDisplay_bModeSet || !stdGpu_GetShadowPixels() ) {
         return 1;
     }
 
-    stdVk_SyncShadowForRead();
-    *pSurface = stdVk_g.pShadowPixels;
+    stdGpu_SyncShadowForRead();
+    *pSurface = stdGpu_GetShadowPixels();
     *pWidth   = stdDisplay_g_backBuffer.rasterInfo.width;
     *pHeight  = stdDisplay_g_backBuffer.rasterInfo.height;
     *pPitch   = (int32_t)stdDisplay_g_backBuffer.rasterInfo.rowSize;
@@ -882,7 +881,7 @@ int J3DAPI stdDisplay_LockBackBuffer(void** pSurface, uint32_t* pWidth, uint32_t
 void stdDisplay_UnlockBackBuffer(void)
 {
     if ( stdDisplay_bOpen && stdDisplay_bModeSet ) {
-        stdVk_MarkShadowDirty();
+        stdGpu_MarkShadowDirty();
     }
 }
 

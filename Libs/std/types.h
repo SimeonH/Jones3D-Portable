@@ -109,10 +109,10 @@ typedef struct sStdTLVertex
 static_assert(sizeof(StdTLVertex) == 32, "sizeof(StdTLVertex) == 32");
 
 // Renderer texture handle
-#ifdef J3D_RENDERER_VULKAN
-typedef struct sStdVkTexture* tStd3DTexture;
-#else
+#ifdef J3D_RENDERER_DIRECTDRAW
 typedef LPDIRECT3DTEXTURE2 tStd3DTexture;
+#else
+typedef struct sStdGpuTexture* tStd3DTexture; // Defined by the GPU renderer backend
 #endif
 
 typedef struct sStdRect
@@ -253,7 +253,7 @@ J3D_ASSERT_SIZE32(tMemoryHeader, 32);
 
 struct sSystemTexture
 {
-#ifndef J3D_RENDERER_VULKAN
+#ifdef J3D_RENDERER_DIRECTDRAW
     DDSURFACEDESC2 ddsd;
 #endif
     tStd3DTexture pSrcTexture;
@@ -263,7 +263,7 @@ struct sSystemTexture
     tSystemTexture* pPrevCachedTexture;
     tSystemTexture* pNextCachedTexture;
 };
-#ifndef J3D_RENDERER_VULKAN
+#ifdef J3D_RENDERER_DIRECTDRAW
 static_assert(sizeof(tSystemTexture) == 148, "sizeof(tSystemTexture) == 148");
 #endif
 

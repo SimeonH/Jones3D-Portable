@@ -17,14 +17,14 @@ int J3DAPI stdDisplay_Open(size_t deviceNum);
 bool stdDisplay_IsOpen(void); // Added
 void stdDisplay_Close(void);
 
-#ifndef J3D_RENDERER_VULKAN
+#ifdef J3D_RENDERER_DIRECTDRAW
 LPDIRECTDRAW4 stdDisplay_GetDirectDraw(void); // Can be retrieved after display system is opened
 int J3DAPI stdDisplay_CreateZBuffer(LPDDPIXELFORMAT pPixelFormat, int bSystemMemory);
 #endif
 
 void stdDisplay_DisableVSync(bool bDisable); // Added
 
-#ifdef J3D_RENDERER_VULKAN
+#ifndef J3D_RENDERER_DIRECTDRAW
 // Scale of the game image in the window (window pixels per back buffer pixel), 0 if nothing was presented yet
 float stdDisplay_GetPresentScale(void);
 #endif

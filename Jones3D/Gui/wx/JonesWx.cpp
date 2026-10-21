@@ -280,7 +280,7 @@ wxBitmap JonesWx::LoadResourceIcon(int iconID, int size)
 
 double JonesWx::GetDialogScale()
 {
-#ifdef J3D_RENDERER_VULKAN
+#ifndef J3D_RENDERER_DIRECTDRAW
     // The game image is scaled to the window (the display mode never changes), scale the dialogs
     // the same so they keep the size relative to the game they had in the original game.
     if ( !JonesMain_HasStarted() ) {

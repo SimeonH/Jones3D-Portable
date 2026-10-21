@@ -49,3 +49,35 @@ const GUID* J3DAPI stdWin95_GetGuid(void)
 {
     return &stdWin95_guid;
 }
+
+#ifndef _WIN32
+
+static StdWindowApi stdWin95_preferredWindowApi       = STDWINDOW_API_VULKAN;
+static StdWin95SetWindowApiFunc stdWin95_pfSetWindowApi = NULL;
+
+void stdWin95_SetPreferredWindowApi(StdWindowApi api)
+{
+    stdWin95_preferredWindowApi = api;
+}
+
+StdWindowApi stdWin95_GetPreferredWindowApi(void)
+{
+    return stdWin95_preferredWindowApi;
+}
+
+void stdWin95_SetWindowApiFunc(StdWin95SetWindowApiFunc pfFunc)
+{
+    stdWin95_pfSetWindowApi = pfFunc;
+}
+
+HWND stdWin95_SetWindowApi(StdWindowApi api)
+{
+    stdWin95_preferredWindowApi = api;
+    if ( stdWin95_pfSetWindowApi ) {
+        stdWin95_hwnd = stdWin95_pfSetWindowApi(api);
+    }
+
+    return stdWin95_hwnd;
+}
+
+#endif // !_WIN32

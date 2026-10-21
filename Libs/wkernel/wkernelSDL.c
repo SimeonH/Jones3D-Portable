@@ -22,6 +22,7 @@ typedef struct sWKernelTimer
 } WKernelTimer;
 
 static SDL_Window* wkernel_pWindow = NULL;
+static StdWindowApi wkernel_windowApi = STDWINDOW_API_VULKAN;
 static bool wkernel_bQuit          = false;
 static Uint32 wkernel_postEventType = 0;
 
@@ -34,6 +35,7 @@ static WKernelTimer wkernel_aTimers[WKERNEL_MAXTIMERS];
 static GUID wkernel_guid = { 0x82CE4DA0, 0x9CBF, 0x01D1, { 0x90, 0x85, 0x00, 0x60, 0x97, 0x76, 0xEA, 0x02 } };
 
 static int wkernel_CreateWindow(LPCSTR lpWindowName);
+static HWND wkernel_SetWindowApi(StdWindowApi api);
 static int wkernel_ProcessEvent(const SDL_Event* pEvent);
 
 void wkernel_InstallHooks(void)
@@ -86,6 +88,7 @@ int J3DAPI wkernel_Run(HINSTANCE hinstance, HINSTANCE hPrevInstance, LPSTR lpCmd
     }
 
     wkernel_postEventType = SDL_RegisterEvents(1);
+    stdWin95_SetWindowApiFunc(wkernel_SetWindowApi);
 
     if ( wkernel_CreateWindow(lpWindowName) )
     {
@@ -123,6 +126,7 @@ int J3DAPI wkernel_Run(HINSTANCE hinstance, HINSTANCE hPrevInstance, LPSTR lpCmd
         wkernel_pWindow = NULL;
     }
 
+    stdWin95_SetWindowApiFunc(NULL);
     SDL_Quit();
     return result;
 }
@@ -227,17 +231,71 @@ HINSTANCE wkernel_GetResourceInstance(void)
     return NULL;
 }
 
-static int wkernel_CreateWindow(LPCSTR lpWindowName)
+// The window is created for the graphics API of the renderer, see stdWin95_SetWindowApi
+static SDL_Window* wkernel_NewWindow(const char* pTitle, int width, int height, SDL_WindowFlags flags, StdWindowApi api)
 {
-    wkernel_pWindow = SDL_CreateWindow(lpWindowName, 640, 480, SDL_WINDOW_VULKAN | SDL_WINDOW_HIGH_PIXEL_DENSITY);
-    if ( !wkernel_pWindow )
-    {
-        fprintf(stderr, "ERROR: wkernel_CreateWindow: %s\n", SDL_GetError());
-        return 1;
+    if ( api == STDWINDOW_API_OPENGL ) {
+        stdSDL_SetGLAttributes();
     }
 
-    SDL_StartTextInput(wkernel_pWindow); // WM_CHAR
-    return 0;
+    flags |= api == STDWINDOW_API_OPENGL ? SDL_WINDOW_OPENGL : SDL_WINDOW_VULKAN;
+    SDL_Window* pWindow = SDL_CreateWindow(pTitle, width, height, flags | SDL_WINDOW_HIGH_PIXEL_DENSITY);
+    if ( !pWindow )
+    {
+        fprintf(stderr, "ERROR: wkernel_CreateWindow: %s\n", SDL_GetError());
+        return NULL;
+    }
+
+    SDL_StartTextInput(pWindow); // WM_CHAR
+    return pWindow;
+}
+
+static int wkernel_CreateWindow(LPCSTR lpWindowName)
+{
+    wkernel_windowApi = stdWin95_GetPreferredWindowApi();
+    wkernel_pWindow   = wkernel_NewWindow(lpWindowName, 640, 480, 0, wkernel_windowApi);
+    return wkernel_pWindow ? 0 : 1;
+}
+
+static HWND wkernel_SetWindowApi(StdWindowApi api)
+{
+    if ( !wkernel_pWindow || api == wkernel_windowApi ) {
+        return wkernel_pWindow;
+    }
+
+    // A window can't switch its API, replace it with a new window in the same state.
+    // The new window is created hidden, so the old one keeps its place until it's shown.
+    SDL_WindowFlags oldFlags = SDL_GetWindowFlags(wkernel_pWindow);
+    SDL_WindowFlags flags    = SDL_WINDOW_HIDDEN | (oldFlags & (SDL_WINDOW_BORDERLESS | SDL_WINDOW_RESIZABLE | SDL_WINDOW_FULLSCREEN));
+
+    int x = 0, y = 0, width = 640, height = 480;
+    SDL_GetWindowPosition(wkernel_pWindow, &x, &y);
+    SDL_GetWindowSize(wkernel_pWindow, &width, &height);
+
+    char aTitle[256];
+    SDL_strlcpy(aTitle, SDL_GetWindowTitle(wkernel_pWindow), sizeof(aTitle));
+
+    SDL_Window* pWindow = wkernel_NewWindow(aTitle, width, height, flags, api);
+    if ( !pWindow ) {
+        return wkernel_pWindow;
+    }
+
+    if ( !(oldFlags & SDL_WINDOW_FULLSCREEN) ) {
+        SDL_SetWindowPosition(pWindow, x, y);
+    }
+
+    SDL_DestroyWindow(wkernel_pWindow);
+    wkernel_pWindow   = pWindow;
+    wkernel_windowApi = api;
+    stdWin95_SetWindow(pWindow);
+
+    if ( !(oldFlags & SDL_WINDOW_HIDDEN) )
+    {
+        SDL_ShowWindow(pWindow);
+        SDL_RaiseWindow(pWindow);
+    }
+
+    return pWindow;
 }
 
 static LPARAM wkernel_MakeKeyLParam(const SDL_KeyboardEvent* pKey, bool bUp)
@@ -279,6 +337,13 @@ static void wkernel_SendText(const char* pText)
 
 static int wkernel_ProcessEvent(const SDL_Event* pEvent)
 {
+    // Skip queued events of a game window replaced by wkernel_SetWindowApi
+    if ( pEvent->type >= SDL_EVENT_WINDOW_FIRST && pEvent->type <= SDL_EVENT_WINDOW_LAST
+        && wkernel_pWindow && pEvent->window.windowID != SDL_GetWindowID(wkernel_pWindow) )
+    {
+        return 0;
+    }
+
     switch ( pEvent->type )
     {
         case SDL_EVENT_QUIT:

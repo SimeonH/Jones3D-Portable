@@ -12,14 +12,14 @@ This project does ***not*** include any game assets. You need a copy of the game
 
 - **Multiple platforms** — runs natively on Windows and Linux (64-bit and 32-bit). Save games use the original file format and can be shared between platforms.
 - **Original dialog boxes, recreated with wxWidgets** — every game dialog is rebuilt with native widgets, following the original layouts.
-- **Vulkan renderer** — a modern rendering backend that replaces DirectDraw / Direct3D 6, while drawing the same image as the original renderer.
+- **Vulkan and OpenGL ES 2.0 renderers** — modern rendering backends that replace DirectDraw / Direct3D 6, while drawing the same image as the original renderer. On Linux both are built in and selectable in the display settings.
 - **In-game help** — the game's original WinHelp file opens in [Rust HLP Viewer](https://github.com/NullMagic2/Rust-HLP-Viewer), as current systems no longer ship a WinHelp viewer.
 - **Game data installer** (Linux) — on first start, the game data is installed from a Steam installation, the GOG offline installer or the original CDs.
 
 | Platform | Renderer | Platform layer | Sound |
 |---|---|---|---|
 | Windows (32-bit) | DirectDraw / Direct3D 6 (original) or Vulkan | Win32 | DirectSound |
-| Linux (x86_64, i686) | Vulkan | SDL3 | OpenAL Soft |
+| Linux (x86_64, i686) | Vulkan or OpenGL ES 2.0 | SDL3 | OpenAL Soft |
 
 ## Faithful to the original
 
@@ -42,14 +42,15 @@ The original game builds its menus and options screens from Win32 dialog templat
 - Dialog icons are read directly from the original `Indy3D.exe` (on Linux it's read as a data file, without the Win32 resource API).
 - Dialogs pause the game, scale with the game window and keep the original keyboard behavior (Enter confirms, Escape cancels).
 
-### Vulkan renderer
+### Vulkan and OpenGL ES 2.0 renderers
 
-The original engine draws through DirectDraw and Direct3D 6, which current drivers only support through compatibility layers. The Vulkan backend (`Libs/std/Vulkan`) implements the engine's `std3D` / `stdDisplay` interfaces on Vulkan 1.3, so the rest of the engine renders exactly as before:
+The original engine draws through DirectDraw and Direct3D 6, which current drivers only support through compatibility layers. The GPU renderers implement the engine's `std3D` / `stdDisplay` interfaces (`Libs/std/Gpu`) over a Vulkan 1.3 backend (`Libs/std/Vulkan`) and an OpenGL ES 2.0 backend (`Libs/std/GLES2`), so the rest of the engine renders exactly as before:
 
-- It's the renderer of the Linux builds and an option of the Windows build (`-DJONES3D_RENDERER=Vulkan`); the original DirectDraw renderer remains the Windows default.
+- Each backend is a display device: on Linux, Vulkan and OpenGL ES 2.0 are both listed in the display settings and the game switches between them without a restart. OpenGL ES 2.0 is for GPUs and drivers without Vulkan 1.3.
+- Vulkan is an option of the Windows build (`-DJONES3D_RENDERER=Vulkan`); the original DirectDraw renderer remains the Windows default. OpenGL ES 2.0 needs the SDL3 platform layer, so it's Linux only.
 - The rendered image is scaled to fit the window, so the display mode never has to change.
 - The 2D surfaces the original code draws into (HUD, menus, movies) are kept in system memory and uploaded when needed, as the game expects to lock and write them directly.
-- Uses [volk](https://github.com/zeux/volk) to load Vulkan at runtime and dynamic rendering; shaders are compiled at build time and embedded.
+- Uses [volk](https://github.com/zeux/volk) to load Vulkan at runtime and dynamic rendering, Vulkan shaders are compiled at build time and embedded. OpenGL ES is loaded at runtime through SDL.
 
 ### In-game help
 
@@ -153,6 +154,7 @@ The Windows build can also be cross-compiled from Linux with clang-cl, see `tool
 | Option | Default | Description |
 |---|---|---|
 | `JONES3D_RENDERER` | `DirectDraw` (Windows), `Vulkan` (Linux) | Renderer backend |
+| `JONES3D_RENDERER_GLES2` | `ON` (Linux) | Also builds the OpenGL ES 2.0 renderer |
 | `JONES3D_BUILD_STANDALONE` | `ON` | Builds the standalone `OpenJones3D.exe` (Windows) |
 | `JONES3D_BUILD_HLP_VIEWER` | `ON` when cargo is found | Builds Rust HLP Viewer for the in-game help |
 | `JONES3D_QOL_IMPROVEMENTS` | `ON` | Quality-of-life improvements: better error handling, logging and debugging features |
@@ -182,7 +184,7 @@ The Jones3D engine is an upgraded version of the *Sith* engine of *Star Wars Jed
 
 - `w32util` — settings, stored in the Windows registry (a settings file on Linux).
 - `wkernel` — game window and its events (Win32, or SDL3 on Linux).
-- `std` — LucasArts' standard library: general utilities (strings, file paths, math, GOB archives) and the hardware layer (display, 3D, input, networking). The Vulkan renderer and the SDL3 platform code live here.
+- `std` — LucasArts' standard library: general utilities (strings, file paths, math, GOB archives) and the hardware layer (display, 3D, input, networking). The GPU renderers and the SDL3 platform code live here.
 - `sound` — sound playback (DirectSound, or OpenAL Soft on Linux).
 - `rdroid` — RenderDroid, the lower level of the rendering system: loads models, animations and textures, and draws primitives.
 - `sith` — the heart of the game: game logic, the COG script VM, game objects (*things*), physics, collision, camera, AI and save games.
