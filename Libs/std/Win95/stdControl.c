@@ -311,9 +311,16 @@ int J3DAPI stdControl_EnableAxis(int axisID)
     return 1;
 }
 
+#ifndef _WIN32
+static void stdControl_UpdateJoystickDevices(void);
+#endif
+
 void stdControl_ReadControls(void)
 {
     STD_ASSERTREL(stdControl_bStartup && stdControl_bOpen);
+#ifndef _WIN32
+    stdControl_UpdateJoystickDevices();
+#endif
     if ( stdControl_bControlsActive )
     {
         stdControl_bControlsIdle = true;
@@ -1328,6 +1335,9 @@ size_t stdControl_GetMaxJoystickButtons(void)
 
 size_t stdControl_GetNumJoysticks(void)
 {
+#ifndef _WIN32
+    stdControl_UpdateJoystickDevices();
+#endif
     return stdControl_numJoystickDevices;
 }
 
@@ -1402,7 +1412,8 @@ void J3DAPI stdControl_SetMouseSensitivity(float xSensitivity, float ySensitivit
 // axes X/Y left stick, Z triggers, RX/RY right stick; buttons A, B, X, Y, LB, RB, Back, Start, LS, RS; d-pad is POV 0.
 
 static int stdControl_mouseWheel = 0;
-static bool stdControl_bMouseActive = false;
+static bool stdControl_bMouseActive     = false;
+static bool stdControl_bJoysticksChanged = false;
 
 static bool SDLCALL stdControl_EventWatch(void* pUserData, SDL_Event* pEvent)
 {
@@ -1410,7 +1421,54 @@ static bool SDLCALL stdControl_EventWatch(void* pUserData, SDL_Event* pEvent)
     if ( pEvent->type == SDL_EVENT_MOUSE_WHEEL ) {
         stdControl_mouseWheel += (int)(pEvent->wheel.y * 120.0f); // WHEEL_DELTA units like DirectInput
     }
+    else if ( pEvent->type == SDL_EVENT_GAMEPAD_ADDED || pEvent->type == SDL_EVENT_GAMEPAD_REMOVED ) {
+        stdControl_bJoysticksChanged = true; // Gamepads are enumerated again by stdControl_UpdateJoystickDevices
+    }
     return true;
+}
+
+static void stdControl_CloseJoysticks(void)
+{
+    for ( size_t i = 0; i < stdControl_numJoystickDevices; i++ )
+    {
+        if ( stdControl_aJoystickDevices[i].pGamepad ) {
+            SDL_CloseGamepad((SDL_Gamepad*)stdControl_aJoystickDevices[i].pGamepad);
+        }
+    }
+
+    stdControl_numJoystickDevices = 0;
+    memset(stdControl_aJoystickDevices, 0, sizeof(stdControl_aJoystickDevices));
+}
+
+// Added: Enumerates the gamepads again when one was connected or disconnected while the game runs,
+//        the original enumerated the joysticks only at startup
+static void stdControl_UpdateJoystickDevices(void)
+{
+    if ( !stdControl_bStartup || !stdControl_bJoysticksChanged ) {
+        return;
+    }
+
+    stdControl_bJoysticksChanged = false;
+
+    // Release the controls of the current devices
+    for ( size_t joyNum = 0; joyNum < stdControl_numJoystickDevices; ++joyNum )
+    {
+        for ( size_t btnNum = 0; btnNum < STDCONTROL_NUM_JOYSTICK_BUTTONS; ++btnNum ) {
+            stdControl_UpdateKeyState(STDCONTROL_JOYSTICK_GETBUTTON(joyNum, btnNum), 0, stdControl_curReadTime);
+        }
+
+        stdControl_UpdateKeyState(STDCONTROL_JOYSTICK_GETPOVLEFT(joyNum, 0), 0, stdControl_curReadTime);
+        stdControl_UpdateKeyState(STDCONTROL_JOYSTICK_GETPOVUP(joyNum, 0), 0, stdControl_curReadTime);
+        stdControl_UpdateKeyState(STDCONTROL_JOYSTICK_GETPOVRIGHT(joyNum, 0), 0, stdControl_curReadTime);
+        stdControl_UpdateKeyState(STDCONTROL_JOYSTICK_GETPOVDOWN(joyNum, 0), 0, stdControl_curReadTime);
+
+        for ( size_t axis = 0; axis < STDCONTROL_JOYSTICK_NUMAXES; ++axis ) {
+            stdControl_aAxisStates[STDCONTROL_GET_JOYSTICK_AXIS(joyNum, axis)] = 0;
+        }
+    }
+
+    stdControl_CloseJoysticks();
+    stdControl_InitJoysticks();
 }
 
 static SDL_Window* stdControl_GetSDLWindow(void)
@@ -1447,6 +1505,7 @@ int J3DAPI stdControl_Startup(int bKeyboardForeground)
 
     SDL_InitSubSystem(SDL_INIT_GAMEPAD);
     SDL_AddEventWatch(stdControl_EventWatch, NULL);
+    stdControl_bJoysticksChanged = false; // Enumerated below
 
     stdControl_InitKeyboard(bKeyboardForeground);
     stdControl_InitJoysticks();
@@ -1463,16 +1522,7 @@ void stdControl_Shutdown(void)
     {
         stdControl_bStartup = false;
         SDL_RemoveEventWatch(stdControl_EventWatch, NULL);
-
-        for ( size_t i = 0; i < stdControl_numJoystickDevices; i++ )
-        {
-            if ( stdControl_aJoystickDevices[i].pGamepad ) {
-                SDL_CloseGamepad((SDL_Gamepad*)stdControl_aJoystickDevices[i].pGamepad);
-            }
-        }
-
-        stdControl_numJoystickDevices = 0;
-        memset(stdControl_aJoystickDevices, 0, sizeof(stdControl_aJoystickDevices));
+        stdControl_CloseJoysticks();
 
         stdControl_bMouseActive = false;
         stdControl_UpdateRelativeMouse();

@@ -89,6 +89,18 @@ int J3DAPI JonesControl_ProcessControls(SithThing* pPlayer, float secDeltaTime)
 {
     J3D_UNUSED(secDeltaTime);
 
+    // Added: A joystick connected while the game runs is used when joystick control is enabled,
+    //        the same as a joystick connected at startup (see JonesControl_Startup)
+    static size_t numJoysticks = 0;
+    const size_t curNumJoysticks = stdControl_GetNumJoysticks();
+    if ( curNumJoysticks != numJoysticks )
+    {
+        if ( curNumJoysticks > numJoysticks && wuRegistry_GetIntEx("Joystick Control", 0) == 1 ) {
+            JonesControl_EnableJoystickAxes();
+        }
+        numJoysticks = curNumJoysticks;
+    }
+
     if ( (pPlayer->thingInfo.actorInfo.flags & SITH_AF_CONTROLSDISABLED) != 0 || JonesConsole_g_bVisible )
     {
         return 0;
