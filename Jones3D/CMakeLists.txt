@@ -34,7 +34,7 @@ endfunction()
 file(GLOB JONES3D_WX_SOURCES CONFIGURE_DEPENDS Gui/wx/*.cpp)
 
 if(NOT WIN32)
-    # Native build: a single OpenJones3D executable, there's no Indy3D.exe to inject into
+    # Native build: a single jones3d-portable executable, there's no Indy3D.exe to inject into
     set(JONES3D_NATIVE_SOURCES ${JONES3D_DLL_SOURCES})
     list(REMOVE_ITEM JONES3D_NATIVE_SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/dllmain.c")
     list(APPEND JONES3D_NATIVE_SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/linuxmain.c")
@@ -42,6 +42,7 @@ if(NOT WIN32)
     add_executable(OpenJones3D ${JONES3D_NATIVE_SOURCES} ${JONES3D_DLL_HEADERS})
     target_include_directories(OpenJones3D PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/..)
     target_link_libraries(OpenJones3D PRIVATE Libs ${JONES3D_WX_LIBS})
+    set_target_properties(OpenJones3D PROPERTIES OUTPUT_NAME jones3d-portable)
     jones3d_add_hlp_viewer(OpenJones3D)
     return()
 endif()

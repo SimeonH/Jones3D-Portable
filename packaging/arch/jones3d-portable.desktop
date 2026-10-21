@@ -1,0 +1,15 @@
+[Desktop Entry]
+Type=Application
+Name=OpenJones3D
+GenericName=Action Adventure Game
+Comment=Open source engine for Indiana Jones and the Infernal Machine (needs the original game data)
+Exec=jones3d-portable
+Icon=applications-games
+Terminal=false
+Categories=Game;ActionGame;AdventureGame;
+Keywords=Indiana Jones;Infernal Machine;Jones3D;
+Actions=InstallData;
+
+[Desktop Action InstallData]
+Name=Install Game Data
+Exec=jones3d-portable -installdata
