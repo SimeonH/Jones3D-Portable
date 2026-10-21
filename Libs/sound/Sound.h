@@ -44,7 +44,6 @@ void J3DAPI Sound_EnableLoad(int bEnable);
 
 size_t J3DAPI Sound_ExportStaticBank(tFileHandle fh);
 int J3DAPI Sound_ImportStaticBank(tFileHandle fh);
-void J3DAPI Sound_SetFileReadCallback(SoundFileReadCallback pfCallback); // Added
 
 size_t J3DAPI Sound_ExportNormalBank(tFileHandle fh);
 int J3DAPI Sound_ImportNormalBank(tFileHandle fh);

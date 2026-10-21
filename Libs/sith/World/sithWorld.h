@@ -29,7 +29,6 @@ void sithWorld_Shutdown(void);
 
 void J3DAPI sithWorld_SetLoadProgressCallback(SithWorldLoadProgressCallback pfProgressCallback);
 void J3DAPI sithWorld_UpdateLoadProgress(float progress);
-void J3DAPI sithWorld_UpdateLoadProgressFromFile(tFileHandle fh); // Added
 int J3DAPI sithWorld_Load(SithWorld* pWorld, const char* pFilename);
 int J3DAPI sithWorld_LoadPostProcess(SithWorld* pWorld);
 int J3DAPI sithWorld_LoadEntryText(SithWorld* pWorld, const char* pFilename, int bSkipParsing);
