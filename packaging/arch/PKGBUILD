@@ -10,7 +10,7 @@ pkgrel=1
 pkgdesc="Open source engine for Indiana Jones and the Infernal Machine (needs the original game data)"
 arch=('x86_64')
 url="https://github.com/SimeonH/Jones3D-Portable"
-license=('AGPL-3.0-only' 'MIT') # MIT: Rust HLP Viewer (in-game help)
+license=('AGPL-3.0-only' 'LGPL-2.1-only') # LGPL: libmspack (CHM help)
 depends=(
   'cairo'
   'gcc-libs'
@@ -25,12 +25,6 @@ depends=(
   'pango'
   'sdl3'
   'vulkan-icd-loader' # Loaded at runtime by volk
-  # Rust HLP Viewer, its wxWidgets is built by wxdragon with these
-  'libnotify'
-  'libsm'
-  'libtiff'
-  'sdl2'
-  'wayland'
 )
 makedepends=(
   'alsa-lib'   # OpenAL Soft backends, loaded at runtime
@@ -40,7 +34,6 @@ makedepends=(
   'libpulse'
   'ninja'
   'pipewire'
-  'rust'
 )
 optdepends=(
   'innoextract: install the game data from the GOG offline installer'
@@ -54,7 +47,6 @@ replaces=('openjones3d-git') # Former package name
 options=('!lto')
 
 _branch=main
-_hlpviewer=a685ecc2fe8d040750ada76d42a8bc6f5a508f7d
 source=(
   "Jones3D-Portable::git+https://github.com/SimeonH/Jones3D-Portable.git#branch=${_branch}"
   # Dependencies the CMake build would otherwise download (see Libs/external)
@@ -62,19 +54,15 @@ source=(
   "openal-soft-1.24.3.tar.gz::https://github.com/kcat/openal-soft/archive/refs/tags/1.24.3.tar.gz"
   "Vulkan-Headers-1.4.304.tar.gz::https://github.com/KhronosGroup/Vulkan-Headers/archive/refs/tags/v1.4.304.tar.gz"
   "volk-1.4.304.tar.gz::https://github.com/zeux/volk/archive/refs/tags/1.4.304.tar.gz"
-  "Rust-HLP-Viewer-${_hlpviewer}.tar.gz::https://github.com/NullMagic2/Rust-HLP-Viewer/archive/${_hlpviewer}.tar.gz"
-  # wxWidgets of the help viewer (wxdragon-sys), the zip has no top-level folder
-  "wxWidgets-3.3.3.zip::https://github.com/wxWidgets/wxWidgets/releases/download/v3.3.3/wxWidgets-3.3.3.zip"
+  "libmspack-1.11.tar.gz::https://github.com/kyz/libmspack/archive/refs/tags/v1.11.tar.gz"
   "jones3d-portable.desktop"
 )
-noextract=('wxWidgets-3.3.3.zip')
 sha256sums=('SKIP'
             'c74784904109d7229e6894c85cfa068f1106a4a07c144afd78af41f373ee0fe6'
             '7e1fecdeb45e7f78722b776c5cf30bd33934b961d7fd2a11e0494e064cc631ce'
             '5e1a06b3f27e7581b55d1dea176fd97ee0a2f299406db2f437c1d2f297ceba5b'
             'ab3d4a8ccaeb32652259cdd008399504a41792675b0421d90b67729ee274746f'
-            'e8bb90de8e4ec88d008d3a410108f922082eaea7acad4e3f8aa4f263f1cfc9a6'
-            '458a1ef598c90174ee43622e8e63bfa1eccb451ffc2258bb4f8edcb050c5feb1'
+            '284e0e51fee991c40e8cbbc0f5e635f99722796a3642a14397989fc00b862f72'
             'SKIP')
 
 pkgver() {
@@ -84,48 +72,27 @@ pkgver() {
   printf "%s.r%s.g%s" "$version" "$(git rev-list --count HEAD)" "$(git rev-parse --short=7 HEAD)"
 }
 
-prepare() {
-  # In this Rust HLP Viewer commit the workspace manifest was uploaded as LICENSE (see Libs/external/HlpViewer)
-  cd "Rust-HLP-Viewer-${_hlpviewer}"
-  cp LICENSE Cargo.toml
-  export RUSTUP_TOOLCHAIN=stable
-  cargo fetch --locked --target "$(rustc -vV | sed -n 's/host: //p')"
-
-  cd "$srcdir"
-  rm -rf wxWidgets-3.3.3
-  mkdir wxWidgets-3.3.3
-  bsdtar -xf wxWidgets-3.3.3.zip -C wxWidgets-3.3.3
-}
-
 build() {
-  # Keep build paths out of the binaries (wx assert file names, Rust panic locations)
+  # Keep build paths out of the binaries (wx assert file names)
   CFLAGS+=" -ffile-prefix-map=$srcdir=."
   CXXFLAGS+=" -ffile-prefix-map=$srcdir=."
-  export RUSTFLAGS+=" --remap-path-prefix=$srcdir=. --remap-path-prefix=${CARGO_HOME:-$HOME/.cargo}=cargo"
-
-  export RUSTUP_TOOLCHAIN=stable
-  export CARGO_NET_OFFLINE=true
-  export WXWIDGETS_DIR="$srcdir/wxWidgets-3.3.3"
 
   cmake -S Jones3D-Portable -B build -G Ninja \
     -DCMAKE_BUILD_TYPE=Release \
     -DCMAKE_C_COMPILER=clang \
     -DCMAKE_CXX_COMPILER=clang++ \
     -DJONES3D_BUILD_PROGRAMS=OFF \
-    -DJONES3D_BUILD_HLP_VIEWER=ON \
-    -DJONES3D_HLP_VIEWER_SOURCE_DIR="$srcdir/Rust-HLP-Viewer-${_hlpviewer}" \
     -DFETCHCONTENT_FULLY_DISCONNECTED=ON \
     -DFETCHCONTENT_SOURCE_DIR_WXWIDGETS="$srcdir/wxWidgets-3.2.8" \
     -DFETCHCONTENT_SOURCE_DIR_OPENALSOFT="$srcdir/openal-soft-1.24.3" \
     -DFETCHCONTENT_SOURCE_DIR_VULKANHEADERS="$srcdir/Vulkan-Headers-1.4.304" \
-    -DFETCHCONTENT_SOURCE_DIR_VOLK="$srcdir/volk-1.4.304"
+    -DFETCHCONTENT_SOURCE_DIR_VOLK="$srcdir/volk-1.4.304" \
+    -DFETCHCONTENT_SOURCE_DIR_LIBMSPACK="$srcdir/libmspack-1.11"
   cmake --build build
 }
 
 package() {
-  # The help viewer is looked for next to the game executable, so both live in /usr/lib/jones3d-portable
   install -Dm755 build/Jones3D/jones3d-portable "$pkgdir/usr/lib/jones3d-portable/jones3d-portable"
-  install -Dm755 build/Jones3D/hlp-viewer "$pkgdir/usr/lib/jones3d-portable/hlp-viewer"
   install -dm755 "$pkgdir/usr/bin"
   ln -s /usr/lib/jones3d-portable/jones3d-portable "$pkgdir/usr/bin/jones3d-portable"
 

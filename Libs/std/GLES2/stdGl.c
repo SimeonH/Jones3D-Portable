@@ -138,14 +138,22 @@ static int stdGl_CreateContext(SDL_Window* pWindow)
     const char* pExtensions = (const char*)glGetString(GL_EXTENSIONS);
 
     glGetIntegerv(GL_MAX_TEXTURE_SIZE, &stdGl_g.maxTextureSize);
-    stdGl_g.bNpot = stdGl_HasExtension(pExtensions, "GL_OES_texture_npot") || (pVersion && strncmp(pVersion, "OpenGL ES 3", 11) == 0);
+    stdGl_g.bDesktop = pVersion && strncmp(pVersion, "OpenGL ES", 9) != 0;
+    stdGl_g.bNpot    = stdGl_g.bDesktop || stdGl_HasExtension(pExtensions, "GL_OES_texture_npot") || (pVersion && strncmp(pVersion, "OpenGL ES 3", 11) == 0);
+
+    // Desktop OpenGL compiles the GLSL ES 1.00 shaders as such with ARB_ES2_compatibility (core in 4.1),
+    // else as GLSL 1.30, which accepts the precision qualifiers
+    stdGl_g.pShaderHeader = "";
+    if ( stdGl_g.bDesktop ) {
+        stdGl_g.pShaderHeader = stdGl_HasExtension(pExtensions, "GL_ARB_ES2_compatibility") ? "#version 100\n" : "#version 130\n";
+    }
 
     stdGl_g.maxAnisotropy = 0.0f;
     if ( stdGl_HasExtension(pExtensions, "GL_EXT_texture_filter_anisotropic") ) {
         glGetFloatv(GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, &stdGl_g.maxAnisotropy);
     }
 
-    if ( stdGl_HasExtension(pExtensions, "GL_OES_depth24") ) {
+    if ( stdGl_g.bDesktop || stdGl_HasExtension(pExtensions, "GL_OES_depth24") ) {
         stdGl_g.depthFormat = GL_DEPTH_COMPONENT24_OES;
     }
     else if ( stdGl_HasExtension(pExtensions, "GL_OES_packed_depth_stencil") ) {
@@ -155,7 +163,7 @@ static int stdGl_CreateContext(SDL_Window* pWindow)
         stdGl_g.depthFormat = GL_DEPTH_COMPONENT16;
     }
 
-    STDLOG_STATUS("OpenGL ES: %s, %s, max texture %d, anisotropy %g, npot %d, depth 0x%X.\n",
+    STDLOG_STATUS("OpenGL%s: %s, %s, max texture %d, anisotropy %g, npot %d, depth 0x%X.\n", stdGl_g.bDesktop ? "" : " ES",
         pRenderer ? pRenderer : "?", pVersion ? pVersion : "?", stdGl_g.maxTextureSize, (double)stdGl_g.maxAnisotropy, stdGl_g.bNpot, stdGl_g.depthFormat);
 
     glPixelStorei(GL_UNPACK_ALIGNMENT, 4);
@@ -254,7 +262,8 @@ void stdGl_SetCap(GLenum cap, int* pState, bool bEnable)
 static GLuint stdGl_CompileShader(GLenum type, const char* pSource)
 {
     GLuint shader = glCreateShader(type);
-    glShaderSource(shader, 1, &pSource, NULL);
+    const char* apSources[] = { stdGl_g.pShaderHeader ? stdGl_g.pShaderHeader : "", pSource };
+    glShaderSource(shader, 2, apSources, NULL);
     glCompileShader(shader);
 
     GLint status = GL_FALSE;
@@ -360,8 +369,7 @@ static int stdGl_CreateBackBuffer(HWND hwnd, uint32_t width, uint32_t height)
     stdGl_SetCap(GL_SCISSOR_TEST, &stdGl_g.bScissor, false);
     stdGl_SetDepthMask(true);
     glViewport(0, 0, (GLsizei)width, (GLsizei)height);
-    glClearDepthf(1.0f);
-    glClear(GL_DEPTH_BUFFER_BIT);
+    glClear(GL_DEPTH_BUFFER_BIT); // Clear depth is the default 1.0
     stdGl_g.bShadowDirty = true;
     stdGl_g.bGpuNewer    = false;
     return 1;
@@ -607,7 +615,6 @@ static void stdGl_ClearDepth(void)
 
     stdGl_BeginRendering();
     stdGl_SetDepthMask(true);
-    glClearDepthf(1.0f);
     glClear(GL_DEPTH_BUFFER_BIT);
 }
 

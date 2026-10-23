@@ -104,11 +104,6 @@ typedef struct sStdVkContext
     VkImageLayout depthLayout;
 
     // CPU mirror of the back buffer
-#ifdef _WIN32
-    HDC hShadowDC;
-    HBITMAP hShadowBitmap;
-    HGDIOBJ hShadowPrevBitmap;
-#endif
     uint8_t* pShadowPixels;
     StdVkBuffer shadowStaging; // upload & readback of the mirror
     bool bShadowDirty;         // CPU wrote to the mirror, upload before next GPU op

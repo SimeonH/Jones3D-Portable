@@ -10,6 +10,7 @@
 #include <std/General/stdMath.h>
 #include <std/General/stdPlatform.h>
 #include <std/General/stdUtil.h>
+#include <std/Win95/stdWin95.h>
 
 #define SOUNDDRIVER_FARVOLUMETHRESHOLD 0.01f
 
@@ -151,12 +152,33 @@ static void SoundDriver_LogError(const char* pFormat, ...)
     }
 }
 
+// Added: DirectSound cooperates with the Win32 window of the game window, which is an SDL window (hwnd is its SDL_Window*).
+// The Win32 window changes when the game window is recreated for another renderer, the cooperative level is then set again,
+// otherwise the sounds stay muted as DirectSound mutes them while its window isn't in the foreground.
+static HWND SoundDriver_GetCooperativeWindow(void)
+{
+    HWND hwndNative = stdWin95_GetNativeWindow();
+    return hwndNative ? hwndNative : GetDesktopWindow();
+}
+
+static void SoundDriver_UpdateCooperativeWindow(void)
+{
+    HWND hwnd = SoundDriver_GetCooperativeWindow();
+    if ( !SoundDriver_pDirectSound || SoundDriver_bDSoundNotCreated || hwnd == SoundDriver_hwnd ) {
+        return;
+    }
+
+    SoundDriver_hwnd = hwnd;
+    SoundDriver_DSCheckStatus(IDirectSound_SetCooperativeLevel(SoundDriver_pDirectSound, SoundDriver_hwnd, DSSCL_PRIORITY), __LINE__);
+}
+
 int J3DAPI SoundDriver_Open(int bNoSound3D, int bGlobalFocus, HWND hwnd, LPDIRECTSOUND pDirectSound, SoundCalcListenerSoundMixFunc pfCalcListenerSoundMix, SoundDriverGetSoundBufferDataFunc pfGetSoundBufferData, tPrintfFunc pfLogError)
 {
     SoundDriver_pfLogError         = pfLogError;
     SoundDriver_bNoDSound3D        = bNoSound3D;
     SoundDriver_bUseGlobalFocusBuf = bGlobalFocus;
-    SoundDriver_hwnd               = hwnd;
+    SoundDriver_hwnd               = SoundDriver_GetCooperativeWindow(); // Changed: hwnd is the SDL game window
+    J3D_UNUSED(hwnd);
 
     SoundDriver_InitPanTable();
 
@@ -682,6 +704,7 @@ void J3DAPI SoundDriver_SetListenerPosition(const rdVector3* pPos, const rdVecto
 
 void SoundDriver_ListenerCommitDeferred(void)
 {
+    SoundDriver_UpdateCooperativeWindow(); // Added
     if ( SoundDriver_bUse3DCaps )
     {
         if ( SoundDriver_pDS3DListener )

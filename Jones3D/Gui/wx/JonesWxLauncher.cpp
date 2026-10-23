@@ -44,7 +44,6 @@ namespace
     constexpr int buttonHeight   = 26;
 
     constexpr const char* steamLauncherExe = "Jones3D.exe";
-    constexpr uint32_t steamLaunchPictureID = 141; // RT_BITMAP of the Launch page picture
 
     enum Page
     {
@@ -85,10 +84,10 @@ namespace
     };
 
     const SoundInfo aSounds[NUM_SOUNDS] = {
-        { "open.wav",  155 },
-        { "start.wav", 156 },
-        { "back.wav",  152 },
-        { "click.wav", 153 },
+        { "open.wav",  JonesWx::steamSoundOpenID },
+        { "start.wav", JonesWx::steamSoundStartID },
+        { "back.wav",  JonesWx::steamSoundBackID },
+        { "click.wav", JonesWx::steamSoundClickID },
     };
 
     struct ButtonInfo
@@ -304,26 +303,11 @@ namespace
             return wxImage(); // Other pages show the launch picture
         }
 
-        // Steam version: RT_BITMAP resource, the BITMAPINFO without the file header
         const wxString steamExe = FindSteamLauncher();
-        const std::vector<uint8_t> dib = steamExe.empty() ? std::vector<uint8_t>() : JonesWx::ReadExeResource(steamExe, 2, steamLaunchPictureID);
-        if ( dib.size() < 40 ) {
+        const std::vector<uint8_t> bmp = steamExe.empty() ? std::vector<uint8_t>() : JonesWx::ReadExeBitmapFile(steamExe, JonesWx::steamLaunchPictureID);
+        if ( bmp.empty() ) {
             return wxImage();
         }
-
-        const uint32_t headerSize = dib[0] | dib[1] << 8 | dib[2] << 16 | (uint32_t)dib[3] << 24;
-        const uint16_t bpp        = (uint16_t)(dib[14] | dib[15] << 8);
-        uint32_t numColors        = dib[32] | dib[33] << 8 | dib[34] << 16 | (uint32_t)dib[35] << 24;
-        if ( !numColors && bpp <= 8 ) {
-            numColors = 1u << bpp;
-        }
-
-        const uint32_t fileSize = (uint32_t)(14 + dib.size());
-        const uint32_t bitsOffset = 14 + headerSize + numColors * 4;
-        std::vector<uint8_t> bmp = { 'B', 'M',
-            (uint8_t)fileSize, (uint8_t)(fileSize >> 8), (uint8_t)(fileSize >> 16), (uint8_t)(fileSize >> 24), 0, 0, 0, 0,
-            (uint8_t)bitsOffset, (uint8_t)(bitsOffset >> 8), (uint8_t)(bitsOffset >> 16), (uint8_t)(bitsOffset >> 24) };
-        bmp.insert(bmp.end(), dib.begin(), dib.end());
 
         wxMemoryInputStream stream(bmp.data(), bmp.size());
         wxLogNull noLog;
@@ -409,10 +393,7 @@ namespace
                 break;
 
             case ACTION_RESUME_PLAY:
-                PlaySound(SOUND_CLICK, /*bWait=*/false);
-                startMode = JONES_STARTMODE_LOADGAME;
-                result    = JONESLAUNCHER_START;
-                EndModal(wxID_OK);
+                StartGame(JONES_STARTMODE_LOADGAME);
                 break;
 
             case ACTION_SOUND_OPTIONS:
@@ -542,7 +523,9 @@ namespace
         }
     }
 
-    // Plays a .wav file like PlaySound, a new sound stops the playing one
+    // Plays a .wav file like PlaySound, a new sound stops the playing one.
+    // The stream stays open while the launcher is shown, a newly opened output (or one PipeWire suspended when idle)
+    // takes a while before it's audible, which would swallow the short game start sound.
     void SoundPlay(const std::vector<uint8_t>& wav, bool bWait)
     {
         if ( wav.empty() ) {
@@ -560,11 +543,15 @@ namespace
             return;
         }
 
-        if ( pSoundStream ) {
-            SDL_DestroyAudioStream(pSoundStream);
+        if ( !pSoundStream ) {
+            pSoundStream = SDL_OpenAudioDeviceStream(SDL_AUDIO_DEVICE_DEFAULT_PLAYBACK, &spec, nullptr, nullptr);
+        }
+        else
+        {
+            SDL_ClearAudioStream(pSoundStream);
+            SDL_SetAudioStreamFormat(pSoundStream, &spec, nullptr);
         }
 
-        pSoundStream = SDL_OpenAudioDeviceStream(SDL_AUDIO_DEVICE_DEFAULT_PLAYBACK, &spec, nullptr, nullptr);
         if ( pSoundStream )
         {
             SDL_PutAudioStreamData(pSoundStream, pBuffer, (int)length);
@@ -573,10 +560,12 @@ namespace
 
             if ( bWait )
             {
-                while ( SDL_GetAudioStreamQueued(pSoundStream) > 0 ) {
+                // Like PlaySound SND_SYNC: return when the sound was heard, i.e. after its duration plus the output latency
+                const Uint64 durationMs = (Uint64)length * 1000 / ((Uint64)SDL_AUDIO_FRAMESIZE(spec) * (Uint64)spec.freq);
+                const Uint64 endTime    = SDL_GetTicks() + durationMs + 250;
+                while ( SDL_GetTicks() < endTime ) {
                     SDL_Delay(10);
                 }
-                SDL_Delay(100); // Device buffer
             }
         }
 

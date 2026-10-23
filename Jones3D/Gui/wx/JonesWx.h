@@ -49,6 +49,16 @@ namespace JonesWx
     // pTypeName is the name of a named resource type (e.g. "WAVE"), type is used when it's null.
     std::vector<uint8_t> ReadExeResource(const wxString& exePath, uint32_t type, uint32_t id, const char* pTypeName = nullptr);
 
+    // Reads RT_BITMAP resource id from the executable at exePath as the data of a .bmp file, empty if not found
+    std::vector<uint8_t> ReadExeBitmapFile(const wxString& exePath, uint32_t id);
+
+    // Resources of the Steam version's launcher (Jones3D.exe): the Launch page picture and the sounds of the original launcher
+    constexpr uint32_t steamLaunchPictureID = 141; // RT_BITMAP, launch.bmp of the CD
+    constexpr uint32_t steamSoundOpenID     = 155; // WAVE resources: open.wav, start.wav, back.wav and click.wav of the CD
+    constexpr uint32_t steamSoundStartID    = 156;
+    constexpr uint32_t steamSoundBackID     = 152;
+    constexpr uint32_t steamSoundClickID    = 153;
+
     // Returns the game folders of all Steam libraries containing the game (JonesWxDataInstaller.cpp)
     wxArrayString FindSteamInstalls();
 

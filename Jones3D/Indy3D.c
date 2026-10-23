@@ -15,17 +15,16 @@
 #include <stdlib.h>
 #include <string.h>
 
-#ifndef _WIN32
 #include <std/Gpu/stdGpu.h>
+
+#ifdef _WIN32
+#include <direct.h>
+#else
 #include <sys/stat.h>
 #include <unistd.h>
 #endif
 
 static const char* appName = "Open Jones 3D";
-
-#ifdef _WIN32
-static bool Indy3D_RemoveDirect3D3ResolutionCap(void);
-#endif
 
 void Indy3D_InstallHooks(void)
 {
@@ -34,24 +33,20 @@ void Indy3D_InstallHooks(void)
 void Indy3D_InitProcess(void)
 {
 #ifdef _WIN32
-    // Enable HIDPI
+    // Enable HIDPI, also for the dialogs shown before SDL is initialized
     SetProcessDpiAwarenessContext(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2);
-
-    // Remove DX6 resolutions cap
-    if ( !Indy3D_RemoveDirect3D3ResolutionCap() )
-    {
-        printf("WARNING: Failed to remove Direct3D3 cap on width/height of DirectDrawSurface!\n");
-        JonesWx_ShowMessageBox("Jones3D", "Failed to remove DirectX 6 draw surface resolution cap!", /*bError=*/0);
-    }
 #endif
 }
-
-#ifndef _WIN32
 
 // Returns true when the data files the game can't start without are found in aDirs, see JonesFile_Open for the searched resource paths
 static bool Indy3D_HasGameData(const char* const* aDirs, size_t numDirs)
 {
+#ifdef _WIN32
+    // The standalone exe reads the game's dialogs from Indy3D.exe
+    static const char* aFiles[] = { "Jones3D.GOB", "CD1.GOB", "CD2.GOB", "Indy3D.exe" };
+#else
     static const char* aFiles[] = { "Jones3D.GOB", "CD1.GOB", "CD2.GOB" };
+#endif
     for ( size_t i = 0; i < STD_ARRAYLEN(aFiles); ++i )
     {
         bool bFound = false;
@@ -77,11 +72,15 @@ static void Indy3D_MakeDirs(const char* pPath)
     stdPlatform_NativePath(pPath, aPath, sizeof(aPath));
     for ( char* p = aPath + 1; ; ++p )
     {
-        if ( *p == '/' || *p == 0 )
+        if ( *p == '/' || *p == '\\' || *p == 0 )
         {
             const char c = *p;
             *p = 0;
+#ifdef _WIN32
+            _mkdir(aPath); // Fails when it exists or for the drive root
+#else
             mkdir(aPath, 0755); // Fails when it exists
+#endif
             *p = c;
             if ( !c ) {
                 break;
@@ -90,22 +89,69 @@ static void Indy3D_MakeDirs(const char* pPath)
     }
 }
 
-bool Indy3D_EnsureGameData(bool bForceInstaller)
+static bool Indy3D_IsAbsolutePath(const char* pPath)
 {
-    if ( wuRegistry_Startup(HKEY_LOCAL_MACHINE, "Software\\LucasArts Entertainment Company LLC\\Indiana Jones and the Infernal Machine\\v1.0") ) {
-        return true; // JonesMain_Startup reports the error
+#ifdef _WIN32
+    return (pPath[0] && pPath[1] == ':') || (pPath[0] == '\\' && pPath[1] == '\\');
+#else
+    return pPath[0] == '/';
+#endif
+}
+
+// Default install dir: ~/.Jones3D, on Windows the folder of the executable like the original installation
+static void Indy3D_GetDefaultInstallPath(char* pPath, size_t size)
+{
+#ifdef _WIN32
+    char aExePath[MAX_PATH] = { 0 };
+    DWORD len = GetModuleFileNameA(NULL, aExePath, MAX_PATH);
+    char* pSep = len && len < MAX_PATH ? strrchr(aExePath, '\\') : NULL;
+    if ( pSep ) {
+        *pSep = '\0';
     }
 
-    // The game data lives in ~/.Jones3D unless the 'Install Path' setting says otherwise
+    // An executable in the Resource folder of an existing installation (next to the GOB files)
+    // uses the game folder above it, so the saved games stay in the game folder's SaveGames
+    const char* aExeDir[] = { pSep ? aExePath : "." };
+    if ( pSep && Indy3D_HasGameData(aExeDir, 1) )
+    {
+        char* pParentSep = strrchr(aExePath, '\\');
+        if ( pParentSep && pParentSep > aExePath && pParentSep[-1] != ':' ) {
+            *pParentSep = '\0';
+        }
+    }
+
+    stdUtil_StringCopy(pPath, size, pSep ? aExePath : ".");
+#else
+    const char* pHome = getenv("HOME");
+    stdUtil_Format(pPath, size, "%s/.Jones3D", pHome && pHome[0] ? pHome : ".");
+#endif
+}
+
+bool Indy3D_EnsureGameData(bool bForceInstaller, char* pInstallPathOut, size_t outSize)
+{
+    // Without the settings the data is still checked in the default install dir, JonesMain_Startup reports the settings error
+    const bool bSettings = wuRegistry_Startup(JONESMAIN_SETTINGS_ROOTKEY, JONESMAIN_SETTINGS_KEY) == 0;
+    if ( !bSettings ) {
+        wuRegistry_Shutdown(); // Startup marks the settings started also when it fails
+    }
+
+    // The game data lives in the default install dir unless the 'Install Path' setting says otherwise
     static const char aNotSet[] = "\x01"; // Can't be a path
     char aInstallPath[128] = { 0 };
-    wuRegistry_GetStr("Install Path", aInstallPath, STD_ARRAYLEN(aInstallPath), aNotSet);
+    if ( bSettings ) {
+        wuRegistry_GetStr("Install Path", aInstallPath, STD_ARRAYLEN(aInstallPath), aNotSet);
+    }
+    else {
+        stdUtil_StringCopy(aInstallPath, sizeof(aInstallPath), aNotSet);
+    }
+
     const bool bNewConfig = strcmp(aInstallPath, aNotSet) == 0;
     if ( bNewConfig || !aInstallPath[0] )
     {
-        const char* pHome = getenv("HOME");
-        STD_FORMAT(aInstallPath, "%s/.Jones3D", pHome && pHome[0] ? pHome : ".");
-        wuRegistry_SaveStr("Install Path", aInstallPath);
+        Indy3D_GetDefaultInstallPath(aInstallPath, sizeof(aInstallPath));
+        if ( bSettings ) {
+            wuRegistry_SaveStr("Install Path", aInstallPath);
+        }
     }
 
     // The game creates SaveGames and ScreenShots in the install dir with a single-level mkdir, make sure the install dir exists,
@@ -126,7 +172,7 @@ bool Indy3D_EnsureGameData(bool bForceInstaller)
     }
 
     // The original installer set up the game to start normally, without it the developer dialog is shown first
-    if ( (bNewConfig || bInstalled) && wuRegistry_GetInt("Start Mode", -1) == -1 ) {
+    if ( bSettings && (bNewConfig || bInstalled) && wuRegistry_GetInt("Start Mode", -1) == -1 ) {
         wuRegistry_SaveInt("Start Mode", JONES_STARTMODE_STARTGAME);
     }
 
@@ -134,26 +180,37 @@ bool Indy3D_EnsureGameData(bool bForceInstaller)
     // so the log files (JonesLog.txt) are written there. Not the Resource dir, as the working dir is also searched
     // for GOB files, which would open them twice. A relative install path is relative to the working dir, so it's kept then.
     const char* aWorkDir[] = { "." };
-    if ( bOk && aInstallPath[0] == '/' && !Indy3D_HasGameData(aWorkDir, 1) )
+    if ( bOk && Indy3D_IsAbsolutePath(aInstallPath) && !Indy3D_HasGameData(aWorkDir, 1) )
     {
         char aNativePath[256];
         stdPlatform_NativePath(aInstallPath, aNativePath, sizeof(aNativePath));
+#ifdef _WIN32
+        if ( _chdir(aNativePath) != 0 ) {
+#else
         if ( chdir(aNativePath) != 0 ) {
+#endif
             fprintf(stderr, "WARNING: Couldn't change working directory to %s\n", aNativePath);
         }
     }
 
     // The game window is created for the renderer of the display device in the settings,
     // switching the renderer later replaces the window
-    char aDisplay[128] = { 0 };
-    wuRegistry_GetStr("Display", aDisplay, STD_ARRAYLEN(aDisplay), "");
-    stdGpu_SetPreferredDriver(aDisplay);
+    if ( bSettings )
+    {
+        char aDisplay[128] = { 0 };
+        wuRegistry_GetStr("Display", aDisplay, STD_ARRAYLEN(aDisplay), "");
+        stdGpu_SetPreferredDriver(aDisplay);
+    }
 
-    wuRegistry_Shutdown();
+    if ( pInstallPathOut ) {
+        stdUtil_StringCopy(pInstallPathOut, outSize, aInstallPath);
+    }
+
+    if ( bSettings ) {
+        wuRegistry_Shutdown();
+    }
     return bOk;
 }
-
-#endif // !_WIN32
 
 static int Indy3D_Startup(const char* aCmd)
 {
@@ -186,75 +243,3 @@ int WINAPI Indy3D_WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lp
     return -1;
 #endif
 }
-
-#ifdef _WIN32
-
-static void* Indy3D_memfind(const void* l, size_t l_len, const void* s, size_t s_len)
-{
-    register char* cur, * last;
-    const char* cl = (const char*)l;
-    const char* cs = (const char*)s;
-
-    if ( !l_len || !s_len )
-        return NULL;
-
-    if ( l_len < s_len )
-        return NULL;
-
-    // Special case where s_len == 1
-    if ( s_len == 1 )
-        return memchr(l, (int)*cs, l_len);
-
-    // The last position where it's possible to find "s" in "l"
-    last = (char*)cl + l_len - s_len;
-    for ( cur = (char*)cl; cur <= last; cur++ )
-        if ( cur[0] == cs[0] && !memcmp(cur, cs, s_len) )
-            return cur;
-
-    return NULL;
-}
-
-/**
- * @brief Removes IDirect3D3 2048-pixel resolution cap on device creation
- *
- * @details Loads d3dim.dll and patches in memory IDirect3D3_CreateDevice function
- *          to remove the 2048-pixel width/height limit check when creating a Direct3D device
- *          from DirectDrawSurface, allowing rendering to surfaces larger than 2048x2048.
- *
- * @return true if resolution cap was successfully removed, false if operation failed
- */
-static bool Indy3D_RemoveDirect3D3ResolutionCap(void)
-{
-    // From: https://github.com/UCyborg/LegacyD3DResolutionHack
-
-    static const BYTE wantedBytes[] = { 0xB8, 0x00, 0x08, 0x00, 0x00, 0x39 };
-
-    char szPath[MAX_PATH];
-    GetSystemDirectory(szPath, MAX_PATH);
-    strcat_s(szPath, sizeof(szPath), "\\d3dim.dll");
-
-    HMODULE hD3DIm = LoadLibrary(szPath);
-    if ( !hD3DIm ) {
-        return false;
-    }
-
-    PIMAGE_DOS_HEADER pDosHeader = (PIMAGE_DOS_HEADER)hD3DIm;
-    PIMAGE_NT_HEADERS pNtHeader = (PIMAGE_NT_HEADERS)((char*)pDosHeader + pDosHeader->e_lfanew);
-    DWORD dwCodeBase = (DWORD)hD3DIm + pNtHeader->OptionalHeader.BaseOfCode;
-    DWORD dwCodeSize = pNtHeader->OptionalHeader.SizeOfCode;
-
-    uintptr_t dwPatchBase = (uintptr_t)Indy3D_memfind((void*)dwCodeBase, dwCodeSize, wantedBytes, sizeof(wantedBytes));
-    if ( dwPatchBase )
-    {
-        dwPatchBase++;
-
-        DWORD dwOldProtect;
-        VirtualProtect((LPVOID)dwPatchBase, 4, PAGE_EXECUTE_READWRITE, &dwOldProtect);
-        *(DWORD*)dwPatchBase = (DWORD)-1;
-        VirtualProtect((LPVOID)dwPatchBase, 4, dwOldProtect, &dwOldProtect);
-    }
-
-    return true;
-}
-
-#endif // _WIN32

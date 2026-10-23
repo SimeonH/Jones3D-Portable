@@ -55,6 +55,7 @@
 #include <std/General/stdMath.h>
 #include <std/General/stdMemory.h>
 #include <std/General/stdPlatform.h>
+#include <std/General/stdFnames.h>
 #include <std/General/stdUtil.h>
 #include <std/Win95/stdControl.h>
 #include <std/Win95/stdDisplay.h>
@@ -3859,10 +3860,10 @@ static bool JonesHud_FindHelpFile(const char* pFilename, char* pOutPath, size_t 
 
 HANDLE J3DAPI JonesHud_OpenHelp(HANDLE process)
 {
-    // Changed: The help file is opened with the program set by the 'Help Viewer' setting.
-    //          When it isn't set, Rust HLP Viewer (hlp-viewer next to the game executable, else from PATH) is started,
-    //          since current Windows versions and Linux don't come with a WinHelp viewer. On Windows the viewer is
-    //          started directly, the .hlp file association isn't used.
+    // Changed: The help file is opened with the program set by the 'Help Viewer' setting. When it isn't set,
+    //          the game executable shows it in its help viewer (-help <file>, JonesWx_ShowHelp), since current
+    //          Windows versions and Linux don't come with a WinHelp viewer.
+    //          The GOG release has the help as a .chm file instead, which Windows opens with its HTML Help viewer.
 #ifdef _WIN32
     if ( process ) {
         return process; // Viewer still open, only one is opened at a time
@@ -3885,6 +3886,17 @@ HANDLE J3DAPI JonesHud_OpenHelp(HANDLE process)
 
     char aHelpPath[512];
     bool bFound = JonesHud_FindHelpFile(pFilename, aHelpPath, sizeof(aHelpPath));
+    bool bChm   = false;
+    if ( !bFound )
+    {
+        // The GOG release: Jones3D.chm
+        char aChmFilename[128];
+        STD_STRCPY(aChmFilename, pFilename);
+        stdFnames_StripExtAndDot(aChmFilename);
+        stdUtil_StringCat(aChmFilename, sizeof(aChmFilename), ".chm");
+        bFound = bChm = JonesHud_FindHelpFile(aChmFilename, aHelpPath, sizeof(aHelpPath));
+    }
+
     stdMemory_Free(pFilename);
     if ( !bFound )
     {
@@ -3903,29 +3915,37 @@ HANDLE J3DAPI JonesHud_OpenHelp(HANDLE process)
         return NULL;
     }
 
-    if ( !strlen(aViewer) )
+    if ( bChm && !strlen(aViewer) )
     {
-        // hlp-viewer.exe next to the game executable, else from PATH
-        STD_STRCPY(aViewer, "hlp-viewer.exe");
-
-        char aExePath[MAX_PATH];
-        DWORD len = GetModuleFileNameA(NULL, aExePath, sizeof(aExePath));
-        char* pSep = len && len < sizeof(aExePath) ? strrchr(aExePath, '\\') : NULL;
-        if ( pSep )
+        // Windows' HTML Help viewer (hh.exe), through the .chm file association
+        SHELLEXECUTEINFOA execInfo;
+        memset(&execInfo, 0, sizeof(execInfo));
+        execInfo.cbSize = sizeof(execInfo);
+        execInfo.fMask  = SEE_MASK_NOCLOSEPROCESS;
+        execInfo.lpVerb = "open";
+        execInfo.lpFile = aFullPath;
+        execInfo.nShow  = SW_SHOWNORMAL;
+        if ( !ShellExecuteExA(&execInfo) )
         {
-            *pSep = '\0';
-            char aLocalViewer[MAX_PATH];
-            STD_FORMAT(aLocalViewer, "%s\\hlp-viewer.exe", aExePath);
-            if ( GetFileAttributesA(aLocalViewer) != INVALID_FILE_ATTRIBUTES ) {
-                STD_STRCPY(aViewer, aLocalViewer);
-            }
+            STDLOG_ERROR("JonesHud: Couldn't open the help file '%s' (error %lu).\n", aFullPath, GetLastError());
+            return NULL;
         }
+
+        return execInfo.hProcess;
     }
 
-    // Start the viewer directly instead of using the .hlp file association,
-    // which on current Windows versions points to a stub or to nothing.
-    char aCmdLine[sizeof(aViewer) + MAX_PATH + 8];
-    STD_FORMAT(aCmdLine, "\"%s\" \"%s\"", aViewer, aFullPath);
+    // The viewer is started directly instead of using the .hlp file association,
+    // which on current Windows versions points to a stub or to nothing
+    char aCmdLine[sizeof(aViewer) + MAX_PATH + 16];
+    if ( strlen(aViewer) ) {
+        STD_FORMAT(aCmdLine, "\"%s\" \"%s\"", aViewer, aFullPath);
+    }
+    else
+    {
+        // The game executable in its help viewer mode
+        GetModuleFileNameA(NULL, aViewer, sizeof(aViewer));
+        STD_FORMAT(aCmdLine, "\"%s\" -help \"%s\"", aViewer, aFullPath);
+    }
 
     STARTUPINFOA startupInfo;
     memset(&startupInfo, 0, sizeof(startupInfo));
@@ -3937,7 +3957,7 @@ HANDLE J3DAPI JonesHud_OpenHelp(HANDLE process)
     // No application name, so a viewer without path is searched for in PATH
     if ( !CreateProcessA(NULL, aCmdLine, NULL, NULL, FALSE, 0, NULL, NULL, &startupInfo, &procInfo) )
     {
-        STDLOG_ERROR("JonesHud: Couldn't start help viewer '%s' (error %lu), place hlp-viewer.exe next to the game executable or set 'Help Viewer' to the path of a WinHelp viewer.\n", aViewer, GetLastError());
+        STDLOG_ERROR("JonesHud: Couldn't start help viewer '%s' (error %lu).\n", aViewer, GetLastError());
         return NULL;
     }
 
@@ -3945,6 +3965,8 @@ HANDLE J3DAPI JonesHud_OpenHelp(HANDLE process)
     hProcess = procInfo.hProcess;
 
 #else
+    J3D_UNUSED(bChm); // The help viewer shows CHM files too
+
     // Reap the previous viewer, only one is opened at a time
     static SDL_Process* pViewerProcess = NULL;
     if ( pViewerProcess )
@@ -3965,23 +3987,22 @@ HANDLE J3DAPI JonesHud_OpenHelp(HANDLE process)
         return NULL;
     }
 
+    const char* aArgs[] = { aViewer, aFullPath, NULL, NULL };
     if ( !strlen(aViewer) )
     {
-        // hlp-viewer next to the game executable, else from PATH
-        const char* pBasePath = SDL_GetBasePath();
-        STD_FORMAT(aViewer, "%shlp-viewer", pBasePath ? pBasePath : "");
-        if ( !pBasePath || access(aViewer, X_OK) != 0 ) {
-            STD_FORMAT(aViewer, "hlp-viewer");
-        }
+        // The game executable in its help viewer mode
+        ssize_t len = readlink("/proc/self/exe", aViewer, sizeof(aViewer) - 1);
+        aViewer[len > 0 ? len : 0] = '\0';
+        aArgs[1] = "-help";
+        aArgs[2] = aFullPath;
     }
 
-    const char* aArgs[] = { aViewer, aFullPath, NULL };
     pViewerProcess = SDL_CreateProcess(aArgs, false);
     if ( !pViewerProcess )
     {
         STDLOG_STATUS("JonesHud: Couldn't start help viewer '%s': %s\n", aViewer, SDL_GetError());
 
-        // Fall back to the default application for .hlp files
+        // Fall back to the default application for the help file
         char aUrl[PATH_MAX + 8];
         STD_FORMAT(aUrl, "file://%s", aFullPath);
         if ( !SDL_OpenURL(aUrl) ) {

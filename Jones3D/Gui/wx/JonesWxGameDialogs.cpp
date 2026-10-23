@@ -125,16 +125,8 @@ int J3DAPI jonesConfig_ShowDialogInsertCD(HWND hWnd, LPARAM dwInitParam)
         return 2; // quit
     }
 
-#ifdef __WXMSW__
-    ::ShowCursor(TRUE);
-#endif
-
     InsertCDDialog dlg(hWnd, (int)dwInitParam);
     int btnNum = dlg.ShowGameModal();
-
-#ifdef __WXMSW__
-    ::ShowCursor(FALSE);
-#endif
 
     return btnNum; // 1 - ok or 2 - quit
 }

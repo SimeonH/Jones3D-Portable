@@ -1,10 +1,11 @@
-// Standalone OpenJones3D entry point.
-// Runs the reimplemented game directly, without injecting Jones3D.dll into Indy3D.exe.
-// The original Indy3D.exe is still required, but only as a data file for its dialog and icon resources.
+// Windows entry point of OpenJones3D.exe.
+// The original Indy3D.exe is still required, but only as a data file for its icon resources.
+// When the game data isn't found, the data installer copies it next to this exe (see Indy3D_EnsureGameData).
 #include "types.h" // Should be included first due to Windows.h / CommCtrl.h conflict
 #include "Indy3D.h"
 #include <Jones3D/Gui/wx/JonesWxDialogs.h>
 
+#include <Jones3D/Main/JonesMain.h>
 #include <wkernel/wkernel.h>
 
 #include <stdio.h>
@@ -30,9 +31,21 @@ static HMODULE Standalone_LoadResourceModuleFrom(const char* pPath)
     return hModule;
 }
 
-static HMODULE Standalone_LoadResourceModule(void)
+static HMODULE Standalone_LoadResourceModule(const char* pInstallPath)
 {
-    // First look next to this exe, then in the working directory
+    // First look in the Resource folder of the install dir, then next to this exe, then in the working directory
+    if ( pInstallPath && pInstallPath[0] )
+    {
+        char aResPath[MAX_PATH];
+        if ( sprintf_s(aResPath, sizeof(aResPath), "%s\\Resource\\%s", pInstallPath, INDY3D_RESOURCE_MODULE) > 0 )
+        {
+            HMODULE hModule = Standalone_LoadResourceModuleFrom(aResPath);
+            if ( hModule ) {
+                return hModule;
+            }
+        }
+    }
+
     char aPath[MAX_PATH] = { 0 };
     DWORD len = GetModuleFileNameA(NULL, aPath, MAX_PATH);
     if ( len > 0 && len < MAX_PATH )
@@ -53,11 +66,41 @@ static HMODULE Standalone_LoadResourceModule(void)
 
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nShowCmd)
 {
-    HMODULE hResModule = Standalone_LoadResourceModule();
+    Indy3D_InitProcess();
+
+    // -help "<file>" shows the help file, started by the game's Help (JonesHud_OpenHelp)
+    if ( __argc == 3 && strcmp(__argv[1], "-help") == 0 ) {
+        return JonesWx_ShowHelp(__argv[2]);
+    }
+
+    // -installdata opens the game data installer even when the data is already installed
+    char aCmdLine[1024] = { 0 };
+    strcpy_s(aCmdLine, sizeof(aCmdLine), lpCmdLine ? lpCmdLine : "");
+    bool bInstallData = false;
+    char* pArg = strstr(aCmdLine, "-installdata");
+    if ( pArg )
+    {
+        bInstallData = true;
+        const char* pRest = pArg + strlen("-installdata");
+        memmove(pArg, pRest, strlen(pRest) + 1);
+        while ( aCmdLine[0] == ' ' ) {
+            memmove(aCmdLine, aCmdLine + 1, strlen(aCmdLine));
+        }
+    }
+
+    char aInstallPath[128] = { 0 };
+    if ( !Indy3D_EnsureGameData(bInstallData, aInstallPath, sizeof(aInstallPath)) )
+    {
+        JonesWx_Shutdown();
+        return 0;
+    }
+
+    HMODULE hResModule = Standalone_LoadResourceModule(aInstallPath);
     if ( !hResModule )
     {
         JonesWx_ShowMessageBox("OpenJones3D Error",
-            "Can't find " INDY3D_RESOURCE_MODULE "!\n\nPlace this program in the game's Resource folder next to " INDY3D_RESOURCE_MODULE ".",
+            "Can't find " INDY3D_RESOURCE_MODULE "!\n\nRun this program with -installdata to install the game data, "
+            "or place it in the game's Resource folder next to " INDY3D_RESOURCE_MODULE ".",
             /*bError=*/1
         );
         JonesWx_Shutdown();
@@ -65,9 +108,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
     }
 
     wkernel_SetResourceInstance(hResModule);
-    Indy3D_InitProcess();
 
-    int result = Indy3D_WinMain(hInstance, hPrevInstance, lpCmdLine, nShowCmd);
+    int result = Indy3D_WinMain(hInstance, hPrevInstance, aCmdLine, nShowCmd);
 
     wkernel_SetResourceInstance(NULL);
     FreeLibrary(hResModule);

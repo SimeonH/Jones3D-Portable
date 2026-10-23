@@ -3,19 +3,17 @@
 #include <j3dcore/j3d.h>
 #include <std/types.h>
 
-#ifndef _WIN32
 #include <std/Win95/stdWin95.h>
-#endif
 
 J3D_EXTERN_C_START
 
-// GPU renderer backends (Vulkan/, GLES2/) of the shared stdDisplay and std3D implementations in Gpu/.
+// GPU renderer backends (Vulkan/, GLES2/, D3D11/) of the shared stdDisplay and std3D implementations in Gpu/.
 // Each backend is a display device of stdDisplay, the game picks one in the display settings.
 //
 // The game's back buffer is an offscreen color target with a depth buffer, rendered at the game resolution
 // and scaled to the window on present.
-// CPU access to the back buffer (locks, fills, GDI DCs on Windows) goes through a 32-bit XRGB8888 mirror
-// (BGRX in memory, a DIB section on Windows): it's read back from the GPU when the GPU holds newer content
+// CPU access to the back buffer (locks, fills) goes through a 32-bit XRGB8888 mirror
+// (BGRX in memory): it's read back from the GPU when the GPU holds newer content
 // and uploaded again before the next GPU operation after the CPU wrote to it.
 //
 // Textures outlive display restarts (materials keep them), when the display switches to another backend they're
@@ -65,9 +63,7 @@ typedef enum eStdGpuTexLayout
 typedef struct sStdGpuBackend
 {
     const char* pApiName; // Driver name of the display device
-#ifndef _WIN32
     StdWindowApi windowApi;
-#endif
 
     // Device. Startup doesn't need the game window, so all backends can be listed.
     // Shutdown keeps the device alive while it has textures, calling it again after they're destroyed finishes it.
@@ -87,9 +83,6 @@ typedef struct sStdGpuBackend
     int (*pfPresent)(void);             // Returns 0 on success
     float (*pfGetPresentScale)(void);   // Window pixels per back buffer pixel on last present
     uint8_t* (*pfGetShadowPixels)(void);
-#ifdef _WIN32
-    HDC (*pfGetShadowDC)(void);
-#endif
     void (*pfSyncShadowForRead)(void);
     void (*pfMarkShadowDirty)(void);
     void (*pfClearColor)(uint32_t xrgb, const StdRect* pRect); // pRect is (left, top, width, height), NULL for all
@@ -113,16 +106,17 @@ extern const StdGpuBackend stdVk_g_backend;
 #ifdef J3D_RENDERER_GLES2
 extern const StdGpuBackend stdGl_g_backend;
 #endif
+#ifdef J3D_RENDERER_D3D11
+extern const StdGpuBackend stdD3D11_g_backend;
+#endif
 
 // Backends
 size_t stdGpu_GetNumBackends(void);
 const StdGpuBackend* J3DAPI stdGpu_GetBackend(size_t idx);
 const StdGpuBackend* stdGpu_GetCurBackend(void);
 void J3DAPI stdGpu_SelectBackend(const StdGpuBackend* pBackend); // Backend of the opened display device
-#ifndef _WIN32
 // Creates the game window at startup for the backend of the display device saved in the settings
 void J3DAPI stdGpu_SetPreferredDriver(const char* pDriverName);
-#endif
 
 // Selected backend
 const char* stdGpu_GetApiName(void);
@@ -141,9 +135,6 @@ void J3DAPI stdGpu_SetNoVSync(bool bNoVSync);
 int stdGpu_Present(void);
 float stdGpu_GetPresentScale(void);
 uint8_t* stdGpu_GetShadowPixels(void);
-#ifdef _WIN32
-HDC stdGpu_GetShadowDC(void);
-#endif
 void stdGpu_SyncShadowForRead(void);
 void stdGpu_MarkShadowDirty(void);
 void J3DAPI stdGpu_ClearColor(uint32_t xrgb, const StdRect* pRect);

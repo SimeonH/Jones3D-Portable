@@ -9,14 +9,13 @@
 
 J3D_EXTERN_C_START
 
-// Process-wide setup shared by the injected DLL and the standalone exe: DPI awareness, D3D resolution cap removal
+// Process-wide setup: DPI awareness
 void Indy3D_InitProcess(void);
 
-#ifndef _WIN32
 // Added: Makes sure the game data files are installed, shows the data installer when they aren't found.
-// The default install path is ~/.Jones3D. Returns false when the user quit the installer.
-bool Indy3D_EnsureGameData(bool bForceInstaller);
-#endif
+// The default install path is ~/.Jones3D, on Windows the folder of the executable. pInstallPathOut (optional) receives
+// the install path. Returns false when the user quit the installer.
+bool Indy3D_EnsureGameData(bool bForceInstaller, char* pInstallPathOut, size_t outSize);
 
 // Indy3D.exe entry point
 int __stdcall Indy3D_WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nShowCmd);

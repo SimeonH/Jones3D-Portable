@@ -3,10 +3,10 @@
 #include <stdint.h>
 #include <j3dcore/j3d.h>
 #ifdef _WIN32
-#include <d3d.h>
+#include <d3d.h>   // Direct3D 6 & DirectDraw types of the original renderer interface
 #include <ddraw.h>
-#include <dinput.h>
 #include <dplay.h>
+#include <j3dcore/j3ddikeys.h> // Key ids, input is SDL on all platforms
 #endif
 
 J3D_EXTERN_C_START
@@ -109,11 +109,7 @@ typedef struct sStdTLVertex
 static_assert(sizeof(StdTLVertex) == 32, "sizeof(StdTLVertex) == 32");
 
 // Renderer texture handle
-#ifdef J3D_RENDERER_DIRECTDRAW
-typedef LPDIRECT3DTEXTURE2 tStd3DTexture;
-#else
-typedef struct sStdGpuTexture* tStd3DTexture; // Defined by the GPU renderer backend
-#endif
+typedef struct sStdGpuTexture* tStd3DTexture; // Defined by the GPU renderer, see Gpu/stdGpu.c
 
 typedef struct sStdRect
 {
@@ -253,9 +249,6 @@ J3D_ASSERT_SIZE32(tMemoryHeader, 32);
 
 struct sSystemTexture
 {
-#ifdef J3D_RENDERER_DIRECTDRAW
-    DDSURFACEDESC2 ddsd;
-#endif
     tStd3DTexture pSrcTexture;
     tStd3DTexture pCachedTex;
     size_t textureSize;
@@ -263,9 +256,6 @@ struct sSystemTexture
     tSystemTexture* pPrevCachedTexture;
     tSystemTexture* pNextCachedTexture;
 };
-#ifdef J3D_RENDERER_DIRECTDRAW
-static_assert(sizeof(tSystemTexture) == 148, "sizeof(tSystemTexture) == 148");
-#endif
 
 typedef struct sColorInfo
 {
@@ -322,19 +312,10 @@ typedef struct sRasterInfo
 } tRasterInfo;
 J3D_ASSERT_SIZE32(tRasterInfo, 76);
 
-#ifdef _WIN32
 typedef struct sVSurface
 {
-    LPDIRECTDRAWSURFACE4 pDDSurf;
-    DDSURFACEDESC2 ddSurfDesc;
+    void* pSurface; // Unused by the GPU renderers (was the DirectDraw surface)
 } tVSurface;
-static_assert(sizeof(tVSurface) == 128, "sizeof(tVSurface) == 128");
-#else
-typedef struct sVSurface
-{
-    void* pSurface; // unused by the Vulkan renderer
-} tVSurface;
-#endif
 
 typedef struct sVBuffer
 {
@@ -346,9 +327,6 @@ typedef struct sVBuffer
     int unknown1;
     tVSurface surface;
 } tVBuffer;
-#ifdef _WIN32
-static_assert(sizeof(tVBuffer) == 224, "sizeof(tVBuffer) == 224");
-#endif
 
 typedef struct sCircularBuffer
 {
@@ -518,15 +496,6 @@ typedef struct sStdDisplayEnvironment
 } StdDisplayEnvironment;
 J3D_ASSERT_SIZE32(StdDisplayEnvironment, 8);
 
-#ifdef _WIN32
-typedef struct sStdInputDevice
-{
-    LPDIRECTINPUTDEVICEA pDIDevice;
-    DIDEVCAPS diDevCaps;
-} StdInputDevice;
-static_assert(sizeof(StdInputDevice) == 48, "sizeof(StdInputDevice) == 48");
-#endif
-
 typedef struct sStdControlAxis
 {
     StdControlAxisFlag flags;
@@ -538,21 +507,11 @@ typedef struct sStdControlAxis
 } StdControlAxis;
 static_assert(sizeof(StdControlAxis) == 24, "sizeof(StdControlAxis) == 24");
 
-#ifdef _WIN32
-typedef struct sStdControlJoystickDevice
-{
-    DIDEVICEINSTANCEA dinstance;
-    LPDIRECTINPUTDEVICE2A pDIDevice;
-    DIDEVCAPS caps;
-} StdControlJoystickDevice;
-static_assert(sizeof(StdControlJoystickDevice) == 628, "sizeof(StdControlJoystickDevice) == 628");
-#else
 typedef struct sStdControlJoystickDevice
 {
     void* pGamepad; // SDL_Gamepad*
     uint32_t numButtons;
 } StdControlJoystickDevice;
-#endif
 
 typedef struct sStdFadeFactor
 {

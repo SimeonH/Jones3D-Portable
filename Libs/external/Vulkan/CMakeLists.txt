@@ -32,9 +32,5 @@ target_include_directories(volk SYSTEM PUBLIC
     ${vulkanheaders_SOURCE_DIR}/include
 )
 
-if(WIN32)
-    target_compile_definitions(volk PUBLIC VK_USE_PLATFORM_WIN32_KHR)
-endif()
-
 add_library(Vulkan::volk ALIAS volk)
 set_target_properties(volk PROPERTIES FOLDER "Libs/external")

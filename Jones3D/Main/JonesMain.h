@@ -9,6 +9,12 @@
 
 J3D_EXTERN_C_START
 
+// Added: Settings key of the game (a settings file on Linux, see wuRegistryFile.c). Not the key of the original game
+// (HKLM\Software\LucasArts Entertainment Company LLC\Indiana Jones and the Infernal Machine\v1.0): its settings belong
+// to that installation, e.g. its Install Path would make the game run from a Steam install instead of its own data.
+#define JONESMAIN_SETTINGS_ROOTKEY HKEY_CURRENT_USER
+#define JONESMAIN_SETTINGS_KEY     "Software\\OpenJones3D"
+
 extern char JonesMain_g_aErrorBuffer[1024];
 
 extern HANDLE JonesMain_g_mainMutex;

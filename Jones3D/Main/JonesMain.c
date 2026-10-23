@@ -264,7 +264,7 @@ int J3DAPI JonesMain_Startup(const char* lpCmdLine)
     JonesDisplay_UpdateDualScreenWindowSize(&JonesMain_state.displaySettings);
     JonesFile_Startup(&JonesMain_hs);
 
-    if ( wuRegistry_Startup(HKEY_LOCAL_MACHINE, "Software\\LucasArts Entertainment Company LLC\\Indiana Jones and the Infernal Machine\\v1.0") )
+    if ( wuRegistry_Startup(JONESMAIN_SETTINGS_ROOTKEY, JONESMAIN_SETTINGS_KEY) )
     {
         JonesMain_LogErrorToFile("Couldn't open the registry.");
         JonesMain_CloseWindow();
@@ -363,7 +363,6 @@ int J3DAPI JonesMain_Startup(const char* lpCmdLine)
         }
     }
 
-#ifndef _WIN32
     // Added: The launcher of the original game (Jones3D.exe) is shown first, unless the game is started with arguments
     //        or in developer mode. It sets the start mode like the original launcher did before it started the game.
     if ( !(lpCmdLine && lpCmdLine[0]) && JonesMain_state.startMode != JONES_STARTMODE_DEVELOPERDIALOG )
@@ -376,7 +375,6 @@ int J3DAPI JonesMain_Startup(const char* lpCmdLine)
         JonesMain_state.startMode = startMode;
         wuRegistry_SaveInt("Start Mode", startMode);
     }
-#endif
 
     // Handle start mode
     int bSuccess    = 0;
@@ -795,59 +793,18 @@ int J3DAPI JonesMain_GameWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPa
 
 void J3DAPI JonesMain_HandleWMGetMinMaxInfo(HWND hwnd, LPMINMAXINFO pMinMaxInfo)
 {
-#ifdef _WIN32
-    RECT rectWnd;
-    GetWindowRect(hwnd, &rectWnd);
-
-    int frameWidth  = 2 * GetSystemMetrics(SM_CXFRAME);
-    int frameSize   = GetSystemMetrics(SM_CXFRAME);
-    int frameHeight = GetSystemMetrics(SM_CYMENU) + 2 * frameSize;
-
-    uint32_t width, height;
-    stdDisplay_GetBackBufferSize(&width, &height);
-    if ( width && height )
-    {
-        rectWnd.left   = 0;
-        rectWnd.top    = 0;
-        rectWnd.right  = frameWidth + width;
-        rectWnd.bottom = frameHeight + height;
-    }
-
-    pMinMaxInfo->ptMaxSize.x = rectWnd.right - rectWnd.left;
-    pMinMaxInfo->ptMaxSize.y = rectWnd.bottom - rectWnd.top;
-
-    pMinMaxInfo->ptMinTrackSize.x = rectWnd.right - rectWnd.left;
-    pMinMaxInfo->ptMinTrackSize.y = rectWnd.bottom - rectWnd.top;
-    pMinMaxInfo->ptMaxTrackSize.x = rectWnd.right - rectWnd.left;
-    pMinMaxInfo->ptMaxTrackSize.y = rectWnd.bottom - rectWnd.top;
-
-    JonesMain_bWndMsgProcessed = true;
-#else
-    // Not sent by the SDL window
+    // Not sent by the SDL game window, its size is set by stdDisplay
     J3D_UNUSED(hwnd);
     J3D_UNUSED(pMinMaxInfo);
-#endif
 }
 
 void J3DAPI JonesMain_HandleWMPaint(HWND hWnd)
 {
     if ( JonesMain_pfProcess == JonesMain_ProcessWindowEvents )
     {
-    #ifndef _WIN32
         // Show the last frame again, e.g. while a dialog is open
         J3D_UNUSED(hWnd);
         stdDisplay_Update();
-    #else
-        PAINTSTRUCT ps;
-        HDC hdc = BeginPaint(hWnd, (LPPAINTSTRUCT)&ps);
-        if ( hdc )
-        {
-            POINT pt = { .x=0, .y=0 };
-            ClientToScreen(hWnd, &pt);
-            JonesDialog_RestoreBackground(hdc, hWnd, &pt, &ps.rcPaint);
-            EndPaint(hWnd, &ps);
-        }
-    #endif
     }
 }
 
@@ -857,7 +814,7 @@ void J3DAPI JonesMain_HandleWMTimer(HWND hWnd, WPARAM timerID)
     {
         // TODO: If JonesMain_bWndMsgProcessed will be used by main wnd proc than it should be set to true here
         JonesMain_bPrintQuickSave = false;
-        KillTimer(hWnd, JONES_QUICKSAVE_TEXTSHOWTIMERID);
+        wkernel_KillTimer(hWnd, JONES_QUICKSAVE_TEXTSHOWTIMERID);
     }
 }
 
@@ -898,7 +855,7 @@ void J3DAPI JonesMain_HandleWMKeydown(HWND hWnd, WPARAM vk, int a3, uint16_t rep
                     // Print quicksave text to screen and set text hide timer
                     JonesMain_bPrintQuickSave = true;
                     JonesMain_PrintQuickSave();
-                    SetTimer(hWnd, JONES_QUICKSAVE_TEXTSHOWTIMERID, JONES_QUICKSAVE_TEXTSHOWTIME, NULL); // 1 sec
+                    wkernel_SetTimer(hWnd, JONES_QUICKSAVE_TEXTSHOWTIMERID, JONES_QUICKSAVE_TEXTSHOWTIME); // 1 sec
                 }
             }
         } break;
@@ -1004,14 +961,14 @@ int J3DAPI JonesMain_HandleWMActivateApp(HWND hWnd, WPARAM wParam, LPARAM lParam
 {
     // TODO: If JonesMain_bWndMsgProcessed will be used by main wnd proc than it should be set to true here
     JonesMain_OnAppActivate(hWnd, wParam);
-    return DefWindowProc(hWnd, WM_ACTIVATEAPP, wParam, lParam);
+    return wkernel_DefWindowProc(hWnd, WM_ACTIVATEAPP, wParam, lParam);
 }
 
 LRESULT J3DAPI JonesMain_HandleWMActivate(HWND hWnd, uint16_t activateState, LPARAM hwndActivate, uint16_t minimizedState)
 {
     // TODO: If JonesMain_bWndMsgProcessed will be used by main wnd proc than it should be set to true here
     JonesMain_OnAppActivate(hWnd, activateState != WA_INACTIVE);
-    return DefWindowProc(hWnd, WM_ACTIVATE, (minimizedState << 16) | activateState, hwndActivate);
+    return wkernel_DefWindowProc(hWnd, WM_ACTIVATE, (minimizedState << 16) | activateState, hwndActivate);
 }
 
 void J3DAPI JonesMain_OnAppActivate(HWND hWnd, int bActivated)
@@ -1027,7 +984,7 @@ void J3DAPI JonesMain_OnAppActivate(HWND hWnd, int bActivated)
         {
             if ( !JonesMain_state.displaySettings.bWindowMode )
             {
-                ShowWindow(hWnd, SW_SHOW);
+                wkernel_ShowWindow(hWnd, SW_SHOW);
             }
 
             JonesDisplay_UpdateDualScreenWindowSize(&JonesMain_state.displaySettings);
@@ -1933,7 +1890,7 @@ int J3DAPI JonesMain_ShowLauncherDisplaySettings(HWND hwnd)
 
 int JonesMain_CloseWindow(void)
 {
-    return PostMessage(stdWin95_GetWindow(), WM_CLOSE, 0, 0);
+    return wkernel_PostMessage(stdWin95_GetWindow(), WM_CLOSE, 0, 0);
 }
 
 int J3DAPI JonesMain_Log(int textColor, const char* ptext)

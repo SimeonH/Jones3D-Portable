@@ -31,7 +31,6 @@ J3D_EXTERN_C_START
     X(PFNGLCHECKFRAMEBUFFERSTATUSPROC, glCheckFramebufferStatus) \
     X(PFNGLCLEARPROC, glClear) \
     X(PFNGLCLEARCOLORPROC, glClearColor) \
-    X(PFNGLCLEARDEPTHFPROC, glClearDepthf) \
     X(PFNGLCOMPILESHADERPROC, glCompileShader) \
     X(PFNGLCREATEPROGRAMPROC, glCreateProgram) \
     X(PFNGLCREATESHADERPROC, glCreateShader) \
@@ -96,7 +95,6 @@ STDGL_FUNCTIONS(STDGL_DECLARE_FUNCTION)
 #define glCheckFramebufferStatus   stdGl_glCheckFramebufferStatus
 #define glClear                    stdGl_glClear
 #define glClearColor               stdGl_glClearColor
-#define glClearDepthf              stdGl_glClearDepthf
 #define glCompileShader            stdGl_glCompileShader
 #define glCreateProgram            stdGl_glCreateProgram
 #define glCreateShader             stdGl_glCreateShader
@@ -179,6 +177,8 @@ typedef struct sStdGlContext
     GLint maxTextureSize;
     float maxAnisotropy; // 0 if not supported
     bool bNpot;          // GL_OES_texture_npot
+    bool bDesktop;       // Desktop OpenGL compatibility context instead of OpenGL ES (see stdSDL_SetGLAttributes)
+    const char* pShaderHeader; // Prepended to the GLSL ES 1.00 shader sources
     GLenum depthFormat;
     size_t numLiveTextures;
 

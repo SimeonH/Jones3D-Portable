@@ -5,6 +5,8 @@
 #include <std/General/std.h>
 #include <std/RTI/symbols.h>
 
+#include <SDL3/SDL_video.h>
+
 static GUID stdWin95_guid;
 static HWND stdWin95_hwnd = NULL;
 static HINSTANCE stdWin95_hInstance = NULL;
@@ -50,8 +52,6 @@ const GUID* J3DAPI stdWin95_GetGuid(void)
     return &stdWin95_guid;
 }
 
-#ifndef _WIN32
-
 static StdWindowApi stdWin95_preferredWindowApi       = STDWINDOW_API_VULKAN;
 static StdWin95SetWindowApiFunc stdWin95_pfSetWindowApi = NULL;
 
@@ -80,4 +80,13 @@ HWND stdWin95_SetWindowApi(StdWindowApi api)
     return stdWin95_hwnd;
 }
 
-#endif // !_WIN32
+#ifdef _WIN32
+HWND stdWin95_GetNativeWindow(void)
+{
+    if ( !stdWin95_hwnd ) {
+        return NULL;
+    }
+
+    return (HWND)SDL_GetPointerProperty(SDL_GetWindowProperties((SDL_Window*)stdWin95_hwnd), SDL_PROP_WINDOW_WIN32_HWND_POINTER, NULL);
+}
+#endif

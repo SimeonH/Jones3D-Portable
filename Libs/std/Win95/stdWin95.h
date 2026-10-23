@@ -13,12 +13,14 @@ HINSTANCE stdWin95_GetInstance(void);
 void J3DAPI stdWin95_SetGuid(const GUID* pGuid);
 const GUID* J3DAPI stdWin95_GetGuid(void); // Added
 
-#ifndef _WIN32
+// Added: The game window is an SDL window on all platforms, the HWND of the game is its SDL_Window* (see wkernelSDL.c)
+
 // Graphics API the SDL game window is created for, SDL can't use another API on a window (Added)
 typedef enum eStdWindowApi
 {
     STDWINDOW_API_VULKAN = 0,
     STDWINDOW_API_OPENGL = 1,
+    STDWINDOW_API_NATIVE = 2, // Plain window, e.g. for a DXGI swap chain
 } StdWindowApi;
 
 // Recreates the game window for api if it was created for another one, returns the game window
@@ -28,6 +30,10 @@ void stdWin95_SetPreferredWindowApi(StdWindowApi api); // API of the game window
 StdWindowApi stdWin95_GetPreferredWindowApi(void);
 void stdWin95_SetWindowApiFunc(StdWin95SetWindowApiFunc pfFunc);
 HWND stdWin95_SetWindowApi(StdWindowApi api);
+
+#ifdef _WIN32
+// Win32 window handle of the game window (Added). It changes when the game window is recreated for another API.
+HWND stdWin95_GetNativeWindow(void);
 #endif
 
 // Helper hooking functions

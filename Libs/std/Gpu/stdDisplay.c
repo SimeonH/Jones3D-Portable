@@ -15,10 +15,8 @@
 
 #include <stdlib.h>
 
-#ifndef _WIN32
 #include <SDL3/SDL_events.h>
 #include <SDL3/SDL_video.h>
-#endif
 
 static bool stdDisplay_bStartup    = false;
 static bool stdDisplay_bOpen       = false;
@@ -36,9 +34,6 @@ static size_t stdDisplay_numDevices = 0;
 static StdDisplayDevice stdDisplay_aDisplayDevices[4] = { 0 };
 static const StdGpuBackend* stdDisplay_apDeviceBackends[4] = { 0 }; // A display device per GPU renderer backend
 
-#ifdef _WIN32
-static HFONT stdDisplay_hFont;
-#endif
 
 // Back buffer pixel format, XRGB8888 (BGRX in memory) as DIB sections
 static const ColorInfo stdDisplay_cfBackBuffer = {
@@ -175,16 +170,6 @@ static void stdDisplay_EnumVideoModes(void)
 {
     stdDisplay_numVideoModes = 0;
 
-#ifdef _WIN32
-    DEVMODEA dm = { 0 };
-    dm.dmSize = sizeof(dm);
-    for ( DWORD i = 0; EnumDisplaySettingsA(NULL, i, &dm); ++i )
-    {
-        if ( dm.dmBitsPerPel >= 24 ) {
-            stdDisplay_AddVideoMode(dm.dmPelsWidth, dm.dmPelsHeight);
-        }
-    }
-#else
     int numModes = 0;
     SDL_DisplayMode** apModes = SDL_GetFullscreenDisplayModes(SDL_GetPrimaryDisplay(), &numModes);
     if ( apModes )
@@ -209,7 +194,6 @@ static void stdDisplay_EnumVideoModes(void)
             }
         }
     }
-#endif
 
     qsort(
         stdDisplay_aVideoModes,
@@ -374,16 +358,7 @@ int J3DAPI stdDisplay_SetMode(size_t modeNum, int bFullscreen, size_t numBackBuf
     stdDisplay_InitDisplayBuffer(&stdDisplay_g_backBuffer, &stdDisplay_pCurVideoMode->rasterInfo);
     stdDisplay_InitDisplayBuffer(&stdDisplay_g_frontBuffer, &stdDisplay_pCurVideoMode->rasterInfo);
 
-#ifdef _WIN32
-    // The game window is created topmost. Same as DirectDraw stdDisplay_SetWindowMode, a window
-    // in window mode is a normal window, so it doesn't cover other windows and the game dialogs.
-    SetWindowPos(stdWin95_GetWindow(), bFullscreen ? HWND_TOPMOST : HWND_NOTOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE);
-
-    int fheight = width < 640 ? 12 : 24;
-    stdDisplay_hFont = CreateFontA(fheight, 0, 0, 0, FW_NORMAL, 0, 0, 0, ANSI_CHARSET, OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY, VARIABLE_PITCH, "Arial");
-#else
     SDL_SetWindowFullscreen((SDL_Window*)stdWin95_GetWindow(), bFullscreen != 0); // borderless desktop fullscreen
-#endif
 
     stdDisplay_bModeSet    = true;
     stdDisplay_bFullscreen = bFullscreen;
@@ -402,13 +377,6 @@ void stdDisplay_ClearMode(void)
         memset(&stdDisplay_g_frontBuffer, 0, sizeof(stdDisplay_g_frontBuffer));
     }
 
-#ifdef _WIN32
-    if ( stdDisplay_hFont )
-    {
-        DeleteObject(stdDisplay_hFont);
-        stdDisplay_hFont = NULL;
-    }
-#endif
 
     stdDisplay_bModeSet = false;
 }
@@ -701,43 +669,15 @@ void stdDisplay_DisableVSync(bool bDisable)
 }
 
 // Keeps the borderless fullscreen window over its whole monitor, the game sizes it to the mode resolution
-static void stdDisplay_UpdateFullscreenWindow(void)
-{
-#ifndef _WIN32
-    // SDL fullscreen windows already cover the display
-#else
-    HWND hwnd = stdWin95_GetWindow();
-    MONITORINFO mi = { 0 };
-    mi.cbSize = sizeof(mi);
-    if ( !GetMonitorInfoA(MonitorFromWindow(hwnd, MONITOR_DEFAULTTOPRIMARY), &mi) ) {
-        return;
-    }
-
-    RECT rect;
-    GetWindowRect(hwnd, &rect);
-    if ( memcmp(&rect, &mi.rcMonitor, sizeof(rect)) != 0 )
-    {
-        SetWindowPos(hwnd, HWND_TOP, mi.rcMonitor.left, mi.rcMonitor.top,
-            mi.rcMonitor.right - mi.rcMonitor.left, mi.rcMonitor.bottom - mi.rcMonitor.top, SWP_NOZORDER | SWP_NOACTIVATE);
-    }
-#endif
-}
-
 int stdDisplay_Update(void)
 {
     if ( !stdDisplay_bModeSet ) {
         return 1;
     }
 
-    if ( stdDisplay_bFullscreen ) {
-        stdDisplay_UpdateFullscreenWindow();
-    }
-
-#ifndef _WIN32
     // Keep the window responsive while the game doesn't process its events, e.g. on the loading screen.
     // The events stay queued for the game's event loop.
     SDL_PumpEvents();
-#endif
 
     return stdGpu_Present();
 }
@@ -814,27 +754,12 @@ void J3DAPI stdDisplay_ReleaseFrontBufferDC(HDC hdc)
 
 HDC stdDisplay_GetBackBufferDC(void)
 {
-#ifdef _WIN32
-    if ( !stdDisplay_bOpen || !stdDisplay_bModeSet || !stdGpu_GetShadowDC() ) {
-        return NULL;
-    }
-
-    stdGpu_SyncShadowForRead();
-    return stdGpu_GetShadowDC();
-#else
-    return NULL; // No GDI
-#endif
+    return NULL; // No GDI on the GPU back buffer
 }
 
 void J3DAPI stdDisplay_ReleaseBackBufferDC(HDC hdc)
 {
-#ifdef _WIN32
-    if ( stdDisplay_bOpen && stdDisplay_bModeSet && hdc == stdGpu_GetShadowDC() ) {
-        stdGpu_MarkShadowDirty();
-    }
-#else
     J3D_UNUSED(hdc);
-#endif
 }
 
 int stdDisplay_FlipToGDISurface(void)

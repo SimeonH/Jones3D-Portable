@@ -295,3 +295,27 @@ std::vector<uint8_t> JonesWx::ReadExeResource(const wxString& exePath, uint32_t 
     const std::vector<uint8_t>& data = resources.GetData();
     return std::vector<uint8_t>(data.begin() + offset, data.begin() + offset + size);
 }
+
+std::vector<uint8_t> JonesWx::ReadExeBitmapFile(const wxString& exePath, uint32_t id)
+{
+    // RT_BITMAP holds the BITMAPINFO and the bits, without the BITMAPFILEHEADER of a .bmp file
+    const std::vector<uint8_t> dib = ReadExeResource(exePath, 2, id);
+    if ( dib.size() < 40 ) {
+        return {};
+    }
+
+    const uint32_t headerSize = ReadU32(dib, 0);
+    const uint16_t bpp        = ReadU16(dib, 14);
+    uint32_t numColors        = ReadU32(dib, 32);
+    if ( !numColors && bpp <= 8 ) {
+        numColors = 1u << bpp;
+    }
+
+    const uint32_t fileSize   = (uint32_t)(14 + dib.size());
+    const uint32_t bitsOffset = 14 + headerSize + numColors * 4;
+    std::vector<uint8_t> bmp = { 'B', 'M',
+        (uint8_t)fileSize, (uint8_t)(fileSize >> 8), (uint8_t)(fileSize >> 16), (uint8_t)(fileSize >> 24), 0, 0, 0, 0,
+        (uint8_t)bitsOffset, (uint8_t)(bitsOffset >> 8), (uint8_t)(bitsOffset >> 16), (uint8_t)(bitsOffset >> 24) };
+    bmp.insert(bmp.end(), dib.begin(), dib.end());
+    return bmp;
+}

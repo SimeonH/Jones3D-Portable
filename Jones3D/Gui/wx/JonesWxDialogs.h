@@ -81,6 +81,10 @@ void JonesWx_Shutdown(void);
 // or the original CDs to pInstallPath (native path). Returns 1 when the data was installed, 0 when the user quit.
 int JonesWx_ShowDataInstaller(const char* pInstallPath);
 
+// Shows the help file (native path), a WinHelp (.hlp) or, except on Windows, an HTML Help (.chm) file, in the wxHTML help viewer
+// until it's closed. Runs as its own process, see JonesHud_OpenHelp. Returns 0 on success.
+int JonesWx_ShowHelp(const char* pFilePath);
+
 // Results of JonesWx_ShowLauncher
 #define JONESLAUNCHER_EXIT  0 // Exit
 #define JONESLAUNCHER_START 1 // Start the game with the start mode

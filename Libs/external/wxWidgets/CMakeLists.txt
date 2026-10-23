@@ -34,7 +34,7 @@ set(wxBUILD_PRECOMP        OFF CACHE STRING "" FORCE)
 
 # Only the core GUI is needed, disable everything else
 foreach(feature
-    WEBVIEW STC RICHTEXT AUI PROPGRID RIBBON MEDIACTRL XRC HTML WXHTML_HELP
+    WEBVIEW STC RICHTEXT AUI PROPGRID RIBBON MEDIACTRL XRC
     OPENGL GLCANVAS LIBTIFF REGEX XML DEBUGREPORT SOCKETS URL PROTOCOL FS_INET
     LIBNOTIFY # GTK: not needed, and fails to build with some libnotify versions
     LIBSDL    # Unix wxSound backend, not used (and would pull in the host SDL2)
@@ -42,11 +42,29 @@ foreach(feature
     set(wxUSE_${feature} OFF CACHE BOOL "" FORCE)
 endforeach()
 
+# The game's help is shown in the wxHTML help viewer (Jones3D/Gui/wx/JonesWxHelp.cpp): the WinHelp file converted to HTML,
+# or the CHM file of the GOG release, read with libmspack (Libs/external/libmspack). Windows opens CHM files with its own viewer.
+set(wxUSE_HTML        ON CACHE BOOL "" FORCE)
+set(wxUSE_WXHTML_HELP ON CACHE BOOL "" FORCE)
+if(WIN32)
+    set(wxUSE_LIBMSPACK OFF CACHE BOOL "" FORCE)
+else()
+    set(wxUSE_LIBMSPACK ON CACHE BOOL "" FORCE)
+endif()
+
 FetchContent_MakeAvailable(wxWidgets)
+
+if(TARGET wxhtml AND TARGET mspack)
+    add_dependencies(wxhtml mspack) # wxhtml links the libmspack file (MSPACK_LIBRARY)
+endif()
 
 # wx exports UNICODE/_UNICODE to its users, which would switch the game's C code to the wide Win32 API.
 # Jones3D sets these only on its wx sources (see Jones3D/CMakeLists.txt).
-foreach(target wxbase wxcore)
+foreach(target wxbase wxcore wxhtml)
+    if(NOT TARGET ${target})
+        continue()
+    endif()
+
     get_target_property(defs ${target} INTERFACE_COMPILE_DEFINITIONS)
     if(defs)
         list(REMOVE_ITEM defs UNICODE _UNICODE)
@@ -54,7 +72,7 @@ foreach(target wxbase wxcore)
     endif()
 endforeach()
 
-foreach(target wxbase wxcore wxnet wxadv wxqa wxzlib wxexpat wxjpeg wxpng wxregex wxnanosvg)
+foreach(target wxbase wxcore wxhtml wxnet wxadv wxqa wxzlib wxexpat wxjpeg wxpng wxregex wxnanosvg)
     if(TARGET ${target})
         set_target_properties(${target} PROPERTIES FOLDER "Libs/external/wxWidgets")
 

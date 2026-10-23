@@ -16,50 +16,30 @@ option(JONES3D_BUILD_PROGRAMS "Build programs" ON)
 option(JONES3D_BUILD_GAME "Build the game (Jones3D); OFF builds only the libraries" ON)
 option(JONES3D_QOL_IMPROVEMENTS "Enable quality-of-life improvements" ON)
 
-# Rust HLP Viewer for the in-game help (Libs/external/HlpViewer). It's built with cargo for the host,
-# so it's only available when the game is built for the host OS.
-find_program(JONES3D_CARGO cargo)
-if(JONES3D_CARGO AND CMAKE_SYSTEM_NAME STREQUAL CMAKE_HOST_SYSTEM_NAME)
-    set(JONES3D_HLP_VIEWER_DEFAULT ON)
-else()
-    set(JONES3D_HLP_VIEWER_DEFAULT OFF)
-endif()
-option(JONES3D_BUILD_HLP_VIEWER "Build the help file viewer (needs cargo)" ${JONES3D_HLP_VIEWER_DEFAULT})
-
 if(JONES3D_QOL_IMPROVEMENTS)
     add_compile_definitions(J3D_QOL_IMPROVEMENTS=1)
 endif()
 
-# Renderer backend of std3D/stdDisplay: DirectDraw (original, Windows only) or the GPU renderers.
-# The GPU renderers are Vulkan and, on SDL platforms, OpenGL ES 2.0 (JONES3D_RENDERER_GLES2), selectable at runtime as display devices.
+# Renderers of std3D/stdDisplay (Libs/std/Gpu). Each one is a display device, selectable at runtime in the display settings.
+# Vulkan is always built, OpenGL ES 2.0 and Direct3D 11 (Windows only) are optional.
+option(JONES3D_RENDERER_GLES2 "Build the OpenGL ES 2.0 renderer" ON)
 if(WIN32)
-    set(JONES3D_RENDERER "DirectDraw" CACHE STRING "Renderer backend (DirectDraw or Vulkan)")
+    option(JONES3D_RENDERER_D3D11 "Build the Direct3D 11 renderer" ON)
 else()
-    set(JONES3D_RENDERER "Vulkan" CACHE STRING "Renderer backend (DirectDraw or Vulkan)")
-    if(NOT JONES3D_RENDERER STREQUAL "Vulkan")
-        message(FATAL_ERROR "Only the Vulkan renderer is supported on ${CMAKE_SYSTEM_NAME}")
-    endif()
-endif()
-set_property(CACHE JONES3D_RENDERER PROPERTY STRINGS DirectDraw Vulkan)
-if(JONES3D_RENDERER STREQUAL "Vulkan")
-    add_compile_definitions(J3D_RENDERER_VULKAN=1)
-elseif(JONES3D_RENDERER STREQUAL "DirectDraw")
-    add_compile_definitions(J3D_RENDERER_DIRECTDRAW=1)
-else()
-    message(FATAL_ERROR "Unknown JONES3D_RENDERER '${JONES3D_RENDERER}', expected DirectDraw or Vulkan")
+    set(JONES3D_RENDERER_D3D11 OFF)
 endif()
 
-if(JONES3D_RENDERER STREQUAL "Vulkan" AND NOT WIN32)
-    option(JONES3D_RENDERER_GLES2 "Also build the OpenGL ES 2.0 renderer" ON)
-    if(JONES3D_RENDERER_GLES2)
-        add_compile_definitions(J3D_RENDERER_GLES2=1)
-    endif()
-endif()
+set(JONES3D_RENDERERS Vulkan)
+add_compile_definitions(J3D_RENDERER_VULKAN=1)
 if(JONES3D_RENDERER_GLES2)
-    message(STATUS "Jones3D renderer: ${JONES3D_RENDERER}, GLES2")
-else()
-    message(STATUS "Jones3D renderer: ${JONES3D_RENDERER}")
+    add_compile_definitions(J3D_RENDERER_GLES2=1)
+    list(APPEND JONES3D_RENDERERS GLES2)
 endif()
+if(JONES3D_RENDERER_D3D11)
+    add_compile_definitions(J3D_RENDERER_D3D11=1)
+    list(APPEND JONES3D_RENDERERS D3D11)
+endif()
+message(STATUS "Jones3D renderers: ${JONES3D_RENDERERS}")
 
 # Configure the version header file
 configure_file(

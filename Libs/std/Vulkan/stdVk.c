@@ -9,10 +9,8 @@
 #include <stdlib.h>
 #include <string.h>
 
-#ifndef _WIN32
 #include <SDL3/SDL_video.h>
 #include <SDL3/SDL_vulkan.h>
-#endif
 
 #define STDVK_BLOCK_SIZE        (64u * 1024u * 1024u)
 #define STDVK_FRAME_RING_SIZE   (16u * 1024u * 1024u)
@@ -44,52 +42,25 @@ static StdVkBlock* stdVk_pBlocks = NULL;
 
 static void stdVk_GetWindowSize(uint32_t* pWidth, uint32_t* pHeight)
 {
-#ifdef _WIN32
-    RECT rect;
-    GetClientRect(stdVk_g.hwnd, &rect);
-    *pWidth  = (uint32_t)(rect.right - rect.left);
-    *pHeight = (uint32_t)(rect.bottom - rect.top);
-#else
     int width = 0, height = 0;
     SDL_GetWindowSizeInPixels((SDL_Window*)stdVk_g.hwnd, &width, &height);
     *pWidth  = (uint32_t)width;
     *pHeight = (uint32_t)height;
-#endif
 }
 
 static bool stdVk_HasPresentationSupport(VkPhysicalDevice device, uint32_t queueFamily)
 {
-#ifdef _WIN32
-    return vkGetPhysicalDeviceWin32PresentationSupportKHR(device, queueFamily) != VK_FALSE;
-#else
     return SDL_Vulkan_GetPresentationSupport(stdVk_g.instance, device, queueFamily);
-#endif
 }
 
 static VkResult stdVk_CreateWindowSurface(void)
 {
-#ifdef _WIN32
-    VkWin32SurfaceCreateInfoKHR surfInfo = { 0 };
-    surfInfo.sType     = VK_STRUCTURE_TYPE_WIN32_SURFACE_CREATE_INFO_KHR;
-    surfInfo.hinstance = (HINSTANCE)GetWindowLongPtrA(stdVk_g.hwnd, GWLP_HINSTANCE);
-    surfInfo.hwnd      = stdVk_g.hwnd;
-    return vkCreateWin32SurfaceKHR(stdVk_g.instance, &surfInfo, NULL, &stdVk_g.surface);
-#else
     if ( !SDL_Vulkan_CreateSurface((SDL_Window*)stdVk_g.hwnd, stdVk_g.instance, NULL, &stdVk_g.surface) )
     {
         STDLOG_ERROR("SDL_Vulkan_CreateSurface failed: %s\n", SDL_GetError());
         return VK_ERROR_INITIALIZATION_FAILED;
     }
     return VK_SUCCESS;
-#endif
-}
-
-// Finishes pending GDI drawing to the back buffer mirror
-static void stdVk_FlushGdi(void)
-{
-#ifdef _WIN32
-    GdiFlush();
-#endif
 }
 
 static void stdVk_DestroySwapchain(void);
@@ -335,14 +306,12 @@ int stdVk_Startup(void)
 
     if ( !stdVk_g.bInstance )
     {
-#ifndef _WIN32
         // SDL needs its Vulkan library loaded for the instance extensions and surfaces
         if ( !SDL_Vulkan_LoadLibrary(NULL) )
         {
             STDLOG_ERROR("SDL_Vulkan_LoadLibrary failed: %s\n", SDL_GetError());
             return 0;
         }
-#endif
 
         VkResult res = volkInitialize();
         if ( res != VK_SUCCESS )
@@ -364,11 +333,6 @@ int stdVk_Startup(void)
         appInfo.pEngineName      = "Jones3D";
         appInfo.apiVersion       = VK_API_VERSION_1_3;
 
-#ifdef _WIN32
-        const char* aExtensions[] = { VK_KHR_SURFACE_EXTENSION_NAME, VK_KHR_WIN32_SURFACE_EXTENSION_NAME };
-        uint32_t numExtensions = (uint32_t)STD_ARRAYLEN(aExtensions);
-        const char* const* ppExtensions = aExtensions;
-#else
         uint32_t numExtensions = 0;
         const char* const* ppExtensions = SDL_Vulkan_GetInstanceExtensions(&numExtensions);
         if ( !ppExtensions )
@@ -376,7 +340,6 @@ int stdVk_Startup(void)
             STDLOG_ERROR("SDL_Vulkan_GetInstanceExtensions failed: %s\n", SDL_GetError());
             return 0;
         }
-#endif
 
         VkInstanceCreateInfo info = { 0 };
         info.sType                   = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
@@ -743,58 +706,6 @@ static void stdVk_TransitionColor(VkCommandBuffer cmd, VkImageLayout newLayout, 
 
 // Back buffer & swapchain
 
-#ifdef _WIN32
-
-// The mirror is a DIB section, so GDI can draw to the back buffer through its DC
-
-static void stdVk_DestroyShadow(void)
-{
-    if ( stdVk_g.hShadowDC )
-    {
-        SelectObject(stdVk_g.hShadowDC, stdVk_g.hShadowPrevBitmap);
-        DeleteDC(stdVk_g.hShadowDC);
-    }
-
-    if ( stdVk_g.hShadowBitmap ) {
-        DeleteObject(stdVk_g.hShadowBitmap);
-    }
-
-    stdVk_g.hShadowDC         = NULL;
-    stdVk_g.hShadowBitmap     = NULL;
-    stdVk_g.hShadowPrevBitmap = NULL;
-    stdVk_g.pShadowPixels     = NULL;
-}
-
-static uint8_t* stdVk_AllocShadowPixels(uint32_t width, uint32_t height)
-{
-    BITMAPINFO bmi = { 0 };
-    bmi.bmiHeader.biSize        = sizeof(BITMAPINFOHEADER);
-    bmi.bmiHeader.biWidth       = (LONG)width;
-    bmi.bmiHeader.biHeight      = -(LONG)height; // top-down
-    bmi.bmiHeader.biPlanes      = 1;
-    bmi.bmiHeader.biBitCount    = 32;
-    bmi.bmiHeader.biCompression = BI_RGB;
-
-    void* pBits = NULL;
-    stdVk_g.hShadowBitmap = CreateDIBSection(NULL, &bmi, DIB_RGB_COLORS, &pBits, NULL, 0);
-    if ( !stdVk_g.hShadowBitmap || !pBits )
-    {
-        STDLOG_ERROR("Error creating back buffer DIB section.\n");
-        return NULL;
-    }
-
-    stdVk_g.hShadowDC = CreateCompatibleDC(NULL);
-    if ( !stdVk_g.hShadowDC )
-    {
-        STDLOG_ERROR("Error creating back buffer DC.\n");
-        return NULL;
-    }
-
-    stdVk_g.hShadowPrevBitmap = SelectObject(stdVk_g.hShadowDC, stdVk_g.hShadowBitmap);
-    return (uint8_t*)pBits;
-}
-
-#else // !_WIN32
 
 static void stdVk_DestroyShadow(void)
 {
@@ -809,8 +720,6 @@ static uint8_t* stdVk_AllocShadowPixels(uint32_t width, uint32_t height)
 {
     return (uint8_t*)STDMALLOC((size_t)width * height * 4);
 }
-
-#endif // _WIN32
 
 static int stdVk_CreateShadow(uint32_t width, uint32_t height)
 {
@@ -1391,7 +1300,7 @@ int stdVk_Present(void)
     if ( res == VK_ERROR_OUT_OF_DATE_KHR ) {
         stdVk_g.bSwapchainDirty = true;
     }
-    else if ( res != VK_SUCCESS ) {
+    else if ( res != VK_SUCCESS && res != VK_SUBOPTIMAL_KHR ) {
         STDLOG_ERROR("Vulkan error %s presenting.\n", stdVk_ResultString(res));
     }
 
@@ -1411,7 +1320,6 @@ static void stdVk_UploadShadow(VkCommandBuffer cmd)
         }
     }
 
-    stdVk_FlushGdi();
     memcpy(stdVk_g.shadowStaging.pMapped, stdVk_g.pShadowPixels, (size_t)stdVk_g.width * stdVk_g.height * 4);
 
     stdVk_TransitionColor(cmd, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_ACCESS_TRANSFER_WRITE_BIT);
@@ -1455,14 +1363,12 @@ void stdVk_SyncShadowForRead(void)
 
     stdVk_Flush();
 
-    stdVk_FlushGdi();
     memcpy(stdVk_g.pShadowPixels, stdVk_g.shadowStaging.pMapped, (size_t)stdVk_g.width * stdVk_g.height * 4);
     stdVk_g.bGpuNewer = false;
 }
 
 void stdVk_MarkShadowDirty(void)
 {
-    stdVk_FlushGdi();
     stdVk_g.bShadowDirty = true;
     stdVk_g.bGpuNewer    = false;
 }
@@ -1842,12 +1748,6 @@ static uint8_t* stdVk_GetShadowPixels(void)
     return stdVk_g.pShadowPixels;
 }
 
-#ifdef _WIN32
-static HDC stdVk_GetShadowDC(void)
-{
-    return stdVk_g.hShadowDC;
-}
-#endif
 
 static void stdVk_GpuClearColor(uint32_t xrgb, const StdRect* pRect)
 {
@@ -1861,9 +1761,7 @@ static void stdVk_GpuClearDepth(void)
 
 const StdGpuBackend stdVk_g_backend = {
     .pApiName              = "Vulkan",
-#ifndef _WIN32
     .windowApi             = STDWINDOW_API_VULKAN,
-#endif
     .pfStartup             = stdVk_Startup,
     .pfShutdown            = stdVk_Shutdown,
     .pfIsStarted           = stdVk_IsStarted,
@@ -1878,9 +1776,6 @@ const StdGpuBackend stdVk_g_backend = {
     .pfPresent             = stdVk_Present,
     .pfGetPresentScale     = stdVk_GetPresentScale,
     .pfGetShadowPixels     = stdVk_GetShadowPixels,
-#ifdef _WIN32
-    .pfGetShadowDC         = stdVk_GetShadowDC,
-#endif
     .pfSyncShadowForRead   = stdVk_SyncShadowForRead,
     .pfMarkShadowDirty     = stdVk_MarkShadowDirty,
     .pfClearColor          = stdVk_GpuClearColor,

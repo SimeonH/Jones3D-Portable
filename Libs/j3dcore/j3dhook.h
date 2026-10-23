@@ -41,13 +41,9 @@
 *             as `func_ADDR`, which is expected to be globally defined or
 *             included in the source file where this macro is used.
 */
-#ifdef _WIN32
-#define J3D_HOOKFUNC(func) \
-    J3DHookFunction(func##_ADDR, (void*)func)
-#else
-// Native builds don't run inside Indy3D.exe, there's nothing to hook
+// The game no longer runs injected into Indy3D.exe, there's nothing to hook.
+// The *_InstallHooks functions are kept as the list of reimplemented functions.
 #define J3D_HOOKFUNC(func) ((void)0)
-#endif
 
 /**
 * @brief Declares a variable at a specific memory address.

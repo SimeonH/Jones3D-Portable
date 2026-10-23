@@ -14,6 +14,9 @@ static const StdGpuBackend* const stdGpu_apBackends[] = {
 #ifdef J3D_RENDERER_GLES2
     &stdGl_g_backend,
 #endif
+#ifdef J3D_RENDERER_D3D11
+    &stdD3D11_g_backend,
+#endif
 };
 
 // Textures keep a CPU copy of their pixels to be recreated when the display switches backends
@@ -68,7 +71,6 @@ void J3DAPI stdGpu_SelectBackend(const StdGpuBackend* pBackend)
     }
 }
 
-#ifndef _WIN32
 void J3DAPI stdGpu_SetPreferredDriver(const char* pDriverName)
 {
     for ( size_t i = 0; i < STD_ARRAYLEN(stdGpu_apBackends); ++i )
@@ -80,7 +82,6 @@ void J3DAPI stdGpu_SetPreferredDriver(const char* pDriverName)
         }
     }
 }
-#endif
 
 const char* stdGpu_GetApiName(void)
 {
@@ -138,9 +139,7 @@ int J3DAPI stdGpu_CreateBackBuffer(HWND hwnd, uint32_t width, uint32_t height)
         stdGpu_pActiveBackend->pfShutdown();
     }
 
-#ifndef _WIN32
     hwnd = stdWin95_SetWindowApi(pBackend->windowApi);
-#endif
 
     stdGpu_pActiveBackend = pBackend;
     pBackend->pfSetNoVSync(stdGpu_bNoVSync); // A backend forgets it when it's shut down
@@ -177,13 +176,6 @@ uint8_t* stdGpu_GetShadowPixels(void)
 {
     return stdGpu_Cur()->pfGetShadowPixels();
 }
-
-#ifdef _WIN32
-HDC stdGpu_GetShadowDC(void)
-{
-    return stdGpu_Cur()->pfGetShadowDC();
-}
-#endif
 
 void stdGpu_SyncShadowForRead(void)
 {

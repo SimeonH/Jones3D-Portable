@@ -16,7 +16,11 @@ uint8_t stdSDL_ScancodeToDIK(SDL_Scancode scancode);
 uint32_t stdSDL_KeycodeToVK(SDL_Keycode key);
 
 // Sets the SDL GL attributes of the OpenGL ES 2.0 renderer, before an OpenGL window or context is created
+// OpenGL contexts are OpenGL ES 2.0, or a desktop OpenGL compatibility context where ES isn't available
+// (Windows drivers without WGL_EXT_create_context_es2_profile, SDL would need ANGLE then)
 void stdSDL_SetGLAttributes(void);
+void stdSDL_UseDesktopGL(void); // Following contexts are desktop OpenGL
+bool stdSDL_IsDesktopGL(void);
 
 J3D_EXTERN_C_END
 #endif // STD_SDL_STDSDL_H

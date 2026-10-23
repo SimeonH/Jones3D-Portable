@@ -11,7 +11,6 @@ function(add_directx_library name lib_file)
 endfunction()
 
 # Create imported libraries for each DirectX component
-add_directx_library(ddraw ddraw.lib)
 if(CMAKE_CROSSCOMPILING)
     # The MinGW-built dxguid.lib used for cross-compiling defines all GUIDs in a single object,
     # which clashes with uuid.lib (needed by wxWidgets). Use the Windows SDK dxguid.lib instead,
@@ -24,16 +23,14 @@ if(CMAKE_CROSSCOMPILING)
 else()
     add_directx_library(dxguid dxguid.lib)
 endif()
-add_directx_library(dinput dinput.lib)
 add_directx_library(dplayx dplayx.lib)
 add_directx_library(dsound dsound.lib)
 
-# Create a meta-target that includes all DirectX components
+# Create a meta-target that includes all used DirectX components.
+# DirectDraw, Direct3D 6 and DirectInput aren't used anymore, their headers are only included for types.
 add_library(DirectX61c INTERFACE)
 target_link_libraries(DirectX61c INTERFACE
-    DirectX61c::ddraw
     DirectX61c::dxguid
-    DirectX61c::dinput
     DirectX61c::dplayx
     DirectX61c::dsound
 )

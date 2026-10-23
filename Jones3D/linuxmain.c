@@ -8,6 +8,11 @@
 
 int main(int argc, char* argv[])
 {
+    // -help <file> shows the help file, started by the game's Help (JonesHud_OpenHelp)
+    if ( argc == 3 && strcmp(argv[1], "-help") == 0 ) {
+        return JonesWx_ShowHelp(argv[2]);
+    }
+
     // -installdata opens the game data installer even when the data is already installed
     bool bInstallData = false;
 
@@ -31,7 +36,7 @@ int main(int argc, char* argv[])
     }
 
     Indy3D_InitProcess();
-    if ( !Indy3D_EnsureGameData(bInstallData) )
+    if ( !Indy3D_EnsureGameData(bInstallData, NULL, 0) )
     {
         JonesWx_Shutdown();
         return 1;

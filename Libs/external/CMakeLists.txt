@@ -1,23 +1,17 @@
 cmake_minimum_required(VERSION 3.12)
 
+add_subdirectory(SDL3)
 if(WIN32)
-    add_subdirectory(DirectX61c)
+    add_subdirectory(DirectX61c) # DirectSound, DirectPlay
 else()
-    add_subdirectory(SDL3)
     add_subdirectory(OpenAL)
 endif()
 
 if(JONES3D_BUILD_GAME)
-    add_subdirectory(wxWidgets) # game dialogs
-
-    if(JONES3D_BUILD_HLP_VIEWER)
-        if(NOT JONES3D_CARGO)
-            message(FATAL_ERROR "JONES3D_BUILD_HLP_VIEWER needs cargo")
-        endif()
-        add_subdirectory(HlpViewer) # in-game help
+    if(NOT WIN32)
+        add_subdirectory(libmspack) # CHM help in the wxHTML help viewer
     endif()
+    add_subdirectory(wxWidgets) # game dialogs and help viewer
 endif()
 
-if(JONES3D_RENDERER STREQUAL "Vulkan")
-    add_subdirectory(Vulkan)
-endif()
+add_subdirectory(Vulkan)

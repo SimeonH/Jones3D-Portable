@@ -8,6 +8,7 @@
 #include <std/General/std.h>
 #include <std/General/stdPlatform.h>
 #include <std/Win95/stdDisplay.h>
+#include <std/Win95/stdWin95.h>
 #include <wkernel/wkernel.h>
 
 #include <wx/display.h>
@@ -34,10 +35,15 @@ namespace
 #ifdef __WXMSW__
     HINSTANCE GetThisModule()
     {
-        // Could be either OpenJones3D.exe or Jones3D.dll
         HMODULE hModule = nullptr;
         GetModuleHandleExA(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS | GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT, (LPCSTR)&GetThisModule, &hModule);
         return hModule;
+    }
+
+    // Win32 handle of a window passed to the dialogs as HWND: the game window (an SDL window) or a wx dialog
+    HWND GetNativeHandle(HWND hwnd)
+    {
+        return hwnd && hwnd == stdWin95_GetWindow() ? stdWin95_GetNativeWindow() : hwnd;
     }
 #endif
 
@@ -128,7 +134,7 @@ wxWindow* JonesWx::GetParent(HWND hwnd)
     // Nested dialog. Note, native windows (e.g. the game window) are not wrapped
     // as wx would subclass them, they're set as native owner of the dialog instead.
     if ( hwnd ) {
-        return wxFindWinFromHandle((WXHWND)hwnd);
+        return wxFindWinFromHandle((WXHWND)GetNativeHandle(hwnd));
     }
 #else
     // HWND is the SDL window of the game, or a wx dialog passed as HWND (e.g. the launcher, JonesWxLauncher.cpp)
@@ -286,7 +292,6 @@ wxBitmap JonesWx::LoadResourceIcon(int iconID, int size)
 
 double JonesWx::GetDialogScale()
 {
-#ifndef J3D_RENDERER_DIRECTDRAW
     // The game image is scaled to the window (the display mode never changes), scale the dialogs
     // the same so they keep the size relative to the game they had in the original game.
     if ( !JonesMain_HasStarted() ) {
@@ -301,33 +306,16 @@ double JonesWx::GetDialogScale()
     // Present scale is in physical pixels, dialogs are already scaled by the display scale factor
     const double displayScale = wxDisplay((unsigned int)0).GetScaleFactor();
     return presentScale / (displayScale > 0.0 ? displayScale : 1.0);
-#else
-    // Shrink dialogs when the game runs fullscreen in a display mode smaller than the desktop
-    JonesDisplaySettings* pSettings = JonesMain_GetDisplaySettings();
-    if ( !JonesMain_HasStarted() || !pSettings || pSettings->bWindowMode ) {
-        return 1.0;
-    }
-
-    uint32_t width, height;
-    stdDisplay_GetBackBufferSize(&width, &height);
-
-    wxRect rectDisplay = wxDisplay((unsigned int)0).GetGeometry();
-    if ( !height || rectDisplay.height <= 0 || (int)height >= rectDisplay.height ) {
-        return 1.0;
-    }
-
-    return (double)height / rectDisplay.height;
-#endif
 }
 
 JonesWxDialog::JonesWxDialog(HWND hwndParent, const char* pTitleKey, long style) :
     wxDialog(JonesWx::GetParent(hwndParent), wxID_ANY, pTitleKey ? JonesWx::Str(pTitleKey) : wxString(), wxDefaultPosition, wxDefaultSize, style)
 {
 #ifdef __WXMSW__
-    if ( !GetParent() && hwndParent )
+    if ( !GetParent() && GetNativeHandle(hwndParent) )
     {
         // Native owner window, e.g. the game window. Same as owner of the original Win32 dialog.
-        hwndOwner = hwndParent;
+        hwndOwner = GetNativeHandle(hwndParent);
         ::SetWindowLongPtr(GetHWND(), GWLP_HWNDPARENT, (LONG_PTR)hwndOwner);
 
         // A Win32 dialog created with a topmost owner (the fullscreen game window) is topmost too.

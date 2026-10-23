@@ -1,6 +1,6 @@
 #ifndef J3DCORE_J3DDIKEYS_H
 #define J3DCORE_J3DDIKEYS_H
-// DirectInput keyboard scan codes (DIK_*) for non-Windows builds.
+// DirectInput keyboard scan codes (DIK_*), DirectInput itself isn't used.
 // The game uses them as its key ids (key bindings, controls), the SDL input layer maps SDL scancodes to them.
 
 #define DIK_ESCAPE 0x01

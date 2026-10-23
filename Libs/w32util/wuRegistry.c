@@ -8,6 +8,27 @@ static bool wuRegistry_bStarted = false;
 static LPCSTR appSubKey = NULL;
 static HKEY appRootKey  = NULL;
 
+// Added: Opens the app key with only the access needed
+static LSTATUS wuRegistry_OpenKey(HKEY rootKey, REGSAM access, PHKEY phKey)
+{
+    *phKey = 0;
+    return rootKey ? RegOpenKeyEx(rootKey, appSubKey, 0, access, phKey) : ERROR_FILE_NOT_FOUND;
+}
+
+// Added: Queries value from the app key
+static LSTATUS wuRegistry_QueryValue(const char* pKey, DWORD flags, void* pData, DWORD* pSize)
+{
+    HKEY hKey;
+    LSTATUS res = wuRegistry_OpenKey(appRootKey, KEY_READ, &hKey);
+    if ( res == ERROR_SUCCESS )
+    {
+        res = RegGetValue(hKey, NULL, pKey, flags, NULL, pData, pSize);
+        RegCloseKey(hKey);
+    }
+
+    return res;
+}
+
 void wuRegistry_InstallHooks(void)
 {
     J3D_HOOKFUNC(wuRegistry_Startup);
@@ -95,7 +116,7 @@ int J3DAPI wuRegistry_SaveInt(const char* pKey, int value)
     );
 
     HKEY hkResult = 0;
-    if ( RegOpenKeyEx(appRootKey, appSubKey, 0, KEY_ALL_ACCESS, &hkResult) == ERROR_SUCCESS
+    if ( wuRegistry_OpenKey(appRootKey, KEY_SET_VALUE, &hkResult) == ERROR_SUCCESS
       && RegSetValueEx(hkResult, pKey, 0, REG_DWORD, (const BYTE*)&value, sizeof(value)) == ERROR_SUCCESS
       && RegCloseKey(hkResult) == ERROR_SUCCESS )
     {
@@ -126,7 +147,7 @@ int J3DAPI wuRegistry_SaveFloat(const char* pKey, float value)
     );
 
     HKEY hkResult = 0;
-    if ( RegOpenKeyEx(appRootKey, appSubKey, 0, KEY_ALL_ACCESS, &hkResult) == ERROR_SUCCESS
+    if ( wuRegistry_OpenKey(appRootKey, KEY_SET_VALUE, &hkResult) == ERROR_SUCCESS
       && RegSetValueEx(hkResult, pKey, 0, REG_BINARY, (const BYTE*)&value, sizeof(value)) == ERROR_SUCCESS
       && RegCloseKey(hkResult) == ERROR_SUCCESS )
     {
@@ -145,33 +166,12 @@ int J3DAPI wuRegistry_GetInt(const char* pKey, int defaultValue)
 {
     STD_ASSERTREL(wuRegistry_bStarted);
 
-    // Added: Added HKEY_CURRENT_USER_LOCAL_SETTINGS & Removed HKEY_DYN_DATA 
-    STD_ASSERTREL(
-        appRootKey == HKEY_CLASSES_ROOT
-     || appRootKey == HKEY_CURRENT_USER
-     || appRootKey == HKEY_LOCAL_MACHINE
-     || appRootKey == HKEY_USERS
-     || appRootKey == HKEY_PERFORMANCE_DATA
-     || appRootKey == HKEY_CURRENT_CONFIG
-     || appRootKey == HKEY_CURRENT_USER_LOCAL_SETTINGS
-    );
-
-    HKEY hkResult = 0;
-    if ( RegOpenKeyEx(appRootKey, appSubKey, 0, KEY_ALL_ACCESS, &hkResult) != ERROR_SUCCESS )
-    {
-        return defaultValue;
+    uint32_t value = 0;
+    DWORD size = sizeof(value);
+    if ( wuRegistry_QueryValue(pKey, RRF_RT_ANY, &value, &size) == ERROR_SUCCESS && size == sizeof(value) ) {
+        return (int)value;
     }
 
-    BYTE data[sizeof(int)] = { 0 };
-    DWORD sizeData = sizeof(data);
-    DWORD type;
-    if ( RegQueryValueEx(hkResult, pKey, NULL, &type, data, &sizeData) == ERROR_SUCCESS )
-    {
-        RegCloseKey(hkResult);
-        return *(uint32_t*)data;
-    }
-
-    RegCloseKey(hkResult);
     return defaultValue;
 }
 
@@ -179,33 +179,12 @@ float J3DAPI wuRegistry_GetFloat(const char* pKey, float defaultValue)
 {
     STD_ASSERTREL(wuRegistry_bStarted);
 
-    // Added: Added HKEY_CURRENT_USER_LOCAL_SETTINGS & Removed HKEY_DYN_DATA 
-    STD_ASSERTREL(
-        appRootKey == HKEY_CLASSES_ROOT
-     || appRootKey == HKEY_CURRENT_USER
-     || appRootKey == HKEY_LOCAL_MACHINE
-     || appRootKey == HKEY_USERS
-     || appRootKey == HKEY_PERFORMANCE_DATA
-     || appRootKey == HKEY_CURRENT_CONFIG
-     || appRootKey == HKEY_CURRENT_USER_LOCAL_SETTINGS
-    );
-
-    HKEY hkResult = 0; // Added: Initialized to 0
-    if ( RegOpenKeyEx(appRootKey, appSubKey, 0, KEY_ALL_ACCESS, &hkResult) )
-    {
-        return defaultValue;
+    float value = 0.0f;
+    DWORD size = sizeof(value);
+    if ( wuRegistry_QueryValue(pKey, RRF_RT_ANY, &value, &size) == ERROR_SUCCESS && size == sizeof(value) ) {
+        return value;
     }
 
-    BYTE data[sizeof(int)] = { 0 };
-    DWORD sizeData = sizeof(data);
-    DWORD type;
-    if ( RegQueryValueExA(hkResult, pKey, 0, &type, data, &sizeData) == ERROR_SUCCESS )// TODO: make new int type var for 4th param (pKey
-    {
-        RegCloseKey(hkResult);
-        return *(float*)data;
-    }
-
-    RegCloseKey(hkResult);
     return defaultValue;
 }
 
@@ -237,7 +216,7 @@ int J3DAPI wuRegistry_SaveStr(const char* pKey, const char* pStr)
     );
 
     HKEY hkResult = 0;
-    if ( RegOpenKeyEx(appRootKey, appSubKey, 0, KEY_ALL_ACCESS, &hkResult) == ERROR_SUCCESS
+    if ( wuRegistry_OpenKey(appRootKey, KEY_SET_VALUE, &hkResult) == ERROR_SUCCESS
       && RegSetValueEx(hkResult, pKey, 0, REG_SZ, (const uint8_t*)pStr, strlen(pStr)) == ERROR_SUCCESS
       && RegCloseKey(hkResult) == ERROR_SUCCESS )
     {
@@ -256,35 +235,14 @@ int J3DAPI wuRegistry_GetStr(const char* pKey, char* pDstStr, size_t size, const
 {
     STD_ASSERTREL(wuRegistry_bStarted);
 
-    // Added: Added HKEY_CURRENT_USER_LOCAL_SETTINGS & Removed HKEY_DYN_DATA 
-    STD_ASSERTREL(
-        appRootKey == HKEY_CLASSES_ROOT
-     || appRootKey == HKEY_CURRENT_USER
-     || appRootKey == HKEY_LOCAL_MACHINE
-     || appRootKey == HKEY_USERS
-     || appRootKey == HKEY_PERFORMANCE_DATA
-     || appRootKey == HKEY_CURRENT_CONFIG
-     || appRootKey == HKEY_CURRENT_USER_LOCAL_SETTINGS
-    );
-
-    HKEY hkResult = 0;
-    if ( RegOpenKeyEx(appRootKey, appSubKey, 0, KEY_ALL_ACCESS, &hkResult) == ERROR_SUCCESS )
-    {
-        // Added: Changed call RegQueryValueEx -> RegGetValue to handle null termination
-        DWORD dataSize = size;
-        if ( RegGetValue(hkResult, NULL, pKey, RRF_RT_REG_SZ, NULL, (LPBYTE)pDstStr, &dataSize) == ERROR_SUCCESS && RegCloseKey(hkResult) == ERROR_SUCCESS )
-        {
-            return 0;
-        }
+    // Added: Changed call RegQueryValueEx -> RegGetValue to handle null termination
+    DWORD dataSize = (DWORD)size;
+    if ( wuRegistry_QueryValue(pKey, RRF_RT_REG_SZ, pDstStr, &dataSize) == ERROR_SUCCESS ) {
+        return 0;
     }
 
     if ( pDefaultValue ) {
         stdUtil_StringCopy(pDstStr, size, pDefaultValue);
-    }
-
-    if ( hkResult )
-    {
-        RegCloseKey(hkResult);
     }
 
     return 1;

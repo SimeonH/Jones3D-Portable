@@ -133,12 +133,35 @@ uint32_t stdSDL_KeycodeToVK(SDL_Keycode key)
     }
 }
 
+static bool stdSDL_bDesktopGL = false;
+
+void stdSDL_UseDesktopGL(void)
+{
+    stdSDL_bDesktopGL = true;
+}
+
+bool stdSDL_IsDesktopGL(void)
+{
+    return stdSDL_bDesktopGL;
+}
+
 void stdSDL_SetGLAttributes(void)
 {
     // The depth buffer is in the renderer's offscreen back buffer
-    SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_ES);
-    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 2);
-    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 0);
+    if ( stdSDL_bDesktopGL )
+    {
+        // Any compatibility context from 2.1, the GLES shaders need GLSL 1.30 or ARB_ES2_compatibility
+        SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_COMPATIBILITY);
+        SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 2);
+        SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 1);
+    }
+    else
+    {
+        SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_ES);
+        SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 2);
+        SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 0);
+    }
+
     SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
     SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 0);
     SDL_GL_SetAttribute(SDL_GL_STENCIL_SIZE, 0);

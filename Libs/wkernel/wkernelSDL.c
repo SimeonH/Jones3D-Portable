@@ -1,4 +1,4 @@
-// wkernel on SDL3 (non-Windows builds).
+// wkernel on SDL3.
 // The game window is an SDL window, its SDL_Window* is the HWND of the game (stdWin95_GetWindow).
 // SDL events are translated to the Win32 window messages the game window procedures handle,
 // so the game code processes them the same way on all platforms.
@@ -32,6 +32,7 @@ static WKERNELSHUTDOWNPROC wkernel_pfOnShutdown = NULL;
 static WKERNELWNDPROC wkernel_pfWndProc         = NULL;
 
 static WKernelTimer wkernel_aTimers[WKERNEL_MAXTIMERS];
+static HINSTANCE wkernel_hResInstance = NULL;
 static GUID wkernel_guid = { 0x82CE4DA0, 0x9CBF, 0x01D1, { 0x90, 0x85, 0x00, 0x60, 0x97, 0x76, 0xEA, 0x02 } };
 
 static int wkernel_CreateWindow(LPCSTR lpWindowName);
@@ -67,7 +68,7 @@ static LRESULT wkernel_SendMessage(UINT uMsg, WPARAM wParam, LPARAM lParam)
         return retValue;
     }
 
-    return DefWindowProc(wkernel_pWindow, uMsg, wParam, lParam);
+    return wkernel_DefWindowProc(wkernel_pWindow, uMsg, wParam, lParam);
 }
 
 int J3DAPI wkernel_Run(HINSTANCE hinstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nShowCmd, LPCSTR lpWindowName)
@@ -223,23 +224,35 @@ void J3DAPI wkernel_SetWindowProc(WKERNELWNDPROC pfProc)
 
 void J3DAPI wkernel_SetResourceInstance(HINSTANCE hInstance)
 {
-    J3D_UNUSED(hInstance);
+    wkernel_hResInstance = hInstance;
 }
 
 HINSTANCE wkernel_GetResourceInstance(void)
 {
-    return NULL;
+    return wkernel_hResInstance;
 }
 
 // The window is created for the graphics API of the renderer, see stdWin95_SetWindowApi
 static SDL_Window* wkernel_NewWindow(const char* pTitle, int width, int height, SDL_WindowFlags flags, StdWindowApi api)
 {
-    if ( api == STDWINDOW_API_OPENGL ) {
+    if ( api == STDWINDOW_API_OPENGL )
+    {
         stdSDL_SetGLAttributes();
+        flags |= SDL_WINDOW_OPENGL;
+    }
+    else if ( api == STDWINDOW_API_VULKAN ) {
+        flags |= SDL_WINDOW_VULKAN;
+    }
+    SDL_Window* pWindow = SDL_CreateWindow(pTitle, width, height, flags | SDL_WINDOW_HIGH_PIXEL_DENSITY);
+    if ( !pWindow && api == STDWINDOW_API_OPENGL && !stdSDL_IsDesktopGL() )
+    {
+        // No OpenGL ES support for the window (e.g. Windows without ANGLE), fall back to desktop OpenGL
+        fprintf(stderr, "WARNING: wkernel_CreateWindow: OpenGL ES window failed (%s), using desktop OpenGL.\n", SDL_GetError());
+        stdSDL_UseDesktopGL();
+        stdSDL_SetGLAttributes();
+        pWindow = SDL_CreateWindow(pTitle, width, height, flags | SDL_WINDOW_HIGH_PIXEL_DENSITY);
     }
 
-    flags |= api == STDWINDOW_API_OPENGL ? SDL_WINDOW_OPENGL : SDL_WINDOW_VULKAN;
-    SDL_Window* pWindow = SDL_CreateWindow(pTitle, width, height, flags | SDL_WINDOW_HIGH_PIXEL_DENSITY);
     if ( !pWindow )
     {
         fprintf(stderr, "ERROR: wkernel_CreateWindow: %s\n", SDL_GetError());
@@ -431,12 +444,11 @@ static int wkernel_ProcessEvent(const SDL_Event* pEvent)
     return 0;
 }
 
-// Win32 functions used by the game code
+// Win32 window functions used by the game code
 
-UINT_PTR SetTimer(HWND hWnd, UINT_PTR nIDEvent, UINT uElapse, TIMERPROC lpTimerFunc)
+UINT_PTR wkernel_SetTimer(HWND hWnd, UINT_PTR nIDEvent, UINT uElapse)
 {
     J3D_UNUSED(hWnd);
-    J3D_UNUSED(lpTimerFunc);
 
     WKernelTimer* pFree = NULL;
     for ( size_t i = 0; i < WKERNEL_MAXTIMERS; ++i )
@@ -462,7 +474,7 @@ UINT_PTR SetTimer(HWND hWnd, UINT_PTR nIDEvent, UINT uElapse, TIMERPROC lpTimerF
     return nIDEvent;
 }
 
-BOOL KillTimer(HWND hWnd, UINT_PTR uIDEvent)
+BOOL wkernel_KillTimer(HWND hWnd, UINT_PTR uIDEvent)
 {
     J3D_UNUSED(hWnd);
     for ( size_t i = 0; i < WKERNEL_MAXTIMERS; ++i )
@@ -477,7 +489,7 @@ BOOL KillTimer(HWND hWnd, UINT_PTR uIDEvent)
     return FALSE;
 }
 
-BOOL PostMessage(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam)
+BOOL wkernel_PostMessage(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam)
 {
     J3D_UNUSED(hWnd);
 
@@ -489,7 +501,7 @@ BOOL PostMessage(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam)
     return SDL_PushEvent(&event);
 }
 
-LRESULT DefWindowProc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam)
+LRESULT wkernel_DefWindowProc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam)
 {
     J3D_UNUSED(hWnd);
     J3D_UNUSED(Msg);
@@ -498,17 +510,11 @@ LRESULT DefWindowProc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam)
     return 0;
 }
 
-BOOL ShowWindow(HWND hWnd, int nCmdShow)
+BOOL wkernel_ShowWindow(HWND hWnd, int nCmdShow)
 {
     if ( !hWnd ) {
         return FALSE;
     }
 
     return nCmdShow == SW_HIDE ? SDL_HideWindow((SDL_Window*)hWnd) : SDL_ShowWindow((SDL_Window*)hWnd);
-}
-
-HWND GetForegroundWindow(void)
-{
-    // The game window when it has the input focus
-    return wkernel_pWindow && (SDL_GetWindowFlags(wkernel_pWindow) & SDL_WINDOW_INPUT_FOCUS) ? wkernel_pWindow : NULL;
 }

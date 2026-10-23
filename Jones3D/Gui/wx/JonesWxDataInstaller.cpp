@@ -1,5 +1,6 @@
 // Game data installer: copies the data files of the original game to the install dir (default ~/.Jones3D)
-// from a Steam installation, the GOG offline installer (unpacked with innoextract) or the original CDs.
+// from a Steam installation, the GOG release (on Windows the installed game, elsewhere the offline installer
+// unpacked with innoextract) or the original CDs.
 // Shown before the game starts when the data files are not found, see Indy3D_EnsureGameData.
 #include "JonesWx.h"
 #include <Jones3D/Gui/wx/JonesWxDialogs.h>
@@ -14,6 +15,10 @@
 #include <wx/progdlg.h>
 #include <wx/stdpaths.h>
 #include <wx/utils.h>
+
+#ifdef __WXMSW__
+#include <wx/msw/registry.h>
+#endif
 
 #include <stdlib.h>
 #include <functional>
@@ -34,7 +39,11 @@ namespace
         { "Jones3D.GOB",    true  },
         { "CD1.GOB",        true  },
         { "CD2.GOB",        true  },
+#ifdef __WXMSW__
+        { "Indy3D.exe",     true  }, // Dialogs of the standalone exe
+#else
         { "Indy3D.exe",     false }, // Dialog icons
+#endif
         { "jonesopn.snm",   false }, // Intro movies
         { "jonesopn_3.snm", false },
         { "jonesopn_4.snm", false },
@@ -42,7 +51,7 @@ namespace
         { "jonesopn_8.snm", false },
     };
 
-    const char* aRootFiles[]   = { "Jones3D.hlp", "Jones3D.cnt" };
+    const char* aRootFiles[]   = { "Jones3D.hlp", "Jones3D.cnt", "Jones3D.chm" }; // The GOG release has the help as .chm
 
     // Pictures, sounds and texts of the launcher (JonesWxLauncher.cpp) in the Install folder of the CD
     const char* aLauncherFiles[] = {
@@ -50,8 +59,10 @@ namespace
         "open.wav", "click.wav", "back.wav", "start.wav",
         "setup.tab",
     };
+#ifndef __WXMSW__
     const char* aGogSetupGlob  = "setup_indiana_jones_and_the_infernal_machine*.exe";
     const char* aGogExtractDir = ".gog-extract";
+#endif
 
     struct CopyItem
     {
@@ -261,6 +272,81 @@ namespace
         return text;
     }
 
+    // The Steam version has the launcher's Launch page picture and sounds in its Jones3D.exe instead of the Install folder of the CD,
+    // they're written to the Install folder of the install dir for the launcher (JonesWxLauncher.cpp)
+    void ExtractSteamLauncherFiles(const wxString& root, const wxString& installDir)
+    {
+        const wxString exe = FindPath(root, "Jones3D.exe");
+        if ( exe.empty() ) {
+            return;
+        }
+
+        const struct { const char* pName; std::vector<uint8_t> data; } aFiles[] = {
+            { "launch.bmp", JonesWx::ReadExeBitmapFile(exe, JonesWx::steamLaunchPictureID) },
+            { "open.wav",   JonesWx::ReadExeResource(exe, 0, JonesWx::steamSoundOpenID, "WAVE") },
+            { "start.wav",  JonesWx::ReadExeResource(exe, 0, JonesWx::steamSoundStartID, "WAVE") },
+            { "back.wav",   JonesWx::ReadExeResource(exe, 0, JonesWx::steamSoundBackID, "WAVE") },
+            { "click.wav",  JonesWx::ReadExeResource(exe, 0, JonesWx::steamSoundClickID, "WAVE") },
+        };
+
+        wxLogNull noLog;
+        const wxString dir = JoinPath(installDir, "Install");
+        for ( const auto& file : aFiles )
+        {
+            const wxString path = JoinPath(dir, file.pName);
+            if ( file.data.empty() || wxFileExists(path) || !wxFileName::Mkdir(dir, wxS_DIR_DEFAULT, wxPATH_MKDIR_FULL) ) {
+                continue;
+            }
+
+            wxFile out;
+            if ( out.Create(path, /*overwrite=*/true) ) {
+                out.Write(file.data.data(), file.data.size());
+            }
+        }
+    }
+
+#ifdef __WXMSW__
+    // Returns the folders of the game installed with the GOG installer or GOG Galaxy
+    wxArrayString FindGogInstalls()
+    {
+        static const char* const pGameId = "1106707958"; // GOG.com game ID of Indiana Jones and the Infernal Machine
+
+        wxLogNull noLog;
+        std::vector<wxString> candidates;
+        auto addRegValue = [&](wxRegKey::StdKey root, const wxString& key, const char* pValue) {
+            for ( wxRegKey::WOW64ViewMode view : { wxRegKey::WOW64ViewMode_32, wxRegKey::WOW64ViewMode_64 } )
+            {
+                wxRegKey regKey(root, key, view);
+                wxString path;
+                if ( regKey.Exists() && regKey.QueryValue(pValue, path) && !path.empty() ) {
+                    candidates.push_back(path);
+                }
+            }
+        };
+
+        addRegValue(wxRegKey::HKLM, wxString("SOFTWARE\\GOG.com\\Games\\") + pGameId, "path");
+        addRegValue(wxRegKey::HKLM, wxString("SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\") + pGameId + "_is1", "InstallLocation");
+        addRegValue(wxRegKey::HKCU, wxString("SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\") + pGameId + "_is1", "InstallLocation");
+
+        // Default install folders of the GOG installer and GOG Galaxy
+        wxString programFiles;
+        if ( !wxGetEnv("ProgramFiles(x86)", &programFiles) ) {
+            wxGetEnv("ProgramFiles", &programFiles);
+        }
+        candidates.push_back("C:\\GOG Games\\Indiana Jones and the Infernal Machine");
+        candidates.push_back(programFiles + "\\GOG Galaxy\\Games\\Indiana Jones and the Infernal Machine");
+
+        wxArrayString result;
+        std::set<wxString> seen;
+        for ( const wxString& dir : candidates )
+        {
+            if ( !dir.empty() && wxDir::Exists(dir) && HasResourceFile(dir, "CD1.GOB") && seen.insert(CanonicalDir(dir).Lower()).second ) {
+                result.push_back(CanonicalDir(dir));
+            }
+        }
+        return result;
+    }
+#else
     // Returns the GOG offline installer found in the downloads folder, if any
     wxString FindGogInstaller()
     {
@@ -281,6 +367,7 @@ namespace
         }
         return wxString();
     }
+#endif
 
     bool IsDiscRoot(const wxString& dir, int discNum)
     {
@@ -320,7 +407,21 @@ namespace
             }
         }
 #else
-        (void)discNum;
+        // CD-ROM drives
+        const DWORD drives = ::GetLogicalDrives();
+        for ( int letter = 0; letter < 26; ++letter )
+        {
+            const wxString root = wxString::Format("%c:\\", 'A' + letter);
+            if ( !(drives & (1u << letter)) || ::GetDriveTypeW(root.wc_str()) != DRIVE_CDROM ) {
+                continue;
+            }
+
+            wxLogNull noLog;
+            const bool bDisc = discNum ? IsDiscRoot(root, discNum) : IsDiscRoot(root, 1) || IsDiscRoot(root, 2);
+            if ( bDisc ) {
+                result.push_back(root);
+            }
+        }
 #endif
         return result;
     }
@@ -437,6 +538,9 @@ namespace
         progress.Update(progressRange);
         return true;
     }
+
+#ifndef __WXMSW__
+    // innoextract, which unpacks the GOG offline installer (on Windows the installed game is used instead)
 
     // Child process with redirected output, owned by the caller
     class ChildProcess : public wxProcess
@@ -574,6 +678,7 @@ namespace
         }
         return false;
     }
+#endif // !__WXMSW__
 
     // Shows license agreement, returns true when accepted
     bool ShowLicenseAgreement(wxWindow* pParent, const wxString& text)
@@ -614,21 +719,25 @@ namespace
         void UpdateControls();
         void OnInstall();
 
-        bool InstallFromFolder();
-        bool InstallFromGog();
+        bool InstallFromFolder(const wxString& root, bool bSaveGames);
+#ifndef __WXMSW__
+        bool InstallFromGog(); // Unpacks the offline installer
+#endif
         bool InstallFromCDs();
         bool Finish(const std::vector<CopyItem>& items, const wxString& sourceDescription);
 
         void ShowError(const wxString& message) { wxMessageBox(message, "Install Game Data", wxOK | wxICON_ERROR, this); }
 
         wxString installDir;
+#ifndef __WXMSW__
         bool bInnoextract = false;
+#endif
 
         wxRadioButton* pSteamRadio = nullptr;
         wxRadioButton* pGogRadio   = nullptr;
         wxRadioButton* pCdRadio    = nullptr;
         wxComboBox* pSteamPath     = nullptr;
-        wxTextCtrl* pGogPath       = nullptr;
+        wxComboBox* pGogPath       = nullptr;
         wxComboBox* pCdPath        = nullptr;
         wxCheckBox* pCopySaves     = nullptr;
         wxButton* pSteamBrowse     = nullptr;
@@ -640,7 +749,9 @@ namespace
         wxDialog(nullptr, wxID_ANY, "OpenJones3D - Install Game Data"),
         installDir(installDir_)
     {
+#ifndef __WXMSW__
         bInnoextract = IsProgramInPath("innoextract");
+#endif
 
         wxBoxSizer* pSizer = new wxBoxSizer(wxVERTICAL);
 
@@ -671,21 +782,50 @@ namespace
 
         pCopySaves = new wxCheckBox(this, wxID_ANY, "Also copy saved &games");
         pCopySaves->SetValue(true);
+#ifndef __WXMSW__
         pSizer->Add(pCopySaves, wxSizerFlags().Border(wxLEFT | wxTOP, indent));
+#endif
 
         if ( steamInstalls.empty() )
         {
             wxStaticText* pNote = new wxStaticText(this, wxID_ANY, "No Steam installation of the game was found.");
             pNote->SetForegroundColour(wxSystemSettings::GetColour(wxSYS_COLOUR_GRAYTEXT));
-            pSizer->Add(pNote, wxSizerFlags().Border(wxLEFT | wxTOP, indent));
+            pSizer->AddSpacer(FromDIP(6));
+            pSizer->Add(pNote, wxSizerFlags().Border(wxLEFT, indent));
         }
 
         // GOG
+#ifdef __WXMSW__
+        // The game installed with the GOG installer or GOG Galaxy, its folder is copied like a Steam installation
+        pGogRadio = new wxRadioButton(this, wxID_ANY, "&GOG (installed with the GOG installer or GOG Galaxy)");
+        pSizer->Add(pGogRadio, wxSizerFlags().Border(wxTOP, FromDIP(14)));
+
+        const wxArrayString gogInstalls = FindGogInstalls();
+        pGogPath = new wxComboBox(this, wxID_ANY, gogInstalls.empty() ? wxString() : gogInstalls[0], wxDefaultPosition, FromDIP(wxSize(420, -1)), gogInstalls);
+        pGogPath->SetHint("Folder the game was installed to");
+        pSizer->Add(CreateSourceRow(pGogPath, [this]() {
+            wxDirDialog dialog(this, "Choose the folder the GOG version of the game was installed to", pGogPath->GetValue(), wxDD_DEFAULT_STYLE | wxDD_DIR_MUST_EXIST);
+            if ( dialog.ShowModal() == wxID_OK ) {
+                pGogPath->SetValue(dialog.GetPath());
+            }
+        }, &pGogBrowse), wxSizerFlags().Expand().Border(wxLEFT, indent));
+
+        if ( gogInstalls.empty() )
+        {
+            wxStaticText* pNote = new wxStaticText(this, wxID_ANY, "No GOG installation of the game was found, choose the folder it was installed to.");
+            pNote->SetForegroundColour(wxSystemSettings::GetColour(wxSYS_COLOUR_GRAYTEXT));
+            pSizer->AddSpacer(FromDIP(6));
+            pSizer->Add(pNote, wxSizerFlags().Border(wxLEFT, indent));
+        }
+
+        // Applies to both installed copies of the game
+        pSizer->Add(pCopySaves, wxSizerFlags().Border(wxTOP, FromDIP(14)));
+#else
         pGogRadio = new wxRadioButton(this, wxID_ANY, "&GOG offline installer (setup_indiana_jones_and_the_infernal_machine_*.exe)");
         pSizer->Add(pGogRadio, wxSizerFlags().Border(wxTOP, FromDIP(14)));
 
         const wxString gogInstaller = FindGogInstaller();
-        pGogPath = new wxTextCtrl(this, wxID_ANY, gogInstaller, wxDefaultPosition, FromDIP(wxSize(420, -1)));
+        pGogPath = new wxComboBox(this, wxID_ANY, gogInstaller, wxDefaultPosition, FromDIP(wxSize(420, -1)));
         pGogPath->SetHint("Path to the GOG installer .exe");
         pSizer->Add(CreateSourceRow(pGogPath, [this]() {
             wxFileDialog dialog(this, "Choose the GOG offline installer", wxFileName(pGogPath->GetValue()).GetPath(), wxString(),
@@ -701,6 +841,7 @@ namespace
             pNote->SetForegroundColour(*wxRED);
             pSizer->Add(pNote, wxSizerFlags().Border(wxLEFT | wxTOP, indent));
         }
+#endif
 
         // CDs
         pCdRadio = new wxRadioButton(this, wxID_ANY, "Original &CD-ROMs");
@@ -710,7 +851,12 @@ namespace
         pCdPath = new wxComboBox(this, wxID_ANY, discs.empty() ? wxString() : discs[0], wxDefaultPosition, FromDIP(wxSize(420, -1)), discs);
         pCdPath->SetHint("Folder where disc 1 is mounted");
         pSizer->Add(CreateSourceRow(pCdPath, [this]() {
-            wxDirDialog dialog(this, "Choose the folder where disc 1 is mounted", pCdPath->GetValue().empty() ? "/run/media" : pCdPath->GetValue(),
+#ifdef __WXMSW__
+            const wxString defaultPath = wxString();
+#else
+            const wxString defaultPath = "/run/media";
+#endif
+            wxDirDialog dialog(this, "Choose the folder where disc 1 is mounted", pCdPath->GetValue().empty() ? defaultPath : pCdPath->GetValue(),
                 wxDD_DEFAULT_STYLE | wxDD_DIR_MUST_EXIST);
             if ( dialog.ShowModal() == wxID_OK ) {
                 pCdPath->SetValue(dialog.GetPath());
@@ -727,10 +873,15 @@ namespace
         pSizer->Add(pButtons, wxSizerFlags().Expand().Border(wxTOP, FromDIP(20)));
 
         // Preselect the source that was found
+#ifdef __WXMSW__
+        const bool bGogFound = !gogInstalls.empty();
+#else
+        const bool bGogFound = !gogInstaller.empty() && bInnoextract;
+#endif
         if ( !steamInstalls.empty() ) {
             pSteamRadio->SetValue(true);
         }
-        else if ( !gogInstaller.empty() && bInnoextract ) {
+        else if ( bGogFound ) {
             pGogRadio->SetValue(true);
         }
         else if ( !discs.empty() ) {
@@ -771,7 +922,11 @@ namespace
         const bool bSteam = pSteamRadio->GetValue();
         pSteamPath->Enable(bSteam);
         pSteamBrowse->Enable(bSteam);
+#ifdef __WXMSW__
+        pCopySaves->Enable(bSteam || pGogRadio->GetValue()); // Both are game folders
+#else
         pCopySaves->Enable(bSteam);
+#endif
 
         pGogPath->Enable(pGogRadio->GetValue());
         pGogBrowse->Enable(pGogRadio->GetValue());
@@ -790,10 +945,14 @@ namespace
 
         bool bInstalled = false;
         if ( pSteamRadio->GetValue() ) {
-            bInstalled = InstallFromFolder();
+            bInstalled = InstallFromFolder(pSteamPath->GetValue().Strip(wxString::both), pCopySaves->GetValue());
         }
         else if ( pGogRadio->GetValue() ) {
+#ifdef __WXMSW__
+            bInstalled = InstallFromFolder(pGogPath->GetValue().Strip(wxString::both), pCopySaves->GetValue());
+#else
             bInstalled = InstallFromGog();
+#endif
         }
         else {
             bInstalled = InstallFromCDs();
@@ -818,9 +977,9 @@ namespace
         return true;
     }
 
-    bool DataInstallerDialog::InstallFromFolder()
+    // Installs from a game folder: a Steam installation, the installed GOG version or another installed copy
+    bool DataInstallerDialog::InstallFromFolder(const wxString& root, bool bSaveGames)
     {
-        const wxString root = pSteamPath->GetValue().Strip(wxString::both);
         if ( root.empty() || !wxDir::Exists(root) )
         {
             ShowError("Choose the folder of the installed game.");
@@ -834,7 +993,7 @@ namespace
         }
 
         std::vector<CopyItem> items;
-        CollectDataFiles(root, items, pCopySaves->GetValue(), installDir);
+        CollectDataFiles(root, items, bSaveGames, installDir);
 
         const wxArrayString missing = GetMissingRequiredFiles(items);
         if ( !missing.empty() )
@@ -844,9 +1003,15 @@ namespace
             return false;
         }
 
-        return InstallFiles(this, items, installDir, "Copying Game Data", /*bMove=*/false) && Finish(items, root);
+        if ( !InstallFiles(this, items, installDir, "Copying Game Data", /*bMove=*/false) ) {
+            return false;
+        }
+
+        ExtractSteamLauncherFiles(root, installDir);
+        return Finish(items, root);
     }
 
+#ifndef __WXMSW__
     bool DataInstallerDialog::InstallFromGog()
     {
         const wxString setupPath = pGogPath->GetValue().Strip(wxString::both);
@@ -926,7 +1091,7 @@ namespace
             wxProgressDialog progress("Extracting Game Data", "Extracting the GOG installer...", 1000, this,
                 wxPD_APP_MODAL | wxPD_AUTO_HIDE | wxPD_CAN_ABORT | wxPD_ELAPSED_TIME | wxPD_REMAINING_TIME);
             result = RunProcess({ "innoextract", "--progress=1", "--color=0", "--exclude-temp", "--output-dir", extractDir,
-                    "--include", "/Resource", "--include", "/KeySets", setupPath },
+                    "--include", "/Resource", "--include", "/KeySets", "--include", "/Jones3D.chm", setupPath },
                 [&progress](const std::string& output) {
                     const wxString file = ParseInnoextractFile(output);
                     return progress.Update((int)(ParseInnoextractProgress(output) * 10.0), file.empty() ? wxString("Extracting the GOG installer...") : "Extracting " + file);
@@ -955,6 +1120,8 @@ namespace
 
         return InstallFiles(this, items, installDir, "Installing Game Data", /*bMove=*/true) && Finish(items, setupPath);
     }
+
+#endif // !__WXMSW__
 
     bool DataInstallerDialog::InstallFromCDs()
     {
@@ -1027,7 +1194,27 @@ namespace
 wxArrayString JonesWx::FindSteamInstalls()
 {
     wxArrayString result;
-#ifndef __WXMSW__
+#ifdef __WXMSW__
+    // Steam's folder from the registry
+    std::vector<wxString> aSteamRoots;
+    const struct { wxRegKey::StdKey root; const char* pKey; const char* pValue; } aKeys[] = {
+        { wxRegKey::HKCU, "Software\\Valve\\Steam",             "SteamPath" },
+        { wxRegKey::HKLM, "SOFTWARE\\WOW6432Node\\Valve\\Steam", "InstallPath" },
+        { wxRegKey::HKLM, "SOFTWARE\\Valve\\Steam",             "InstallPath" },
+    };
+
+    wxLogNull noLog;
+    for ( const auto& key : aKeys )
+    {
+        wxRegKey regKey(key.root, key.pKey);
+        wxString path;
+        if ( regKey.Exists() && regKey.QueryValue(key.pValue, path) && !path.empty() )
+        {
+            path.Replace("/", "\\");
+            aSteamRoots.push_back(path);
+        }
+    }
+#else
     const wxString home = wxGetHomeDir();
     const wxString aSteamRoots[] = {
         home + "/.local/share/Steam",
@@ -1037,6 +1224,7 @@ wxArrayString JonesWx::FindSteamInstalls()
         home + "/.var/app/com.valvesoftware.Steam/data/Steam",
         home + "/snap/steam/common/.local/share/Steam",                 // Snap
     };
+#endif
 
     std::vector<wxString> libraries;
     for ( const wxString& root : aSteamRoots )
@@ -1079,7 +1267,6 @@ wxArrayString JonesWx::FindSteamInstalls()
             result.push_back(canonical);
         }
     }
-#endif
     return result;
 }
 

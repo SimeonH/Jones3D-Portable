@@ -292,15 +292,6 @@ typedef struct tagMINMAXINFO
 #define VK_F11      0x7A
 #define VK_F12      0x7B
 
-// Win32 window functions used by the game code, implemented by the SDL wkernel (Libs/wkernel/wkernelSDL.c)
-typedef void (*TIMERPROC)(HWND, UINT, UINT_PTR, DWORD);
-UINT_PTR SetTimer(HWND hWnd, UINT_PTR nIDEvent, UINT uElapse, TIMERPROC lpTimerFunc);
-BOOL KillTimer(HWND hWnd, UINT_PTR uIDEvent);
-BOOL PostMessage(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam);
-LRESULT DefWindowProc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam);
-BOOL ShowWindow(HWND hWnd, int nCmdShow);
-HWND GetForegroundWindow(void);
-
 // Win32 file functions used by the game code, implemented on POSIX with game path translation (Libs/std/SDL/stdWin32File.c)
 typedef struct _SECURITY_ATTRIBUTES
 {
