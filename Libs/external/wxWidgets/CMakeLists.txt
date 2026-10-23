@@ -43,20 +43,12 @@ foreach(feature
 endforeach()
 
 # The game's help is shown in the wxHTML help viewer (Jones3D/Gui/wx/JonesWxHelp.cpp): the WinHelp file converted to HTML,
-# or the CHM file of the GOG release, read with libmspack (Libs/external/libmspack). Windows opens CHM files with its own viewer.
+# or the CHM file of the GOG release, unpacked with libmspack (Libs/external/libmspack) by the game on all platforms.
 set(wxUSE_HTML        ON CACHE BOOL "" FORCE)
 set(wxUSE_WXHTML_HELP ON CACHE BOOL "" FORCE)
-if(WIN32)
-    set(wxUSE_LIBMSPACK OFF CACHE BOOL "" FORCE)
-else()
-    set(wxUSE_LIBMSPACK ON CACHE BOOL "" FORCE)
-endif()
+set(wxUSE_LIBMSPACK   OFF CACHE BOOL "" FORCE)
 
 FetchContent_MakeAvailable(wxWidgets)
-
-if(TARGET wxhtml AND TARGET mspack)
-    add_dependencies(wxhtml mspack) # wxhtml links the libmspack file (MSPACK_LIBRARY)
-endif()
 
 # wx exports UNICODE/_UNICODE to its users, which would switch the game's C code to the wide Win32 API.
 # Jones3D sets these only on its wx sources (see Jones3D/CMakeLists.txt).

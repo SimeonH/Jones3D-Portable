@@ -7,7 +7,7 @@ file(GLOB_RECURSE JONES3D_HEADERS *.h)
 list(REMOVE_ITEM JONES3D_SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/standalone.c")
 list(REMOVE_ITEM JONES3D_SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/linuxmain.c")
 
-set(JONES3D_WX_LIBS wx::html wx::core wx::base) # wx::html: help viewer (Gui/wx/JonesWxHelp.cpp)
+set(JONES3D_WX_LIBS wx::html wx::core wx::base mspack) # wx::html, mspack: help viewer (Gui/wx/JonesWxHelp.cpp)
 
 file(GLOB JONES3D_WX_SOURCES CONFIGURE_DEPENDS Gui/wx/*.cpp)
 

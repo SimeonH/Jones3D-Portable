@@ -1,7 +1,7 @@
 // Help viewer (Added): the game's help is a WinHelp file (Jones3D.hlp), or an HTML Help file (Jones3D.chm) in the GOG release.
 // Current systems don't come with a WinHelp viewer, the help file is shown in the wxHTML help viewer: the WinHelp file
-// converted to an HTML book (JonesWxHlp.cpp), the CHM file read with libmspack (not on Windows, which opens CHM files with
-// its own HTML Help viewer, see JonesHud_OpenHelp). It runs in its own process (the game executable with -help <file>),
+// converted to an HTML book (JonesWxHlp.cpp), the CHM file unpacked with libmspack (JonesWxChm.cpp). On Windows too, as
+// Windows' own HTML Help viewer refuses CHM files in many places. It runs in its own process (the game executable with -help <file>),
 // as the game's event loop doesn't run wx events while the game is played.
 #include "JonesWx.h"
 #include "JonesWxHlp.h"
@@ -41,11 +41,11 @@ extern "C" int JonesWx_ShowHelp(const char* pFilePath)
             const wxString book = JonesWxHlp::LoadBook(filePath, &error);
             bLoaded = !book.empty() && help.AddBook(book);
         }
-    #if wxUSE_LIBMSPACK
-        else {
-            bLoaded = help.AddBook(wxFileName(filePath));
+        else
+        {
+            const wxString book = JonesWxHlp::LoadChmBook(filePath, &error);
+            bLoaded = !book.empty() && help.AddBook(book);
         }
-    #endif
 
         if ( !bLoaded )
         {

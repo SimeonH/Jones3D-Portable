@@ -3863,7 +3863,7 @@ HANDLE J3DAPI JonesHud_OpenHelp(HANDLE process)
     // Changed: The help file is opened with the program set by the 'Help Viewer' setting. When it isn't set,
     //          the game executable shows it in its help viewer (-help <file>, JonesWx_ShowHelp), since current
     //          Windows versions and Linux don't come with a WinHelp viewer.
-    //          The GOG release has the help as a .chm file instead, which Windows opens with its HTML Help viewer.
+    //          The GOG release has the help as a .chm file instead, which the help viewer shows too.
 #ifdef _WIN32
     if ( process ) {
         return process; // Viewer still open, only one is opened at a time
@@ -3886,7 +3886,6 @@ HANDLE J3DAPI JonesHud_OpenHelp(HANDLE process)
 
     char aHelpPath[512];
     bool bFound = JonesHud_FindHelpFile(pFilename, aHelpPath, sizeof(aHelpPath));
-    bool bChm   = false;
     if ( !bFound )
     {
         // The GOG release: Jones3D.chm
@@ -3894,7 +3893,7 @@ HANDLE J3DAPI JonesHud_OpenHelp(HANDLE process)
         STD_STRCPY(aChmFilename, pFilename);
         stdFnames_StripExtAndDot(aChmFilename);
         stdUtil_StringCat(aChmFilename, sizeof(aChmFilename), ".chm");
-        bFound = bChm = JonesHud_FindHelpFile(aChmFilename, aHelpPath, sizeof(aHelpPath));
+        bFound = JonesHud_FindHelpFile(aChmFilename, aHelpPath, sizeof(aHelpPath));
     }
 
     stdMemory_Free(pFilename);
@@ -3913,25 +3912,6 @@ HANDLE J3DAPI JonesHud_OpenHelp(HANDLE process)
     char aFullPath[MAX_PATH];
     if ( !GetFullPathNameA(aHelpPath, sizeof(aFullPath), aFullPath, NULL) ) {
         return NULL;
-    }
-
-    if ( bChm && !strlen(aViewer) )
-    {
-        // Windows' HTML Help viewer (hh.exe), through the .chm file association
-        SHELLEXECUTEINFOA execInfo;
-        memset(&execInfo, 0, sizeof(execInfo));
-        execInfo.cbSize = sizeof(execInfo);
-        execInfo.fMask  = SEE_MASK_NOCLOSEPROCESS;
-        execInfo.lpVerb = "open";
-        execInfo.lpFile = aFullPath;
-        execInfo.nShow  = SW_SHOWNORMAL;
-        if ( !ShellExecuteExA(&execInfo) )
-        {
-            STDLOG_ERROR("JonesHud: Couldn't open the help file '%s' (error %lu).\n", aFullPath, GetLastError());
-            return NULL;
-        }
-
-        return execInfo.hProcess;
     }
 
     // The viewer is started directly instead of using the .hlp file association,
@@ -3965,8 +3945,6 @@ HANDLE J3DAPI JonesHud_OpenHelp(HANDLE process)
     hProcess = procInfo.hProcess;
 
 #else
-    J3D_UNUSED(bChm); // The help viewer shows CHM files too
-
     // Reap the previous viewer, only one is opened at a time
     static SDL_Process* pViewerProcess = NULL;
     if ( pViewerProcess )

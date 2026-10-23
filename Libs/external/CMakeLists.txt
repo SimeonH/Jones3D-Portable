@@ -8,9 +8,7 @@ else()
 endif()
 
 if(JONES3D_BUILD_GAME)
-    if(NOT WIN32)
-        add_subdirectory(libmspack) # CHM help in the wxHTML help viewer
-    endif()
+    add_subdirectory(libmspack) # CHM help in the wxHTML help viewer
     add_subdirectory(wxWidgets) # game dialogs and help viewer
 endif()
 

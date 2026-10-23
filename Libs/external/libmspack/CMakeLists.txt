@@ -1,8 +1,8 @@
 cmake_minimum_required(VERSION 3.14)
 project(libmspack_external C)
 
-# libmspack (LGPL-2.1) reads the CHM help file of the GOG release in the wxWidgets help viewer
-# (wxUSE_LIBMSPACK, see Jones3D/Gui/wx/JonesWxHelp.cpp). Only its CHM decompressor is built, as a static library.
+# libmspack (LGPL-2.1) unpacks the CHM help file of the GOG release for the wxWidgets help viewer
+# (see Jones3D/Gui/wx/JonesWxChm.cpp). Only its CHM decompressor is built, as a static library.
 # It's built from source because 32-bit packages aren't commonly available.
 # Set FETCHCONTENT_SOURCE_DIR_LIBMSPACK to use a local source tree instead of downloading.
 
@@ -25,13 +25,11 @@ add_library(mspack STATIC
 
 # Don't build libmspack with the project's warning flags
 set_target_properties(mspack PROPERTIES COMPILE_OPTIONS "" POSITION_INDEPENDENT_CODE ON FOLDER "Libs/external")
-target_compile_options(mspack PRIVATE -w)
+if(MSVC)
+    target_compile_options(mspack PRIVATE /w)
+else()
+    target_compile_options(mspack PRIVATE -w)
+endif()
 target_compile_definitions(mspack PRIVATE _FILE_OFFSET_BITS=64 LARGEFILE_SUPPORT=1)
 target_include_directories(mspack PRIVATE ${MSPACK_DIR})
 target_include_directories(mspack SYSTEM PUBLIC ${MSPACK_DIR})
-
-# Found by wxWidgets' FindMSPACK.cmake (find_path/find_library keep these cached values).
-# wx needs the library file, not a target, Libs/external/wxWidgets adds the build dependency.
-set_target_properties(mspack PROPERTIES ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
-set(MSPACK_INCLUDE_DIR ${MSPACK_DIR} CACHE PATH "" FORCE)
-set(MSPACK_LIBRARY ${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_STATIC_LIBRARY_PREFIX}mspack${CMAKE_STATIC_LIBRARY_SUFFIX} CACHE FILEPATH "" FORCE)

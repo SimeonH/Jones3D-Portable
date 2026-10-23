@@ -58,7 +58,7 @@ The original engine draws through DirectDraw and Direct3D 6, which current drive
 The game's Help menu opens `Jones3D.hlp`, a WinHelp file. The game executable shows it in the wxWidgets HTML help viewer (`jones3d-portable -help <file>`, `OpenJones3D.exe -help <file>` on Windows), with the contents from `Jones3D.cnt`, the keyword index and full-text search:
 
 - The WinHelp file is converted to HTML when it's opened (`Jones3D/Gui/wx/JonesWxHlp.cpp`): the topics with their fonts, paragraph spacing and indents, tables, pictures (including the bitmap in a Windows metafile) and links between topics. The WinHelp format follows Manfred Winterhoff's HELPDECO documentation and was cross-checked with [Rust HLP Viewer](https://github.com/NullMagic2/Rust-HLP-Viewer).
-- The GOG release replaces the WinHelp file with `Jones3D.chm`, an HTML Help file, which is used when there's no `Jones3D.hlp`. Windows opens it with its own HTML Help viewer, on Linux the same help viewer shows it, reading the CHM file with [libmspack](https://www.cabextract.org.uk/libmspack/).
+- The GOG release replaces the WinHelp file with `Jones3D.chm`, an HTML Help file, which is used when there's no `Jones3D.hlp`. The same help viewer shows it on all platforms, reading the CHM file with [libmspack](https://www.cabextract.org.uk/libmspack/).
 
 A different viewer can be set with the `Help Viewer` setting.
 
@@ -177,7 +177,7 @@ The Windows build can also be cross-compiled from Linux with clang-cl, see `tool
 | `JONES3D_RENDERER_GLES2` | `ON` | Builds the OpenGL ES 2.0 renderer (Vulkan is always built) |
 | `JONES3D_RENDERER_D3D11` | `ON` (Windows) | Builds the Direct3D 11 renderer |
 | `JONES3D_QOL_IMPROVEMENTS` | `ON` | Quality-of-life improvements: better error handling, logging and debugging features |
-| `FETCHCONTENT_SOURCE_DIR_<NAME>` | | Use a local source tree for a downloaded dependency (`WXWIDGETS`, `SDL3` (Windows), `OPENALSOFT`, `LIBMSPACK` (Linux), `VULKANHEADERS`, `VOLK`) |
+| `FETCHCONTENT_SOURCE_DIR_<NAME>` | | Use a local source tree for a downloaded dependency (`WXWIDGETS`, `SDL3` (Windows), `OPENALSOFT`, `LIBMSPACK`, `VULKANHEADERS`, `VOLK`) |
 
 ## Engine architecture
 

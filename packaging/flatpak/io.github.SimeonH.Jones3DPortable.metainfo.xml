@@ -21,7 +21,7 @@
     <ul>
       <li>Vulkan and OpenGL ES 2.0 renderers, switchable in the display settings</li>
       <li>Original dialogs and the CD launcher, recreated with native widgets</li>
-      <li>Built-in viewer for the game's WinHelp file</li>
+      <li>Built-in viewer for the game's WinHelp and HTML Help files</li>
       <li>High resolutions and widescreen support, gamepads</li>
       <li>Save games compatible with the original game</li>
     </ul>

@@ -17,7 +17,7 @@ First release of Jones3D Portable, built on the OpenJones3D decompilation. The g
   - Every game dialog recreated with wxWidgets, including the classic Explorer-style save and load dialogs
   - Recreation of the original CD launcher (Start New Game, Resume Play, Help, Sound and Display Options)
   - Game data installer: from a Steam installation, a GOG installation (Windows) or the GOG offline installer (Linux), or the original CDs
-  - Built-in help viewer for the game's WinHelp file (`Jones3D.hlp`), with contents, index and search; the GOG release's `Jones3D.chm` opens in Windows' HTML Help viewer, or in the built-in viewer on Linux
+  - Built-in help viewer for the game's WinHelp file (`Jones3D.hlp`), with contents, index and search, also showing the GOG release's HTML Help file (`Jones3D.chm`)
   - The intro movie is played in its original 4:3 aspect ratio, save games are listed sorted
 
 ### Fixes

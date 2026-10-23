@@ -12,6 +12,10 @@ namespace JonesWxHlp
     // Converts the help file at pFilePath, returns the URL of the book (.hhp) to add to wxHtmlHelpController,
     // or an empty string with pError set
     wxString LoadBook(const wxString& filePath, wxString* pError);
+
+    // Unpacks the HTML Help file (.chm) at filePath with libmspack (JonesWxChm.cpp), returns the URL of its book (.hhp)
+    // or an empty string with pError set
+    wxString LoadChmBook(const wxString& filePath, wxString* pError);
 }
 
 #endif // JONES3D_GUI_WX_JONESWXHLP_H

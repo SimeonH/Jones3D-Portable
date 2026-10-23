@@ -66,3 +66,8 @@ Libs/external/DirectX61c/libs/*
 .vs/
 # Local build directories (contain game files)
 build*/
+
+# flatpak-builder state and output
+.flatpak-builder/
+flatpak-repo/
+*.flatpak
