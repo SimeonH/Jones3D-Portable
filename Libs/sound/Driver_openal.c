@@ -549,7 +549,9 @@ tSoundDevice J3DAPI SoundDriver_CreateDirectSound(int bNoSound3D)
         return NULL;
     }
 
-    SoundDriver_device.pContext = alcCreateContext(SoundDriver_device.pDevice, NULL);
+    // OpenAL Soft defaults to 256 sources, every game sound channel needs one (SITHSOUND_MAXCHANNELS)
+    const ALCint aAttributes[] = { ALC_MONO_SOURCES, 512, ALC_STEREO_SOURCES, 64, 0 };
+    SoundDriver_device.pContext = alcCreateContext(SoundDriver_device.pDevice, aAttributes);
     if ( !SoundDriver_device.pContext || !alcMakeContextCurrent(SoundDriver_device.pContext) )
     {
         SoundDriver_LogError("SoundDriver: Failed to create the OpenAL context.\n");

@@ -11,7 +11,7 @@ J3D_EXTERN_C_START
 
 // Max number of simultaneous playing sounds
 #ifdef J3D_QOL_IMPROVEMENTS
-#  define SITHSOUND_MAXCHANNELS 128
+#  define SITHSOUND_MAXCHANNELS 512
 #else
 #  define SITHSOUND_MAXCHANNELS 32
 #endif
