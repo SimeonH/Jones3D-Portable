@@ -5,7 +5,7 @@
 # from a Steam installation, the GOG offline installer or the original CDs.
 
 pkgname=jones3d-portable
-pkgver=0.3.1.r0.g0000000
+pkgver=1.0.0
 pkgrel=1
 pkgdesc="Open source engine for Indiana Jones and the Infernal Machine (needs the original game data)"
 arch=('x86_64')
@@ -69,7 +69,12 @@ pkgver() {
   cd Jones3D-Portable
   local version
   version=$(sed -n 's/^project(OpenJones3D VERSION \([0-9.]*\)).*/\1/p' CMakeLists.txt)
-  printf "%s.r%s.g%s" "$version" "$(git rev-list --count HEAD)" "$(git rev-parse --short=7 HEAD)"
+  # A release tag (v1.0.0) is the plain version, other commits get the commit count and hash appended
+  if git describe --exact-match --tags --match "v$version" >/dev/null 2>&1; then
+    printf "%s" "$version"
+  else
+    printf "%s.r%s.g%s" "$version" "$(git rev-list --count HEAD)" "$(git rev-parse --short=7 HEAD)"
+  fi
 }
 
 build() {

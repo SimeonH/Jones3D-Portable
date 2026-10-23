@@ -62,7 +62,27 @@ The game's Help menu opens `Jones3D.hlp`, a WinHelp file. The game executable sh
 
 A different viewer can be set with the `Help Viewer` setting.
 
+## Downloads
+
+The [releases](https://github.com/SimeonH/Jones3D-Portable/releases) have:
+
+- `OpenJones3D-<version>-windows-x86.zip` — the Windows game executable, see [Running on Windows](#running-on-windows).
+- `jones3d-portable-<version>-x86_64.pkg.tar.zst` — the Arch Linux package, installed with `sudo pacman -U <file>`.
+- `jones3d-portable-<version>.flatpak` — the Flatpak, for any Linux distribution, installed with `flatpak install --user <file>`. It needs the GNOME 49 runtime from Flathub, which `flatpak install` offers to install.
+- The source code.
+
 ## Installing on Linux
+
+### Flatpak
+
+Install the Flatpak from the releases, or build it with [flatpak-builder](https://docs.flatpak.org/en/latest/flatpak-builder.html) from `packaging/flatpak` (the GNOME 49 SDK from Flathub is needed):
+
+```bash
+flatpak-builder --user --install --force-clean build-flatpak packaging/flatpak/io.github.SimeonH.Jones3DPortable.yml
+flatpak run io.github.SimeonH.Jones3DPortable
+```
+
+The Flatpak includes innoextract for the GOG offline installer. It reads the game data from anywhere on the system (read-only) and keeps it in `~/.Jones3D` like the other builds; its settings are in `~/.var/app/io.github.SimeonH.Jones3DPortable/config/OpenJones3D`.
 
 ### Arch Linux
 
@@ -113,7 +133,7 @@ Files are copied to temporary files first, so canceling never leaves a broken da
 
 ## Running on Windows
 
-1. Build the project (see [Building on Windows](#building-on-windows)).
+1. Download `OpenJones3D.exe` from the [releases](https://github.com/SimeonH/Jones3D-Portable/releases) or build it (see [Building on Windows](#building-on-windows)).
 2. Copy `OpenJones3D.exe` to an empty folder and run it. The data installer copies the game data next to it, see [The data installer](#the-data-installer).
 
 `OpenJones3D.exe` also runs from the `Resource` folder of an installed copy of the game, next to the original `Indy3D.exe`, without installing the data again.

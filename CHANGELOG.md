@@ -1,3 +1,30 @@
+## v1.0.0 (Jones3D Portable)
+First release of Jones3D Portable, built on the OpenJones3D decompilation. The game runs entirely on the reimplemented engine (2828 of 2828 functions of `Indy3D.exe` v1.0), without code from the original executable.
+
+### Platforms
+  - Native builds for Windows (32-bit) and Linux (64-bit and 32-bit), with an Arch Linux package and a Flatpak
+  - SDL3 for the game window, keyboard, mouse and gamepads on all platforms (replaces Win32 windows and DirectInput)
+  - Gamepads can be connected while the game runs
+  - Save games keep the original file format and can be shared between platforms
+  - Settings in `HKCU\Software\OpenJones3D` on Windows and `~/.config/OpenJones3D/settings.cfg` on Linux, separate from an installation of the original game
+
+### Rendering
+  - Vulkan, OpenGL ES 2.0 and Direct3D 11 (Windows) renderers replace DirectDraw / Direct3D 6, selectable in the display settings and switchable while the game runs
+  - The game image is scaled to the window, including resolutions above the Direct3D 6 limit of 2048 pixels and widescreen aspect ratios
+  - On Windows drivers without OpenGL ES support, the OpenGL ES renderer runs on desktop OpenGL
+
+### Game
+  - Every game dialog recreated with wxWidgets, including the classic Explorer-style save and load dialogs
+  - Recreation of the original CD launcher (Start New Game, Resume Play, Help, Sound and Display Options)
+  - Game data installer: from a Steam installation, a GOG installation (Windows) or the GOG offline installer (Linux), or the original CDs
+  - Built-in help viewer for the game's WinHelp file (`Jones3D.hlp`), with contents, index and search; the GOG release's `Jones3D.chm` opens in Windows' HTML Help viewer, or in the built-in viewer on Linux
+  - The intro movie is played in its original 4:3 aspect ratio, save games are listed sorted
+
+### Fixes
+  - Long sounds that loop while something moves (e.g. slowly opening doors) were cut off
+  - 64-bit only bugs from union fields accessed through the wrong member (whip-climb turning, physics resets) and an uninitialized fog color
+  - The launcher's start sound (whip) wasn't heard before the game started, and Resume Play didn't play it
+
 ## v0.3.1
 ### General:
   - Fixed radius of fading plate 3DO models (5d705fb)

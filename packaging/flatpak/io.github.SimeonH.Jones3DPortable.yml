@@ -1,0 +1,90 @@
+# Flatpak of Jones3D Portable. Build it with flatpak-builder:
+#   flatpak-builder --user --install --force-clean build-flatpak packaging/flatpak/io.github.SimeonH.Jones3DPortable.yml
+# The game data isn't part of it, on first start the data installer installs it to ~/.Jones3D.
+id: io.github.SimeonH.Jones3DPortable
+runtime: org.gnome.Platform
+runtime-version: '49'
+sdk: org.gnome.Sdk
+command: jones3d-portable
+
+finish-args:
+  - --share=ipc
+  - --socket=wayland
+  - --socket=fallback-x11
+  - --socket=pulseaudio
+  - --device=all           # GPU and gamepads
+  - --filesystem=~/.Jones3D:create
+  # The data installer reads the game data from Steam libraries, the GOG offline installer and CDs, which can be anywhere
+  - --filesystem=host:ro
+
+cleanup:
+  - /include
+  - /lib/cmake
+  - /lib/pkgconfig
+  - /share/doc
+  - '*.a'
+
+modules:
+  # innoextract unpacks the GOG offline installer for the data installer, it needs Boost
+  - name: boost
+    buildsystem: simple
+    build-commands:
+      - ./bootstrap.sh --prefix=/app --with-libraries=iostreams,filesystem,date_time,system,program_options
+      - ./b2 -j $FLATPAK_BUILDER_N_JOBS install variant=release link=shared runtime-link=shared threading=multi cxxflags="$CXXFLAGS" linkflags="$LDFLAGS"
+    sources:
+      - type: archive
+        url: https://archives.boost.io/release/1.86.0/source/boost_1_86_0.tar.bz2
+        sha256: 1bed88e40401b2cb7a1f76d4bab499e352fa4d0c5f31c0dbae64e24d34d7513b
+
+  - name: innoextract
+    buildsystem: cmake-ninja
+    builddir: true
+    config-opts:
+      - -DCMAKE_BUILD_TYPE=Release
+    sources:
+      - type: archive
+        url: https://github.com/dscharrer/innoextract/archive/6e9e34ed0876014fdb46e684103ef8c3605e382e.tar.gz
+        sha256: 4d885b27e452dcb137a9d97736b19478447f172bcfed1aa98d80138e9a4c08ae
+
+  - name: jones3d-portable
+    buildsystem: cmake-ninja
+    builddir: true
+    config-opts:
+      - -DCMAKE_BUILD_TYPE=Release
+      - -DJONES3D_BUILD_PROGRAMS=OFF
+      - -DFETCHCONTENT_FULLY_DISCONNECTED=ON
+      - -DFETCHCONTENT_SOURCE_DIR_WXWIDGETS=/run/build/jones3d-portable/deps/wxWidgets
+      - -DFETCHCONTENT_SOURCE_DIR_OPENALSOFT=/run/build/jones3d-portable/deps/openal-soft
+      - -DFETCHCONTENT_SOURCE_DIR_VULKANHEADERS=/run/build/jones3d-portable/deps/Vulkan-Headers
+      - -DFETCHCONTENT_SOURCE_DIR_VOLK=/run/build/jones3d-portable/deps/volk
+      - -DFETCHCONTENT_SOURCE_DIR_LIBMSPACK=/run/build/jones3d-portable/deps/libmspack
+    post-install:
+      - install -Dm755 Jones3D/jones3d-portable /app/bin/jones3d-portable
+      - install -Dm644 ../packaging/flatpak/io.github.SimeonH.Jones3DPortable.desktop /app/share/applications/io.github.SimeonH.Jones3DPortable.desktop
+      - install -Dm644 ../packaging/flatpak/io.github.SimeonH.Jones3DPortable.metainfo.xml /app/share/metainfo/io.github.SimeonH.Jones3DPortable.metainfo.xml
+      - install -Dm644 ../packaging/flatpak/io.github.SimeonH.Jones3DPortable.svg /app/share/icons/hicolor/scalable/apps/io.github.SimeonH.Jones3DPortable.svg
+    sources:
+      - type: git
+        url: https://github.com/SimeonH/Jones3D-Portable.git
+        tag: v1.0.0
+      # Dependencies the CMake build would otherwise download (see Libs/external)
+      - type: archive
+        url: https://github.com/wxWidgets/wxWidgets/releases/download/v3.2.8/wxWidgets-3.2.8.tar.bz2
+        sha256: c74784904109d7229e6894c85cfa068f1106a4a07c144afd78af41f373ee0fe6
+        dest: deps/wxWidgets
+      - type: archive
+        url: https://github.com/kcat/openal-soft/archive/refs/tags/1.24.3.tar.gz
+        sha256: 7e1fecdeb45e7f78722b776c5cf30bd33934b961d7fd2a11e0494e064cc631ce
+        dest: deps/openal-soft
+      - type: archive
+        url: https://github.com/KhronosGroup/Vulkan-Headers/archive/refs/tags/v1.4.304.tar.gz
+        sha256: 5e1a06b3f27e7581b55d1dea176fd97ee0a2f299406db2f437c1d2f297ceba5b
+        dest: deps/Vulkan-Headers
+      - type: archive
+        url: https://github.com/zeux/volk/archive/refs/tags/1.4.304.tar.gz
+        sha256: ab3d4a8ccaeb32652259cdd008399504a41792675b0421d90b67729ee274746f
+        dest: deps/volk
+      - type: archive
+        url: https://github.com/kyz/libmspack/archive/refs/tags/v1.11.tar.gz
+        sha256: 284e0e51fee991c40e8cbbc0f5e635f99722796a3642a14397989fc00b862f72
+        dest: deps/libmspack

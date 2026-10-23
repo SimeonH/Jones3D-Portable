@@ -1,6 +1,6 @@
 [Desktop Entry]
 Type=Application
-Name=OpenJones3D
+Name=Jones3D Portable
 GenericName=Action Adventure Game
 Comment=Open source engine for Indiana Jones and the Infernal Machine (needs the original game data)
 Exec=jones3d-portable

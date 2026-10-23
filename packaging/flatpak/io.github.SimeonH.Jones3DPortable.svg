@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#8a5a2b"/>
+      <stop offset="1" stop-color="#4a2c12"/>
+    </linearGradient>
+    <linearGradient id="gold" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ffd75e"/>
+      <stop offset="1" stop-color="#e08a1e"/>
+    </linearGradient>
+  </defs>
+  <rect x="8" y="8" width="112" height="112" rx="22" fill="url(#bg)"/>
+  <!-- Hat -->
+  <path d="M26 64 C30 58 44 56 64 56 C84 56 98 58 102 64 C96 70 82 72 64 72 C46 72 32 70 26 64 Z" fill="#2b1708"/>
+  <path d="M42 58 C42 40 48 30 64 30 C80 30 86 40 86 58 C78 60 50 60 42 58 Z" fill="#3d220d"/>
+  <path d="M43 53 C52 55 76 55 85 53 L85 58 C76 60 52 60 43 58 Z" fill="#1a0e05"/>
+  <!-- Gear -->
+  <g transform="translate(64 92)" fill="url(#gold)">
+    <circle r="15"/>
+    <g>
+      <rect x="-4" y="-21" width="8" height="8" rx="1"/>
+      <rect x="-4" y="13" width="8" height="8" rx="1"/>
+      <rect x="-21" y="-4" width="8" height="8" rx="1"/>
+      <rect x="13" y="-4" width="8" height="8" rx="1"/>
+      <rect x="-4" y="-21" width="8" height="8" rx="1" transform="rotate(45)"/>
+      <rect x="-4" y="13" width="8" height="8" rx="1" transform="rotate(45)"/>
+      <rect x="-21" y="-4" width="8" height="8" rx="1" transform="rotate(45)"/>
+      <rect x="13" y="-4" width="8" height="8" rx="1" transform="rotate(45)"/>
+    </g>
+    <circle r="6" fill="#4a2c12"/>
+  </g>
+</svg>
