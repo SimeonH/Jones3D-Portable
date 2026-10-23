@@ -97,7 +97,11 @@
 #else
 #   define J3D_INLINE static inline
 #endif
-#define J3DNORETURN _Noreturn
+#ifdef __cplusplus
+#   define J3DNORETURN [[noreturn]]
+#else
+#   define J3DNORETURN _Noreturn
+#endif
 #ifdef _MSC_VER
 #   define J3DAPI __cdecl
 #elif defined(__i386__)

@@ -5,6 +5,10 @@
 #include <std/types.h>
 #include <std/RTI/addresses.h>
 
+#ifdef __cplusplus
+#include <type_traits>
+#endif
+
 J3D_EXTERN_C_START
 
 /**
@@ -13,6 +17,13 @@ J3D_EXTERN_C_START
 */
 #define STD_ARRAYLEN(x) (sizeof(x) / sizeof((x)[0]))
 
+#ifdef __cplusplus // _Generic is C only (Clang accepts it in C++ as an extension, GCC doesn't)
+#define STD_ISARRAYOF_(var, type) \
+    (std::is_array_v<std::remove_reference_t<decltype(var)>> && \
+     std::is_same_v<std::remove_cv_t<std::remove_extent_t<std::remove_reference_t<decltype(var)>>>, type>)
+#define STD_ISSTRARRAY(var)  STD_ISARRAYOF_(var, char)
+#define STD_ISWSTRARRAY(var) STD_ISARRAYOF_(var, wchar_t)
+#else
 /**
 * @brief Macro verifies array is of type char
 * @param var - The array to verify
@@ -32,6 +43,7 @@ J3D_EXTERN_C_START
         wchar_t(*)[sizeof(var)/sizeof((var)[0])]: 1, \
         const char(*)[sizeof(var)/sizeof((var)[0])]: 1, \
         default: 0)
+#endif
 
 /**
  * @brief Formats a string into an array buffer.
@@ -44,7 +56,7 @@ J3D_EXTERN_C_START
 */
 #define STD_FORMAT(buf, format, ...)  \
     do {\
-        _Static_assert(STD_ISSTRARRAY(buf), "STD_FORMAT requires an array type for 'buf'"); \
+        static_assert(STD_ISSTRARRAY(buf), "STD_FORMAT requires an array type for 'buf'"); \
         stdUtil_Format(buf, STD_ARRAYLEN(buf), format, ##__VA_ARGS__); \
     } while ( 0 )
 
@@ -59,7 +71,7 @@ J3D_EXTERN_C_START
 */
 #define STD_WFORMAT(buf, format, ...)  \
     do {\
-        _Static_assert(STD_ISWSTRARRAY(buf), "STD_WFORMAT requires an array type for 'buf'"); \
+        static_assert(STD_ISWSTRARRAY(buf), "STD_WFORMAT requires an array type for 'buf'"); \
         stdUtil_WFormat(buf, STD_ARRAYLEN(buf), format, ##__VA_ARGS__); \
     } while ( 0 )
 
@@ -73,7 +85,7 @@ J3D_EXTERN_C_START
 */
 #define STD_STRCPY(dest, src)  \
     do {\
-        _Static_assert(STD_ISSTRARRAY(dest), "STDCOPYSTR requires an array type for 'dest'"); \
+        static_assert(STD_ISSTRARRAY(dest), "STDCOPYSTR requires an array type for 'dest'"); \
         stdUtil_StringCopy(dest, STD_ARRAYLEN(dest), src); \
     } while ( 0 )
 
@@ -87,7 +99,7 @@ J3D_EXTERN_C_START
 */
 #define STD_WSTRCPY(dest, src)  \
     do {\
-        _Static_assert(STD_ISWSTRARRAY(dest), "STDCOPYSTR requires an array type for 'dest'"); \
+        static_assert(STD_ISWSTRARRAY(dest), "STDCOPYSTR requires an array type for 'dest'"); \
         stdUtil_WStringCopy(dest, STD_ARRAYLEN(dest), src); \
     } while ( 0 )
 
@@ -102,7 +114,7 @@ J3D_EXTERN_C_START
 */
 #define STD_STRNCPY(dest, src, num)  \
     do {\
-        _Static_assert(STD_ISSTRARRAY(dest), "STDCOPYSTR requires an array type for 'dest'"); \
+        static_assert(STD_ISSTRARRAY(dest), "STDCOPYSTR requires an array type for 'dest'"); \
         stdUtil_StringNumCopy(dest, STD_ARRAYLEN(dest), src, num); \
     } while ( 0 )
 
@@ -117,7 +129,7 @@ J3D_EXTERN_C_START
 */
 #define STD_STRCAT(str1, str2)  \
     do {\
-        _Static_assert(STD_ISSTRARRAY(str1), "STD_STRCAT requires an array type for 'str1'"); \
+        static_assert(STD_ISSTRARRAY(str1), "STD_STRCAT requires an array type for 'str1'"); \
         stdUtil_StringCat(str1, STD_ARRAYLEN(str1), str2); \
     } while ( 0 )
 
@@ -131,7 +143,7 @@ J3D_EXTERN_C_START
 */
 #define STD_TOSTR(dest, src)  \
     do {\
-        _Static_assert(STD_ISSTRARRAY(dest), "STD_TOSTR requires an array type for 'dest'"); \
+        static_assert(STD_ISSTRARRAY(dest), "STD_TOSTR requires an array type for 'dest'"); \
         stdUtil_ToAStringEx(dest, src, STD_ARRAYLEN(dest) - 1); \
         dest[STD_ARRAYLEN(dest) - 1] = 0; \
     } while ( 0 )
@@ -146,7 +158,7 @@ J3D_EXTERN_C_START
 */
 #define STD_TOWSTR(dest, src)  \
     do {\
-        _Static_assert(STD_ISWSTRARRAY(dest), "STD_TOWSTR requires an array type for 'dest'"); \
+        static_assert(STD_ISWSTRARRAY(dest), "STD_TOWSTR requires an array type for 'dest'"); \
         stdUtil_ToWStringEx(dest, src, STD_ARRAYLEN(dest) - 1); \
         dest[STD_ARRAYLEN(dest) - 1] = 0; \
     } while ( 0 )
