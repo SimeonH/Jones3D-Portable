@@ -49,6 +49,7 @@ modules:
   - name: jones3d-portable
     buildsystem: cmake-ninja
     builddir: true
+    no-make-install: true # no CMake install rules, see post-install
     config-opts:
       - -DCMAKE_BUILD_TYPE=Release
       - -DJONES3D_BUILD_PROGRAMS=OFF
